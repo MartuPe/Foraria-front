@@ -1,8 +1,12 @@
 Estructura:
 assets/: guarda aquí imágenes, íconos, fuentes, videos.
+
 components/: todos los componentes reutilizables, como botones, formularios, headers, footers.
+
 pages/: componentes que representan páginas completas, usados con React Router.
+
 services/: funciones que hacen llamadas a APIs o lógica centralizada.
+
 styles/: CSS global o variables de estilo.
 
 # Getting Started with Create React App
