@@ -1,4 +1,5 @@
 Estructura:
+
 assets/: guarda aquí imágenes, íconos, fuentes, videos.
 
 components/: todos los componentes reutilizables, como botones, formularios, headers, footers.
