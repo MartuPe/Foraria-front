@@ -1,0 +1,33 @@
+/* Tarjetas */
+.foraria-card {
+  background: white;
+  border: 1px solid rgba(8, 61, 119, 0.1);
+  border-radius: var(--radius);
+  box-shadow: 0 2px 8px rgba(8, 61, 119, 0.1);
+  transition: all 0.3s ease;
+}
+.foraria-card:hover {
+  box-shadow: 0 4px 16px rgba(8, 61, 119, 0.15);
+  transform: translateY(-2px);
+}
+
+/* Inputs */
+.foraria-input {
+  background: rgba(8, 61, 119, 0.05);
+  border: 2px solid rgba(8, 61, 119, 0.2);
+  color: var(--foraria-primary);
+  padding: 12px 16px;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+.foraria-input:focus {
+  border-color: var(--foraria-accent);
+  background: rgba(244, 211, 94, 0.1);
+  box-shadow: 0 0 0 3px rgba(244, 211, 94, 0.2),
+              0 4px 8px rgba(8, 61, 119, 0.15);
+  outline: none;
+}
+.foraria-input::placeholder {
+  color: rgba(8, 61, 119, 0.5);
+}

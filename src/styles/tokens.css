@@ -1,0 +1,17 @@
+:root {
+  --font-size: 16px;
+
+  /* Paleta Foraria */
+  --foraria-primary: #083d77;
+  --foraria-background: #ebebd3;
+  --foraria-accent: #f4d35e;
+  --foraria-secondary: #ee964b;
+  --foraria-alert: #f95738;
+
+  /* Radius */
+  --radius: 0.75rem;
+
+  /* Pesos tipográficos */
+  --font-weight-medium: 500;
+  --font-weight-normal: 400;
+}

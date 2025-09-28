@@ -3,6 +3,7 @@ import { LoginForm } from "../components/forms/LoginForm";
 import { RecoveryForm } from "../components/forms/RecoveryForm";
 import { UpdateForm } from "../components/forms/UpdateForm";
 import { authService } from "../services/authService";
+import "../styles/index.css";
 
 export function Login() {
   const [isRecoveryMode, setRecoveryMode] = useState(false);
