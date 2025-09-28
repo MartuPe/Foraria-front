@@ -33,6 +33,7 @@ export function UpdateForm({
           onChange={(e) =>
             setUpdateData({ ...updateData, nombre: e.target.value })
           }
+          className="foraria-input"
         />
       </div>
       <div>
@@ -43,6 +44,7 @@ export function UpdateForm({
           onChange={(e) =>
             setUpdateData({ ...updateData, apellido: e.target.value })
           }
+          className="foraria-input"
         />
       </div>
       <div>
@@ -53,6 +55,7 @@ export function UpdateForm({
           onChange={(e) =>
             setUpdateData({ ...updateData, dni: e.target.value })
           }
+          className="foraria-input"
         />
       </div>
       <div>
@@ -63,6 +66,7 @@ export function UpdateForm({
           onChange={(e) =>
             setUpdateData({ ...updateData, foto: e.target.value })
           }
+          className="foraria-input"
         />
       </div>
       <div>
@@ -74,12 +78,13 @@ export function UpdateForm({
           onChange={(e) =>
             setUpdateData({ ...updateData, nuevaPassword: e.target.value })
           }
+          className="foraria-input"
         />
       </div>
-      <Button type="submit" disabled={isLoading}>
+      <Button type="submit" variant="foraria" disabled={isLoading}>
         {isLoading ? "Actualizando..." : "Actualizar"}
       </Button>
-      <Button type="button" onClick={onBack} className="bg-gray-400">
+      <Button type="button" variant="foraria" onClick={onBack}>
         Volver
       </Button>
     </form>

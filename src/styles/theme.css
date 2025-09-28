@@ -1,11 +1,9 @@
-/* Light */
+/* Light theme */
 :root {
   --background: #ffffff;
   --foreground: #083d77;
   --card: #ffffff;
   --card-foreground: #083d77;
-  --popover: #ffffff;
-  --popover-foreground: #083d77;
   --primary: #083d77;
   --primary-foreground: #ffffff;
   --secondary: #ebebd3;
@@ -20,33 +18,14 @@
   --input: rgba(8, 61, 119, 0.05);
   --input-background: rgba(8, 61, 119, 0.05);
   --ring: rgba(8, 61, 119, 0.3);
-
-  /* Charts */
-  --chart-1: #083d77;
-  --chart-2: #ee964b;
-  --chart-3: #f4d35e;
-  --chart-4: #f95738;
-  --chart-5: #ebebd3;
-
-  /* Sidebar */
-  --sidebar: #083d77;
-  --sidebar-foreground: #ffffff;
-  --sidebar-primary: #f4d35e;
-  --sidebar-primary-foreground: #083d77;
-  --sidebar-accent: rgba(244, 211, 94, 0.1);
-  --sidebar-accent-foreground: #ffffff;
-  --sidebar-border: rgba(255, 255, 255, 0.1);
-  --sidebar-ring: rgba(244, 211, 94, 0.3);
 }
 
-/* Dark */
+/* Dark theme */
 .dark {
   --background: #1a1a1a;
   --foreground: #ebebd3;
   --card: #2a2a2a;
   --card-foreground: #ebebd3;
-  --popover: #2a2a2a;
-  --popover-foreground: #ebebd3;
   --primary: #f4d35e;
   --primary-foreground: #083d77;
   --secondary: rgba(8, 61, 119, 0.2);
@@ -60,10 +39,4 @@
   --border: rgba(235, 235, 211, 0.2);
   --input: rgba(235, 235, 211, 0.1);
   --ring: rgba(244, 211, 94, 0.3);
-
-  --chart-1: #f4d35e;
-  --chart-2: #ee964b;
-  --chart-3: #083d77;
-  --chart-4: #f95738;
-  --chart-5: #ebebd3;
 }

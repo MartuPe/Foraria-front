@@ -28,15 +28,16 @@ export function RecoveryForm({
           type="email"
           value={recoveryEmail}
           onChange={(e) => setRecoveryEmail(e.target.value)}
+          className="foraria-input"
         />
         {errors.recoveryEmail && (
           <p className="text-red-500 text-sm">{errors.recoveryEmail}</p>
         )}
       </div>
-      <Button type="submit" disabled={isLoading}>
+      <Button type="submit" variant="foraria" disabled={isLoading}>
         {isLoading ? "Enviando..." : "Recuperar contraseña"}
       </Button>
-      <Button type="button" onClick={onBack} className="bg-gray-400">
+      <Button type="button" variant="foraria" onClick={onBack}>
         Volver
       </Button>
     </form>

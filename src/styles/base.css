@@ -1,9 +1,8 @@
 @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@300;400;500;600;700&family=Montserrat:wght@300;400;500;600;700&display=swap");
 
-/* Reset básico + fuentes */
 * {
   font-family: "Montserrat", sans-serif;
- /*  @apply border-border outline-ring/50;*/ 
+  box-sizing: border-box;
 }
 
 html {
@@ -13,15 +12,11 @@ html {
 body {
   font-family: "Montserrat", sans-serif;
   background-color: var(--foraria-background);
-/*   @apply bg-background text-foreground;*/ 
+  color: var(--foreground);
 }
 
-/* Tipografía escalada */
 h1 { font-size: var(--text-2xl); font-weight: var(--font-weight-medium); }
 h2 { font-size: var(--text-xl); font-weight: var(--font-weight-medium); }
 h3 { font-size: var(--text-lg); font-weight: var(--font-weight-medium); }
 h4 { font-size: var(--text-base); font-weight: var(--font-weight-medium); }
-p, label, button, input {
-  font-size: var(--text-base);
-  line-height: 1.5;
-}
+p, label, button, input { font-size: var(--text-base); line-height: 1.5; }
