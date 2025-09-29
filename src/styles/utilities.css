@@ -1,4 +1,4 @@
-/* Gradientes */
+
 .foraria-gradient {
   background: linear-gradient(135deg, var(--foraria-accent), var(--foraria-secondary));
 }
@@ -13,4 +13,28 @@
   background: linear-gradient(135deg, var(--foraria-secondary), var(--foraria-accent));
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(238, 150, 75, 0.3);
+}
+
+
+.foraria-white-button {
+  background: var(--foraria-white); 
+  color: var(--muted-foreground); 
+  border: none;
+  transition: all 0.3s ease;
+}
+.foraria-white-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(108, 117, 125, 0.2);
+}
+
+
+.foraria-outlined-white-button {
+  background: var(--foraria-white);
+  color: var(--muted-foreground);
+  border: 1px solid var(--muted-foreground);
+  transition: all 0.3s ease;
+}
+.foraria-outlined-white-button:hover {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: var(--accent);
 }

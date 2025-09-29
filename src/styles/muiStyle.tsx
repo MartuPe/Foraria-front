@@ -4,7 +4,7 @@ const theme = createTheme({
   palette: {
     mode: 'light',
     background: {
-      default: '#ffffff',
+      default: '#ebebd3', 
       paper: '#ffffff',
     },
     primary: {
@@ -28,7 +28,7 @@ const theme = createTheme({
       contrastText: '#ffffff',
     },
     success: {
-      main: '#4caf50', // opcional, podés usar otro color si querés
+      main: '#4caf50',
       contrastText: '#ffffff',
     },
     text: {
@@ -68,7 +68,7 @@ const theme = createTheme({
     },
   },
   shape: {
-    borderRadius: 12, // equivalente a 0.75rem
+    borderRadius: 12, 
   },
   components: {
     MuiButton: {
@@ -82,6 +82,42 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: '#ffffff',
+        },
+      },
+    },
+  
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: '#ebebd3', 
+            borderRadius: '8px',
+            '& fieldset': {
+              borderColor: 'rgba(0, 0, 0, 0.2)',
+            },
+            '&:hover fieldset': {
+              borderColor: '#f4d35e',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#f4d35e',
+            },
+          },
+          '& .MuiInputLabel-root': {
+            color: '#ebebd3', 
+          },
+          '& .MuiInputAdornment-root .MuiIconButton-root': {
+            color: '#000000', 
+          },
+        },
+      },
+    },
+    MuiLink: {
+      styleOverrides: {
+        root: {
+          color: '#6c757d',
+          '&:hover': {
+            color: '#f4d35e',
+          },
         },
       },
     },
