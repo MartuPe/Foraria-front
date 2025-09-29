@@ -58,7 +58,7 @@
   position: relative;
   max-width: 480px;
   width: 800px;
-  min-height: 800px;
+  min-height: 700px;
   display: flex;
   flex-direction: column;
   justify-content: space-around;
@@ -117,5 +117,10 @@
 .foraria-centered-link {
   margin-top: 16px; 
   text-align: center;
+}
+
+.foraria-left-link{
+      display: flex;
+    align-items: center;
 }
 

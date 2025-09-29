@@ -7,7 +7,7 @@ import IconButton from '@mui/material/IconButton';
 import isotipoColor from '../assets/Isotipo-Color.png';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@mui/material';
-
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -39,8 +39,21 @@ const Login: React.FC = () => {
           gutterBottom 
           className="foraria-form-title"
         >
-          Iniciar Sesión
+          Recuperar Contraseña
         </Typography>
+
+<Typography
+>
+    Ingresa tu email y te enviaremos un enlace para recuperar tu contraseña
+</Typography>
+<Box className="foraria-centered-link">  {}
+    
+<Link component={RouterLink} to="/iniciarSesion" underline="hover" className="foraria-form-link foraria-left-link">
+            <ArrowBackIcon></ArrowBackIcon>
+            Volver al login
+          </Link>
+        </Box>
+
         <TextField
           label="Email"
           variant="outlined"
@@ -51,44 +64,16 @@ const Login: React.FC = () => {
           placeholder="Tu@email.com"
           InputLabelProps={{ className: 'foraria-form-label', shrink: true }}
         />
-        <TextField
-          label="Contraseña"
-          variant="outlined"
-          fullWidth
-          margin="normal"
-          type={showPassword ? 'text' : 'password'}
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          placeholder="Tu contraseña"
-          InputLabelProps={{ className: 'foraria-form-label', shrink: true }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton
-                  aria-label="toggle password visibility"
-                  onClick={handleClickShowPassword}
-                  onMouseDown={handleMouseDownPassword}
-                  edge="end"
-                >
-                  {showPassword ? <VisibilityOff /> : <Visibility />}
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-        />
+        
         <Button 
           type="submit" 
           variant="contained" 
           fullWidth 
           className="foraria-gradient-button"
         >
-          Iniciar Sesión
+          Enviar enlace de recuperación
         </Button>
-        <Box className="foraria-centered-link">  {}
-          <Link component={RouterLink} to="/recuperar" underline="hover" className="foraria-form-link">
-            Olvidé mi contraseña
-          </Link>
-        </Box>
+        
       </Box>
     </Box>
   );
