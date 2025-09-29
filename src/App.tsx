@@ -3,6 +3,7 @@ import logo from './logo.svg';
 import './App.css';
 import Alert from '@mui/material/Alert';
 import CheckIcon from '@mui/icons-material/Check';
+import Button from '@mui/material/Button';
 
 function App() {
   return (
@@ -23,7 +24,7 @@ function App() {
              <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
       Here is a gentle confirmation that your action was successful.
     </Alert>
-          
+          <Button variant="contained">Contained</Button>
         </a>
       </header>
     </div>

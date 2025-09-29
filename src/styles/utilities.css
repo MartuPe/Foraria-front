@@ -1,0 +1,16 @@
+/* Gradientes */
+.foraria-gradient {
+  background: linear-gradient(135deg, var(--foraria-accent), var(--foraria-secondary));
+}
+
+.foraria-gradient-button {
+  background: linear-gradient(135deg, var(--foraria-accent), var(--foraria-secondary));
+  color: var(--foraria-primary);
+  border: none;
+  transition: all 0.3s ease;
+}
+.foraria-gradient-button:hover {
+  background: linear-gradient(135deg, var(--foraria-secondary), var(--foraria-accent));
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(238, 150, 75, 0.3);
+}
