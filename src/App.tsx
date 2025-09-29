@@ -1,6 +1,8 @@
 import React from 'react';
 import logo from './logo.svg';
 import './App.css';
+import Alert from '@mui/material/Alert';
+import CheckIcon from '@mui/icons-material/Check';
 
 function App() {
   return (
@@ -17,9 +19,16 @@ function App() {
           rel="noopener noreferrer"
         >
           Learn React
+
+             <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
+      Here is a gentle confirmation that your action was successful.
+    </Alert>
+          
         </a>
       </header>
     </div>
+
+    
   );
 }
 
