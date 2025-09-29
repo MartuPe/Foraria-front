@@ -6,6 +6,9 @@
   box-shadow: 0 2px 8px rgba(8, 61, 119, 0.1);
   transition: all 0.3s ease;
 }
+
+
+
 .foraria-card:hover {
   box-shadow: 0 4px 16px rgba(8, 61, 119, 0.15);
   transform: translateY(-2px);
@@ -13,7 +16,7 @@
 
 
 .foraria-dark-card {
-  background: var(--muted-foreground); /* #6c757d */
+  background: var(--muted-foreground); 
   color: var(--foraria-light-text);
   border: none;
   border-radius: var(--foraria-large-radius);
@@ -23,24 +26,26 @@
 
 
 .foraria-input {
-  background: var(--foraria-background); /* Cambiado a #ebebd3 para coincidir con imagen */
-  border: 1px solid var(--foraria-input-border); /* Borde sutil */
+  background: var(--foraria-background); 
+  border: 1px solid var(--foraria-input-border); 
   color: var(--primary);
-  padding: 12px 16px;
+  padding: 16px 20px;
+  font-size: 16px;
   border-radius: 8px;
-  font-size: 14px;
   transition: all 0.3s ease;
 }
 .foraria-input:focus {
   border-color: var(--foraria-accent);
-  background: rgba(244, 211, 94, 0.05); /* Más sutil para matching */
+  background: rgba(244, 211, 94, 0.05); 
   box-shadow: 0 0 0 3px rgba(244, 211, 94, 0.2),
               0 4px 8px rgba(8, 61, 119, 0.15);
   outline: none;
 }
 .foraria-input::placeholder {
-  color: rgba(108, 117, 125, 0.7); /* Gris claro para placeholders */
+  color: rgba(108, 117, 125, 0.7); 
 }
+
+
 
 
 .foraria-form-container {
@@ -48,11 +53,18 @@
   color: var(--foraria-light-text); 
   border-radius: var(--foraria-large-radius);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
-  padding: 24px;
-  max-width: 320px;
+  padding: 32px;
   margin: 0 auto;
   position: relative;
+  max-width: 480px;
+  width: 800px;
+  min-height: 800px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
 }
+
+
 
 .foraria-form-title {
   color: var(--foraria-light-text);
@@ -86,3 +98,24 @@
   text-align: center;
   display: block;
 }
+
+.foraria-login-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.foraria-logo {
+  width: 40%; 
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+
+.foraria-centered-link {
+  margin-top: 16px; 
+  text-align: center;
+}
+

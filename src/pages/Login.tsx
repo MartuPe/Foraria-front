@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Box, Button, TextField, Link, Typography } from '@mui/material';  // Quita Container si interfiere
+import { Box, Button, TextField, Link, Typography } from '@mui/material';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -23,28 +23,18 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Box 
-      sx={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'center', 
-        maxWidth: '320px', 
-        mx: 'auto'  // Centrado horizontal
-      }} 
-      className="foraria-login-page"  // Clase exclusiva para margen vertical
-    >
+    <Box className="foraria-login-page">  {}
       <Box 
-        className="foraria-form-container"  // Clase reutilizable (fondo gris, etc.)
+        className="foraria-form-container"  
         component="form" 
-        onSubmit={handleSubmit} 
-        sx={{ width: '100%' }}  // Mantén solo width
+        onSubmit={handleSubmit}
       >
-        <Box component="img" src={isotipoColor} alt="Logo" sx={{ width: 50, mb: 2, mx: 'auto', display: 'block' }} />
+        <Box component="img" src={isotipoColor} alt="Logo" className="foraria-logo" />  {}
         <Typography 
           variant="h5" 
           component="h1" 
           gutterBottom 
-          className="foraria-form-title"  // Fixea color claro
+          className="foraria-form-title"
         >
           Iniciar Sesión
         </Typography>
@@ -56,7 +46,7 @@ const Login: React.FC = () => {
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Tu@email.com"
-          InputLabelProps={{ className: 'foraria-form-label' }}  // Fixea etiquetas
+          InputLabelProps={{ className: 'foraria-form-label', shrink: true }}
         />
         <TextField
           label="Contraseña"
@@ -67,7 +57,7 @@ const Login: React.FC = () => {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Tu contraseña"
-          InputLabelProps={{ className: 'foraria-form-label' }}
+          InputLabelProps={{ className: 'foraria-form-label', shrink: true }}
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
@@ -87,37 +77,15 @@ const Login: React.FC = () => {
           type="submit" 
           variant="contained" 
           fullWidth 
-          className="foraria-gradient-button"  // Ahora con override
-          sx={{ mt: 2 }}
+          className="foraria-gradient-button"
         >
           Iniciar Sesión
         </Button>
-        <Button 
-          variant="contained" 
-          fullWidth 
-          className="foraria-white-button"
-          sx={{ mt: 1 }}
-        >
-          Acceso Administrador
-        </Button>
-        <Button 
-          variant="outlined" 
-          fullWidth 
-          className="foraria-outlined-white-button"
-          sx={{ mt: 1 }}
-        >
-          Acceso Consejo
-        </Button>
-        <Box sx={{ mt: 2, textAlign: 'center' }}>
+        <Box className="foraria-centered-link">  {}
           <Link href="#" underline="hover" className="foraria-form-link">
             Olvidé mi contraseña
           </Link>
         </Box>
-      </Box>
-      <Box sx={{ mt: 2, textAlign: 'center' }}>
-        <Link href="#" underline="hover" className="foraria-secondary-link">
-          Acceso de demostración
-        </Link>
       </Box>
     </Box>
   );

@@ -1,10 +1,10 @@
-import { ThemeProvider, createTheme } from '@mui/material/styles';
+import { createTheme } from '@mui/material/styles';
 
 const theme = createTheme({
   palette: {
     mode: 'light',
     background: {
-      default: '#ebebd3', 
+      default: '#ebebd3',  
       paper: '#ffffff',
     },
     primary: {
@@ -41,40 +41,24 @@ const theme = createTheme({
     fontFamily: '"Montserrat", "Fredoka", sans-serif',
     fontSize: 16,
     fontWeightMedium: 500,
-    fontWeightRegular: 400,
-    h1: {
-      fontSize: '2.5rem',
-      fontWeight: 500,
-    },
-    h2: {
-      fontSize: '2rem',
-      fontWeight: 500,
-    },
-    h3: {
-      fontSize: '1.75rem',
-      fontWeight: 500,
-    },
-    h4: {
-      fontSize: '1.5rem',
-      fontWeight: 500,
-    },
-    body1: {
-      fontSize: '1rem',
-      lineHeight: 1.5,
-    },
-    button: {
-      textTransform: 'none',
-      fontWeight: 500,
-    },
+    fontWeightRegular: 400, 
   },
   shape: {
-    borderRadius: 12, 
+    borderRadius: 12,
   },
   components: {
     MuiButton: {
       styleOverrides: {
         root: {
           borderRadius: '0.75rem',
+          textTransform: 'none',
+          padding: '16.5px 14px'
+        },
+        contained: {
+          boxShadow: 'none',
+          '&:hover': {
+            boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+          },
         },
       },
     },
@@ -85,12 +69,15 @@ const theme = createTheme({
         },
       },
     },
-  
     MuiTextField: {
       styleOverrides: {
         root: {
+          '& .MuiInputLabel-root': {
+            color: '#ebebd3 !important',  
+            transform: 'translate(14px, -20px) scale(0.75)',  
+          },
           '& .MuiOutlinedInput-root': {
-            backgroundColor: '#ebebd3', 
+            backgroundColor: '#ebebd3 !important', 
             borderRadius: '8px',
             '& fieldset': {
               borderColor: 'rgba(0, 0, 0, 0.2)',
@@ -100,21 +87,24 @@ const theme = createTheme({
             },
             '&.Mui-focused fieldset': {
               borderColor: '#f4d35e',
+              boxShadow: '0 0 0 3px rgba(244, 211, 94, 0.2)',
             },
           },
-          '& .MuiInputLabel-root': {
-            color: '#ebebd3', 
+          '& .MuiInputBase-input::placeholder': {
+            color: 'rgba(108, 117, 125, 0.7)',
           },
           '& .MuiInputAdornment-root .MuiIconButton-root': {
-            color: '#000000', 
+            color: '#000000 !important',  
           },
+          
         },
       },
     },
     MuiLink: {
       styleOverrides: {
         root: {
-          color: '#6c757d',
+          color: '#ffffffff !important', 
+          textDecoration: 'underline',
           '&:hover': {
             color: '#f4d35e',
           },
