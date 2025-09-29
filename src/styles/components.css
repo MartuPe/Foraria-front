@@ -122,5 +122,33 @@
 .foraria-left-link{
       display: flex;
     align-items: center;
+    margin-bottom: 15px;
 }
+
+
+
+.foraria-image-upload-button {
+  border-radius: 8px !important; 
+  border: 1px solid var(--foraria-input-border) !important;
+  background-color: white !important; 
+  color: var(--primary) !important;
+  padding: 12px 16px !important;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  justify-content: flex-start !important; 
+  text-align: left !important;
+  margin-bottom: 15px !important; 
+  margin-top: 10px !important; 
+}
+
+.foraria-image-upload-button:hover {
+  background-color: rgba(244, 211, 94, 0.05) !important;
+  box-shadow: 0 0 0 3px rgba(244, 211, 94, 0.2) ,
+              0 4px 8px rgba(8, 61, 119, 0.15) !important;
+}
+
 
