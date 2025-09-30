@@ -1,9 +1,5 @@
 import React, { useState } from 'react';
 import { Box, Button, TextField, Typography } from '@mui/material';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
 import isotipoColor from '../assets/Isotipo-Color.png';
 import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@mui/material';
@@ -11,18 +7,9 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-
-  const handleClickShowPassword = () => setShowPassword(!showPassword);
-  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-  };
-
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     console.log('Email:', email);
-    console.log('Contraseña:', password);
   };
 
   return (
