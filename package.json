@@ -15,6 +15,7 @@
     "@types/node": "^16.18.126",
     "@types/react": "^19.1.15",
     "@types/react-dom": "^19.1.9",
+    "jspdf": "^3.0.3",
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "react-router-dom": "^6.30.1",
