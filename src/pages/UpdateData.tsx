@@ -14,7 +14,7 @@ const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+ // const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
   const handleClickShowPassword = () => setShowPassword(!showPassword);
   const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -29,7 +29,7 @@ const Login: React.FC = () => {
 
   const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files && event.target.files[0]) {
-      setSelectedImage(event.target.files[0]);
+     // setSelectedImage(event.target.files[0]);
     }
   };
 
