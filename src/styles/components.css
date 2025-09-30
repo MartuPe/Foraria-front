@@ -1,4 +1,4 @@
-/* Tarjetas */
+
 .foraria-card {
   background: white;
   border: 1px solid rgba(8, 61, 119, 0.1);
@@ -6,28 +6,238 @@
   box-shadow: 0 2px 8px rgba(8, 61, 119, 0.1);
   transition: all 0.3s ease;
 }
+
+
+
 .foraria-card:hover {
   box-shadow: 0 4px 16px rgba(8, 61, 119, 0.15);
   transform: translateY(-2px);
 }
 
-/* Inputs */
+
+.foraria-dark-card {
+  background: var(--muted-foreground); 
+  color: var(--foraria-light-text);
+  border: none;
+  border-radius: var(--foraria-large-radius);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+
 .foraria-input {
-  background: rgba(8, 61, 119, 0.05);
-  border: 2px solid rgba(8, 61, 119, 0.2);
-  color: var(--foraria-primary);
-  padding: 12px 16px;
+  background: var(--foraria-background); 
+  border: 1px solid var(--foraria-input-border); 
+  color: var(--primary);
+  padding: 16px 20px;
+  font-size: 16px;
   border-radius: 8px;
-  font-size: 14px;
   transition: all 0.3s ease;
 }
 .foraria-input:focus {
   border-color: var(--foraria-accent);
-  background: rgba(244, 211, 94, 0.1);
+  background: rgba(244, 211, 94, 0.05); 
   box-shadow: 0 0 0 3px rgba(244, 211, 94, 0.2),
               0 4px 8px rgba(8, 61, 119, 0.15);
   outline: none;
 }
 .foraria-input::placeholder {
-  color: rgba(8, 61, 119, 0.5);
+  color: rgba(108, 117, 125, 0.7); 
 }
+
+
+
+
+.foraria-form-container {
+  background: var(--muted-foreground);
+  color: var(--foraria-light-text); 
+  border-radius: var(--foraria-large-radius);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
+  padding: 32px;
+  margin: 0 auto;
+  position: relative;
+  max-width: 480px;
+  width: 800px;
+  min-height: 700px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+}
+
+
+
+.foraria-form-title {
+  color: var(--foraria-light-text);
+  font-weight: var(--font-weight-medium);
+  margin-bottom: 16px;
+  text-align: center;
+}
+
+.foraria-form-label {
+  color: var(--foraria-light-text);
+  font-size: 14px;
+}
+
+
+.foraria-form-link {
+  color: var(--muted); 
+  font-size: 12px;
+  text-decoration: underline;
+  transition: color 0.3s ease;
+}
+
+.foraria-form-link:hover {
+  color: var(--accent);
+}
+
+
+.foraria-secondary-link {
+  color: var(--primary);
+  font-size: 12px;
+  margin-top: 16px;
+  text-align: center;
+  display: block;
+}
+
+.foraria-login-page {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+
+.foraria-logo {
+  width: 40%; 
+  margin-left: auto;
+  margin-right: auto;
+  display: block;
+}
+
+
+.foraria-centered-link {
+  margin-top: 16px; 
+  text-align: center;
+}
+
+.foraria-left-link{
+      display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+
+
+.foraria-image-upload-button {
+  border-radius: 8px !important; 
+  border: 1px solid var(--foraria-input-border) !important;
+  background-color: white !important; 
+  color: var(--primary) !important;
+  padding: 12px 16px !important;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px !important;
+  cursor: pointer !important;
+  transition: all 0.3s ease !important;
+  justify-content: flex-start !important; 
+  text-align: left !important;
+  margin-bottom: 15px !important; 
+  margin-top: 10px !important; 
+}
+
+.foraria-image-upload-button:hover {
+  background-color: rgba(244, 211, 94, 0.05) !important;
+  box-shadow: 0 0 0 3px rgba(244, 211, 94, 0.2) ,
+              0 4px 8px rgba(8, 61, 119, 0.15) !important;
+}
+
+.foraria-profile-section {
+  background: #ffffff;
+  border-radius: 1rem; 
+  box-shadow: 0 4px 12px rgba(0.1, 0.1, 0.1, 0.1);
+  padding: 16px;
+  margin-bottom: 24px;
+  width: 100%;
+  position: relative; 
+}
+
+
+.foraria-profile-header {
+    display: flex;
+    margin: 16px;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+
+
+.foraria-profile-name {
+  font-size: 1.25rem;
+  font-weight: bold;
+  color: #083d77;
+  margin-left: 16px;
+}
+
+.foraria-profile-depto {
+  font-size: 0.875rem;
+  color: #6c757d;
+  margin-left: 16px;
+}
+
+
+.foraria-profile-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.foraria-profile-label {
+  color: #083d77;  
+  font-weight: normal;
+  flex: 1;
+}
+
+.foraria-profile-value {
+  background: #f8f9fa;  
+  border-radius: 0.5rem;
+  padding: 8px 12px;
+  flex: 2;
+  text-align: left;  
+  color: #6c757d;
+}
+
+.foraria-profile-value-status {
+  background: rgba(76, 175, 80, 0.1);  
+  border-radius: 0.5rem;
+  padding: 8px 12px;
+  flex: 2;
+  text-align: left; 
+  color: #4caf50;
+}
+
+
+.foraria-edit-button {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  font-size: 0.875rem;
+  color: #61dafb; 
+}
+
+.foraria-profile-edit-button-container {
+ display: flex;
+ flex-direction: row-reverse;
+}
+
+
+.foraria-role-chip {
+  margin-left: 8px;
+  color: #ee964b !important;  
+}
+
+.foraria-status-chip {
+  background: none !important; 
+  color: #4caf50;
+}
+
