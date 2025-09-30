@@ -9,8 +9,6 @@ import {
   Box,
   Typography,
   Avatar,
-  Divider,
-  useTheme,
 } from '@mui/material';
 import {
   BarChart as DashboardIcon,
@@ -57,7 +55,6 @@ interface SidebarProps {
 }
 
 export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
-  const theme = useTheme();
   const location = useLocation();
   const navigate = useNavigate();
 

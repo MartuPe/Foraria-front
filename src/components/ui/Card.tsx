@@ -36,7 +36,9 @@ export function CardTitle({ className, ...props }: CardSubProps) {
       data-slot="card-title"
       className={cn("leading-none font-fredoka text-lg md:text-xl", className)}
       {...props}
-    />
+    >
+      {props.children || "Card Title"}
+    </h4>
   );
 }
 

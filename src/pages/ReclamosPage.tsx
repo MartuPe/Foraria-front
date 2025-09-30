@@ -9,7 +9,6 @@ import {
   Stack,
   Avatar,
   IconButton,
-  Divider,
   Paper,
 } from '@mui/material';
 import {

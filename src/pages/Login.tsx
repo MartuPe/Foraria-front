@@ -11,7 +11,9 @@ export function Login() {
   const [isUpdateMode, setUpdateMode] = useState(false);
   const [isLoading, setLoading] = useState(false);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [username, setUsername] = useState("");
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [password, setPassword] = useState("");
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [updateData, setUpdateData] = useState({
@@ -22,6 +24,7 @@ export function Login() {
     nuevaPassword: "",
   });
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [errors, setErrors] = useState<any>({});
 
   // login handler
