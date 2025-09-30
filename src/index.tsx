@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './styles/index.css';
 import App from './App';
+
 //import reportWebVitals from './reportWebVitals';
 import theme from './styles/muiStyle';  
 import { ThemeProvider } from '@mui/material/styles';  
@@ -14,6 +15,7 @@ root.render(
     </ThemeProvider>
   </React.StrictMode>
 );
+
 
 
 
