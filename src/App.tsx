@@ -1,36 +1,35 @@
+
 import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import Alert from '@mui/material/Alert';
-import CheckIcon from '@mui/icons-material/Check';
-import Button from '@mui/material/Button';
+import './App.css'; 
+import Login from './pages/Login';
+import RecoverPassword from './pages/RecoverPassword';
+import UpdateData from './pages/UpdateData';
+import Profile from './pages/Profile';
+import ChangeData from './pages/ChangeData';
+
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+//import { ImportExportRounded } from '@mui/icons-material';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
+     <>
+         <a href="https://reactjs.org">Learn React</a>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/iniciarSesion" element={<Login />} />
+          <Route path="/recuperar" element={<RecoverPassword />} />
+          <Route path="/actualizarInformacion" element={<UpdateData />} />
+          <Route path="/perfil" element={<Profile />} />
+          <Route path="/editarInformacion" element={<ChangeData />} />
+        </Routes>
+      </div>
+    </Router>
 
-             <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
-      Here is a gentle confirmation that your action was successful.
-    </Alert>
-          <Button variant="contained">Contained</Button>
-        </a>
-      </header>
-    </div>
-
-    
+    </>
   );
+  
 }
 
 export default App;
