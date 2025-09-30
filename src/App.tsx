@@ -13,7 +13,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 function App() {
   return (
      <>
-    <a>Learn React</a>
+    <button>Learn React</button>
 
     <Router>
       <div className="App">
