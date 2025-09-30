@@ -1,17 +1,26 @@
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider } from '@mui/material/styles';
+import { CssBaseline } from '@mui/material';
+import { forariaTheme } from './styles/muiTheme';
 import { Login } from "./pages/Login";
+import ReclamosPage from "./pages/ReclamosPage";
+import { MaterialUITest } from './components/MaterialUITest';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Navigate to="/login" />} />
-        <Route path="/login" element={<Login />} />
-      </Routes>
-    </Router>
+    <ThemeProvider theme={forariaTheme}>
+      <CssBaseline />
+      <Router>
+          <Routes>
+          <Route path="/login" element={<Login />} />
+          <Route path="/reclamos" element={<ReclamosPage />} />
+          <Route path="/test" element={<MaterialUITest />} />
+          <Route path="/" element={<Navigate to="/reclamos" replace />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 
