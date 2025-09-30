@@ -52,8 +52,16 @@ const theme = createTheme({
         root: {
           borderRadius: '0.75rem',
           textTransform: 'none',
-          padding: '16.5px 14px'
+          padding: '16.5px 14px',
+           '&.foraria-edit-button': {
+          minWidth: 'auto',
+          padding: '4px 8px',
+          fontSize: '0.875rem',
+          textTransform: 'none',
+          },
         },
+        
+        
         contained: {
           boxShadow: 'none',
           '&:hover': {
@@ -111,6 +119,39 @@ const theme = createTheme({
         },
       },
     },
+
+ MuiCard: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#ffffff',
+          borderRadius: '0.75rem',
+        },
+      },
+    },
+MuiAvatar: {
+    styleOverrides: {
+      root: {
+        width: 150,
+        height: 150, 
+      },
+    },
+  },
+  MuiChip: {
+    styleOverrides: {
+      root: {
+        borderRadius: '1rem',
+        '&.foraria-role-chip': {
+          backgroundColor: 'transparent',
+          color: '#f4d35e',
+        },
+        '&.foraria-status-chip': {
+          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+          color: '#4caf50',
+        },
+      },
+    },
+  },
+
   },
 });
 

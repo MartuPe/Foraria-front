@@ -4,6 +4,7 @@ import './App.css';
 import Login from './pages/Login';
 import RecoverPassword from './pages/RecoverPassword';
 import UpdateData from './pages/UpdateData';
+import Profile from './pages/Profile';
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
@@ -16,6 +17,7 @@ function App() {
           <Route path="/iniciarSesion" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/actualizarInformacion" element={<UpdateData />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
     </Router>
