@@ -1,5 +1,6 @@
 import React from 'react';
-import { Box, Typography, Avatar, Button, Chip, Grid } from '@mui/material';
+import { Box, Typography, Avatar, Button, Chip, Grid, Link } from '@mui/material';
+import { Link as RouterLink } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';  
 import profilePhoto from '../assets/profile-photo.jpg';  
 
@@ -32,9 +33,11 @@ const Profile: React.FC = () => {
         </Typography>
         </Box>
         <Box className="foraria-profile-edit-button-container">
-        <Button startIcon={<EditIcon />} className="foraria-edit-button">
+             <Link component={RouterLink} to="/editarInformacion">
+        <Button  startIcon={<EditIcon />} className="foraria-edit-button">
           Editar
         </Button>
+        </Link>
         </Box>
         <Grid container spacing={2} className="foraria-profile-info">
           <Grid size={6} className="foraria-profile-label foraria-profile-row ">Nombre</Grid>
