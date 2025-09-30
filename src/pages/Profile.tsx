@@ -27,7 +27,7 @@ const Profile: React.FC = () => {
           <Chip label="Propietario" variant="outlined" color="info" />
         </Box>
         <Box className="foraria-profile-section">
-        <Box className="foraria-profile-info-header">
+        <Box>
         <Typography variant="h6" className="foraria-section-title">
           Información Personal
         </Typography>
