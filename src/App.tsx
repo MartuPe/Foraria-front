@@ -1,35 +1,25 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import Alert from '@mui/material/Alert';
-import CheckIcon from '@mui/icons-material/Check';
-import Button from '@mui/material/Button';
+import React from "react";
+import { ThemeProvider } from "@mui/material/styles";
+import CssBaseline from "@mui/material/CssBaseline";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import theme from "./styles/muiStyle";
+import Votes from "./pages/Votes";
+import Meetings from "./pages/Meetings";
+import Documents from "./pages/Documents";
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-
-             <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
-      Here is a gentle confirmation that your action was successful.
-    </Alert>
-          <Button variant="contained">Contained</Button>
-        </a>
-      </header>
-    </div>
-
-    
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Navigate to="/meetings" replace />} />
+          <Route path="/meetings" element={<Meetings />} />
+          <Route path="/votes" element={<Votes />} />
+          <Route path="/documents" element={<Documents />} />
+        </Routes>
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 
