@@ -27,7 +27,6 @@ const Login: React.FC = () => {
 
   return (
     <Box className="foraria-login-page">  {}
-        <a href="https://reactjs.org">Learn React</a>
       <Box 
         className="foraria-form-container"  
         component="form" 
