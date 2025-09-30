@@ -1,118 +1,98 @@
-import { useState } from "react";
-import { LoginForm } from "../components/forms/LoginForm";
-import { RecoveryForm } from "../components/forms/RecoveryForm";
-import { UpdateForm } from "../components/forms/UpdateForm";
-import { authService } from "../services/authService";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/Card";
-import "../styles/index.css";
 
-export function Login() {
-  const [isRecoveryMode, setRecoveryMode] = useState(false);
-  const [isUpdateMode, setUpdateMode] = useState(false);
-  const [isLoading, setLoading] = useState(false);
+import React, { useState } from 'react';
+import { Box, Button, TextField, Typography } from '@mui/material';
+import Visibility from '@mui/icons-material/Visibility';
+import VisibilityOff from '@mui/icons-material/VisibilityOff';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import isotipoColor from '../assets/Isotipo-Color.png';
+import { Link as RouterLink } from 'react-router-dom';
+import { Link } from '@mui/material';
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [username, setUsername] = useState("");
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [password, setPassword] = useState("");
-  const [recoveryEmail, setRecoveryEmail] = useState("");
-  const [updateData, setUpdateData] = useState({
-    nombre: "",
-    apellido: "",
-    dni: "",
-    foto: "",
-    nuevaPassword: "",
-  });
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [errors, setErrors] = useState<any>({});
+const Login: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
-  // login handler
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    await authService.login(username, password);
-    setLoading(false);
-    alert("Login exitoso ✅");
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
   };
 
-  // recovery handler
-  const handleRecovery = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    await authService.recoverPassword(recoveryEmail);
-    setLoading(false);
-    alert("Email enviado ✅");
-    setRecoveryMode(false);
-  };
-
-  // update handler
-  const handleUpdate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    await authService.updateUser(updateData);
-    setLoading(false);
-    alert("Datos actualizados ✅");
-    setUpdateMode(false);
+  const handleSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    console.log('Email:', email);
+    console.log('Contraseña:', password);
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
-      <Card className="w-full max-w-md bg-[rgba(44,62,80,0.85)] shadow-2xl rounded-2xl">
-        <CardHeader>
-          <CardTitle className="text-white text-center text-2xl font-bold">
-            {!isRecoveryMode && !isUpdateMode
-              ? "Iniciar Sesión"
-              : isRecoveryMode
-              ? "Recuperar Contraseña"
-              : "Actualizar Datos"}
-          </CardTitle>
-          <CardDescription className="text-white/80 text-sm text-center px-4">
-            {!isRecoveryMode && !isUpdateMode
-              ? "Ingresa tus credenciales para acceder a tu cuenta"
-              : isRecoveryMode
-              ? "Ingresa tu email y te enviaremos un enlace para recuperar tu contraseña"
-              : "Actualiza tus datos personales para continuar"}
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="pt-4 px-6">
-          {!isRecoveryMode && !isUpdateMode && (
-            <LoginForm
-              username={username}
-              password={password}
-              errors={errors}
-              isLoading={isLoading}
-              onSubmit={handleLogin}
-              onAdminLogin={() => alert("Login admin")}
-              onConsejoLogin={() => alert("Login consejo")}
-              onRecovery={() => setRecoveryMode(true)}
-            />
-          )}
-
-          {isRecoveryMode && (
-            <RecoveryForm
-              recoveryEmail={recoveryEmail}
-              setRecoveryEmail={setRecoveryEmail}
-              errors={errors}
-              isLoading={isLoading}
-              onSubmit={handleRecovery}
-              onBack={() => setRecoveryMode(false)}
-            />
-          )}
-
-          {isUpdateMode && (
-            <UpdateForm
-              updateData={updateData}
-              setUpdateData={setUpdateData}
-              isLoading={isLoading}
-              onSubmit={handleUpdate}
-              onBack={() => setUpdateMode(false)}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+    <Box className="foraria-login-page">  {}
+      <Box 
+        className="foraria-form-container"  
+        component="form" 
+        onSubmit={handleSubmit}
+      >
+        <Box component="img" src={isotipoColor} alt="Logo" className="foraria-logo" />  {}
+        <Typography 
+          variant="h5" 
+          component="h1" 
+          gutterBottom 
+          className="foraria-form-title"
+        >
+          Iniciar Sesión
+        </Typography>
+        <TextField
+          label="Email"
+          variant="outlined"
+          fullWidth
+          margin="normal"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Tu@email.com"
+          InputLabelProps={{ className: 'foraria-form-label', shrink: true }}
+        />
+        <TextField
+          label="Contraseña"
+          variant="outlined"
+          fullWidth
+          margin="normal"
+          type={showPassword ? 'text' : 'password'}
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Tu contraseña"
+          InputLabelProps={{ className: 'foraria-form-label', shrink: true }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  aria-label="toggle password visibility"
+                  onClick={handleClickShowPassword}
+                  onMouseDown={handleMouseDownPassword}
+                  edge="end"
+                >
+                  {showPassword ? <VisibilityOff /> : <Visibility />}
+                </IconButton>
+              </InputAdornment>
+            ),
+          }}
+        />
+        <Button 
+          type="submit" 
+          variant="contained" 
+          fullWidth 
+          className="foraria-gradient-button"
+        >
+          Iniciar Sesión
+        </Button>
+        <Box className="foraria-centered-link">  {}
+          <Link component={RouterLink} to="/recuperar" underline="hover" className="foraria-form-link">
+            Olvidé mi contraseña
+          </Link>
+        </Box>
+      </Box>
+    </Box>
   );
-}
+};
 
+export default Login;
