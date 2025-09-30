@@ -1,7 +1,7 @@
 import React from "react";
 import { Card } from "./ui/Card";
 import Badge from "./ui/Badge";
-import { Button } from "@mui/material"; // Cambiar a Material-UI Button
+import { Button } from "@mui/material"; 
 import Money from "./Money";
 
 export type ExpenseConcepts = {
