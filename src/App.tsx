@@ -1,24 +1,50 @@
-import React from "react";
-import { ThemeProvider } from "@mui/material/styles";
-import CssBaseline from "@mui/material/CssBaseline";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import theme from "./styles/muiStyle";
-import Votes from "./pages/Votes";
-import Meetings from "./pages/Meetings";
-import Documents from "./pages/Documents";
+
+import React from 'react';
+import './App.css';
+
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+
+import theme from './styles/muiStyle';
+
+// Páginas que ya estaban en main
+import Login from './pages/Login';
+import RecoverPassword from './pages/RecoverPassword';
+import UpdateData from './pages/UpdateData';
+import Profile from './pages/Profile';
+import ChangeData from './pages/ChangeData';
+
+// Tus páginas nuevas
+import Votes from './pages/Votes';
+import Meetings from './pages/Meetings';
+import Documents from './pages/Documents';
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <BrowserRouter>
+      <Router>
         <Routes>
-          <Route path="/" element={<Navigate to="/meetings" replace />} />
-          <Route path="/meetings" element={<Meetings />} />
-          <Route path="/votes" element={<Votes />} />
-          <Route path="/documents" element={<Documents />} />
+          {/* Redirige raíz a login (o ajusta según definan) */}
+          <Route path="/" element={<Navigate to="/login" replace />} />
+
+          {/* Auth + datos */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/iniciarSesion" element={<Login />} />
+          <Route path="/recuperar" element={<RecoverPassword />} />
+          <Route path="/actualizarInformacion" element={<UpdateData />} />
+          <Route path="/perfil" element={<Profile />} />
+          <Route path="/editarInformacion" element={<ChangeData />} />
+
+          {/* Módulos nuevos */}
+          <Route path="/votaciones" element={<Votes />} />
+          <Route path="/reuniones" element={<Meetings />} />
+          <Route path="/documentos" element={<Documents />} />
+
+          {/* 404 simple */}
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
-      </BrowserRouter>
+      </Router>
     </ThemeProvider>
   );
 }
