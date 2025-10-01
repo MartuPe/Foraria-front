@@ -1,38 +1,55 @@
 
+// src/App.tsx
 import React from 'react';
+import './App.css';
 
-import './App.css'; 
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import theme from './styles/muiStyle';
+
+// Rutas “main” (auth / perfil)
 import Login from './pages/Login';
 import RecoverPassword from './pages/RecoverPassword';
 import UpdateData from './pages/UpdateData';
 import Profile from './pages/Profile';
 import ChangeData from './pages/ChangeData';
-import ReclamosPage from './pages/ReclamosPage';
+// Si TENÉS esta página, dejala; si no existe, borrá import + ruta:
+// import ReclamosPage from './pages/ReclamosPage';
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-//import { ImportExportRounded } from '@mui/icons-material';
+// Tus páginas nuevas
+import Votes from './pages/Votes';
+import Meetings from './pages/Meetings';
+import Documents from './pages/Documents';
 
 function App() {
   return (
-     <>
-         <a href="https://reactjs.org">Learn React</a>
-    <Router>
-      <div className="App">
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
         <Routes>
-          <Route path="/" element={<Login />} />
+          {/* Redirect raíz a login (ajustá si querés otro landing) */}
+          <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
+
+          {/* Auth / Perfil (del main) */}
           <Route path="/iniciarSesion" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/actualizarInformacion" element={<UpdateData />} />
           <Route path="/perfil" element={<Profile />} />
           <Route path="/editarInformacion" element={<ChangeData />} />
-          <Route path="/reclamos" element={<ReclamosPage />} />
-        </Routes>
-      </div>
-    </Router>
+          {/* <Route path="/reclamos" element={<ReclamosPage />} /> */}
 
-    </>
+          {/* Nuevos módulos */}
+          <Route path="/votaciones" element={<Votes />} />
+          <Route path="/reuniones" element={<Meetings />} />
+          <Route path="/documentos" element={<Documents />} />
+
+          {/* catch-all */}
+          <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
-  
 }
 
 export default App;

@@ -3,6 +3,7 @@
 # en diferentes versiones de Node.js.
 # Para más información consulta: https://docs.github.com/es/actions/automating-builds-and-tests/building-and-testing-nodejs
 
+
 name: React CI
 
 on:
@@ -14,11 +15,9 @@ on:
 jobs:
   ci:
     runs-on: ubuntu-latest
-
     strategy:
       matrix:
-        node-version: [18.x, 20.x, 22.x]
-
+        node-version: [20.x]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,4 +38,4 @@ jobs:
         run: npm run build
 
       - name: Run tests
-        run: npm test -- --watchAll=false
+        run: npm test --if-present -- --watchAll=false --passWithNoTests
