@@ -30,8 +30,9 @@ import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
 
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+// ❌ Eliminado: jsPDF y autotable
+// import jsPDF from "jspdf";
+// import autoTable from "jspdf-autotable";
 
 import {
   getMeetings,
@@ -85,55 +86,14 @@ export default function Meetings() {
   }, [data, tab, query]);
 
   /* ===========================================
-   * Descargar PDF de transcripción (jsPDF)
+   * Descargar transcripción (placeholder)
    * =========================================== */
   const handleDownloadTranscript = () => {
-    if (!selected?.transcription) return;
+    // Opción A (placeholder): sin libs, solo aviso
+    alert("La descarga de PDF se habilitará cuando el backend exponga el archivo o usemos un PDF pre-generado.");
 
-    const doc = new jsPDF({ unit: "pt", format: "a4" });
-    const marginX = 40;
-    let y = 40;
-
-    // Título
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    doc.text(`Transcripción – ${selected.title}`, marginX, y);
-    y += 20;
-
-    // Subtítulo (fecha/hora opcional)
-    doc.setFontSize(11);
-    doc.setFont("helvetica", "normal");
-    doc.text(`Generado desde Foraria`, marginX, y);
-    y += 10;
-
-    // Tabla con autoTable
-    const rows = selected.transcription.map((t) => [t.speaker, t.time, t.text]);
-
-    autoTable(doc, {
-      head: [["Orador", "Hora", "Texto"]],
-      body: rows,
-      startY: y + 10,
-      styles: { font: "helvetica", fontSize: 11, cellPadding: 6, valign: "top" },
-      headStyles: { fillColor: [8, 61, 119], halign: "left" },
-      columnStyles: {
-        0: { cellWidth: 130 },
-        1: { cellWidth: 60 },
-        2: { cellWidth: 320 },
-      },
-      didDrawPage: (data) => {
-        // Footer con número de página
-        const page = doc.getNumberOfPages();
-        doc.setFontSize(10);
-        doc.text(
-          `Página ${page}`,
-          doc.internal.pageSize.getWidth() - marginX,
-          doc.internal.pageSize.getHeight() - 20,
-          { align: "right" }
-        );
-      },
-    });
-
-    doc.save(`transcripcion-${selected.id}.pdf`);
+    // Opción B (si querés descargar un PDF dummy sin jsPDF):
+    // window.location.href = "/transcript-sample.pdf"; // poné un archivo en public/transcript-sample.pdf
   };
 
   return (
@@ -159,7 +119,12 @@ export default function Meetings() {
         </Stack>
 
         {/* Métricas */}
-        <StatsRow scheduled={stats.scheduled} inProgress={stats.inProgress} withTranscription={stats.withTranscription} thisMonth={stats.thisMonth} />
+        <StatsRow
+          scheduled={stats.scheduled}
+          inProgress={stats.inProgress}
+          withTranscription={stats.withTranscription}
+          thisMonth={stats.thisMonth}
+        />
 
         {/* Buscador + Tabs */}
         <Stack spacing={2} sx={{ mb: 2 }}>
@@ -205,7 +170,7 @@ export default function Meetings() {
           >
             <Tab label="Todas" value="all" />
             <Tab label={`Programadas (${stats.scheduled})`} value="scheduled" />
-            <Tab label={`Finalizadas (${data.filter(m=>m.status==='finished').length})`} value="finished" />
+            <Tab label={`Finalizadas (${data.filter((m) => m.status === "finished").length})`} value="finished" />
           </Tabs>
         </Stack>
 
