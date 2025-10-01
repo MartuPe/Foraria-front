@@ -1,18 +1,20 @@
 
+// src/App.tsx
 import React from 'react';
 import './App.css';
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
-
 import theme from './styles/muiStyle';
 
-// Páginas que ya estaban en main
+// Rutas “main” (auth / perfil)
 import Login from './pages/Login';
 import RecoverPassword from './pages/RecoverPassword';
 import UpdateData from './pages/UpdateData';
 import Profile from './pages/Profile';
 import ChangeData from './pages/ChangeData';
+// Si TENÉS esta página, dejala; si no existe, borrá import + ruta:
+// import ReclamosPage from './pages/ReclamosPage';
 
 // Tus páginas nuevas
 import Votes from './pages/Votes';
@@ -25,24 +27,25 @@ function App() {
       <CssBaseline />
       <Router>
         <Routes>
-          {/* Redirige raíz a login (o ajusta según definan) */}
-          <Route path="/" element={<Navigate to="/login" replace />} />
+          {/* Redirect raíz a login (ajustá si querés otro landing) */}
+          <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
 
-          {/* Auth + datos */}
-          <Route path="/login" element={<Login />} />
+          {/* Auth / Perfil (del main) */}
           <Route path="/iniciarSesion" element={<Login />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/actualizarInformacion" element={<UpdateData />} />
           <Route path="/perfil" element={<Profile />} />
           <Route path="/editarInformacion" element={<ChangeData />} />
+          {/* <Route path="/reclamos" element={<ReclamosPage />} /> */}
 
-          {/* Módulos nuevos */}
+          {/* Nuevos módulos */}
           <Route path="/votaciones" element={<Votes />} />
           <Route path="/reuniones" element={<Meetings />} />
           <Route path="/documentos" element={<Documents />} />
 
-          {/* 404 simple */}
-          <Route path="*" element={<Navigate to="/login" replace />} />
+          {/* catch-all */}
+          <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />
         </Routes>
       </Router>
     </ThemeProvider>
