@@ -1,35 +1,54 @@
+
+// src/App.tsx
 import React from 'react';
-import logo from './logo.svg';
 import './App.css';
-import Alert from '@mui/material/Alert';
-import CheckIcon from '@mui/icons-material/Check';
-import Button from '@mui/material/Button';
+
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { ThemeProvider, CssBaseline } from '@mui/material';
+import theme from './styles/muiStyle';
+
+// Rutas “main” (auth / perfil)
+import Login from './pages/Login';
+import RecoverPassword from './pages/RecoverPassword';
+import UpdateData from './pages/UpdateData';
+import Profile from './pages/Profile';
+import ChangeData from './pages/ChangeData';
+// Si TENÉS esta página, dejala; si no existe, borrá import + ruta:
+// import ReclamosPage from './pages/ReclamosPage';
+
+// Tus páginas nuevas
+import Votes from './pages/Votes';
+import Meetings from './pages/Meetings';
+import Documents from './pages/Documents';
 
 function App() {
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Router>
+        <Routes>
+          {/* Redirect raíz a login (ajustá si querés otro landing) */}
+          <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
 
-             <Alert icon={<CheckIcon fontSize="inherit" />} severity="success">
-      Here is a gentle confirmation that your action was successful.
-    </Alert>
-          <Button variant="contained">Contained</Button>
-        </a>
-      </header>
-    </div>
+          {/* Auth / Perfil (del main) */}
+          <Route path="/iniciarSesion" element={<Login />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/recuperar" element={<RecoverPassword />} />
+          <Route path="/actualizarInformacion" element={<UpdateData />} />
+          <Route path="/perfil" element={<Profile />} />
+          <Route path="/editarInformacion" element={<ChangeData />} />
+          {/* <Route path="/reclamos" element={<ReclamosPage />} /> */}
 
-    
+          {/* Nuevos módulos */}
+          <Route path="/votaciones" element={<Votes />} />
+          <Route path="/reuniones" element={<Meetings />} />
+          <Route path="/documentos" element={<Documents />} />
+
+          {/* catch-all */}
+          <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />
+        </Routes>
+      </Router>
+    </ThemeProvider>
   );
 }
 
