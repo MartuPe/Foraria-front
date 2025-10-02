@@ -45,7 +45,7 @@ const onDrop = (acceptedFiles: File[]) => {
           fullWidth
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titulo del post..."
+          placeholder="Descripcion del gasto"
           variant="outlined"
           className="foraria-form-input"
         />
@@ -58,7 +58,7 @@ const onDrop = (acceptedFiles: File[]) => {
           type="number"
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titulo del post..."
+          placeholder="00.00"
           variant="outlined"
           className="foraria-form-input"
         />
@@ -73,7 +73,7 @@ const onDrop = (acceptedFiles: File[]) => {
           minRows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="¿Que queres compartir con la comunidad?"
+          placeholder="Descripcion del gasto"
           className="foraria-form-textarea"
         />
       </div>
@@ -115,7 +115,7 @@ const onDrop = (acceptedFiles: File[]) => {
           fullWidth
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titulo del post..."
+          placeholder="Nombre del proveedor"
           variant="outlined"
           className="foraria-form-input"
         />
@@ -128,7 +128,7 @@ const onDrop = (acceptedFiles: File[]) => {
           value={title}
           type="date"
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titulo del post..."
+          placeholder="dd/mm/aaaa"
           variant="outlined"
           className="foraria-form-input"
         />
@@ -141,7 +141,7 @@ const onDrop = (acceptedFiles: File[]) => {
           value={title}
            type="date"
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titulo del post..."
+          placeholder="dd/mm/aaaa"
           variant="outlined"
           className="foraria-form-input"
         />
@@ -156,7 +156,7 @@ const onDrop = (acceptedFiles: File[]) => {
           fullWidth
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titulo del post..."
+          placeholder="FAC-0001-00000001"
           variant="outlined"
           className="foraria-form-input"
         />
