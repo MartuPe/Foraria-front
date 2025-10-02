@@ -1,7 +1,7 @@
 import React from "react";
-import { Card } from "./ui/Card";
+import ExpenseCard  from "./ui/ExpensesCard";
 import Badge from "./ui/Badge";
-import { Button } from "@mui/material"; 
+import Button from "./ui/ExpensesButton";
 import Money from "./Money";
 
 export type ExpenseConcepts = {
@@ -40,7 +40,7 @@ export default function ExpenseItem({ exp }: { exp: Expense }) {
   });
 
   return (
-    <Card className="expense">
+    <ExpenseCard className="expense">
       <div className="expense__header">
         <div className="expense__title">
           <span className={`status-dot status-dot--${exp.status}`} />
@@ -69,16 +69,12 @@ export default function ExpenseItem({ exp }: { exp: Expense }) {
 
       <div className="expense__actions">
         {exp.canPay ? (
-          <Button 
-            variant={exp.status === "vencida" ? "contained" : "outlined"}
-            color={exp.status === "vencida" ? "error" : "primary"}
-          >
+          <Button variant={exp.status === "vencida" ? "danger" : "primary"}>
             {exp.status === "vencida" ? "Pagar (Vencida)" : "Pagar Online"}
           </Button>
         ) : null}
 
-        <Button variant="outlined">
-          <span style={{ marginRight: 4 }}>⬇</span>
+        <Button variant="outline" iconLeft={<span></span>}>
           Descargar PDF
         </Button>
 
@@ -88,6 +84,6 @@ export default function ExpenseItem({ exp }: { exp: Expense }) {
           </div>
         ) : null}
       </div>
-    </Card>
+    </ExpenseCard>
   );
 }
