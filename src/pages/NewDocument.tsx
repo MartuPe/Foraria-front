@@ -7,7 +7,6 @@ import "../styles/claim.css";
 export default function ClaimForm() {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Mantenimiento");
-  const [priority, setPriority] = useState("Media");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
 
@@ -26,16 +25,16 @@ export default function ClaimForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ title, category, priority, description, files });
+    console.log({ title, category, description, files });
   };
 
   return (
     <form className="foraria-form" onSubmit={handleSubmit}>
-      <h2 className="foraria-form-title">Crear Nuevo Reclamo</h2>
+      <h2 className="foraria-form-title">Subir Documento Personal</h2>
 
     
       <div className="foraria-form-group">
-        <label className="foraria-form-label">Título del Reclamo</label>
+        <label className="foraria-form-label">Nombre del documento</label>
         <TextField
           fullWidth
           value={title}
@@ -47,8 +46,8 @@ export default function ClaimForm() {
       </div>
 
     
-      <div className="foraria-form-row categoria-prioridad-contenedor">
-        <div className="foraria-form-group categoria-prioridad-select">
+      <div className="foraria-form-row">
+        <div className="foraria-form-group">
           <label className="foraria-form-label">Categoría</label>
           <TextField
             select
@@ -57,24 +56,9 @@ export default function ClaimForm() {
             onChange={(e) => setCategory(e.target.value)}
             className="foraria-form-input"
           >
-            <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
-            <MenuItem value="Servicios">Servicios</MenuItem>
+            <MenuItem value="Mantenimiento">Escritura</MenuItem>
+            <MenuItem value="Servicios">Comprobante</MenuItem>
             <MenuItem value="Otro">Otro</MenuItem>
-          </TextField>
-        </div>
-
-        <div className="foraria-form-group categoria-prioridad-select">
-          <label className="foraria-form-label">Prioridad</label>
-          <TextField
-            select
-            fullWidth
-            value={priority}
-            onChange={(e) => setPriority(e.target.value)}
-            className="foraria-form-input"
-          >
-            <MenuItem value="Alta">Alta</MenuItem>
-            <MenuItem value="Media">Media</MenuItem>
-            <MenuItem value="Baja">Baja</MenuItem>
           </TextField>
         </div>
       </div>

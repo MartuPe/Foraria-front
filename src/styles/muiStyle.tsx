@@ -168,6 +168,21 @@ const theme = createTheme({
       },
     },
 
+MuiMenuItem: {
+  styleOverrides: {
+    root: {
+      '&.Mui-selected': {
+        backgroundColor: '#f4d35e', // amarillo cuando está seleccionado
+        '&:hover': {
+          backgroundColor: '#f4d35e', // mantener amarillo al hacer hover en el seleccionado
+        },
+      },
+      '&:hover': {
+        backgroundColor: '#f0f4f8', // color neutro al hacer hover en otros
+      },
+    },
+  },
+},
     MuiSelect: {
       styleOverrides: {
         root: {
@@ -180,6 +195,7 @@ const theme = createTheme({
       },
     },
   },
+  
 });
 
 export default theme;

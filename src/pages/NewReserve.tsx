@@ -4,7 +4,6 @@ import { TextField, Button, MenuItem, Box, Typography } from "@mui/material";
 import { useDropzone } from "react-dropzone";
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
-import "../styles/claim.css";
 
 export default function ClaimForm() {
   const [area, setArea] = useState("");
