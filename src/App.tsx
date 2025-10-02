@@ -21,8 +21,8 @@ import Meetings from './pages/Meetings';
 import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
-import NewClaim from './pages/NewClaim';
 import Dashboard from './pages/Dashboard';
+import NewReserve from './pages/NewReserve';
 
 function App() {
   return (
@@ -50,7 +50,8 @@ function App() {
           <Route path="/expensas" element={<ExpensesPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reclamos" element={<ReclamosPage />} />
-          <Route path="/nuevoReclamo" element={<NewClaim />} />
+          <Route path="/nuevaReserva" element={<NewReserve />} />
+
 
           {}
           <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />
