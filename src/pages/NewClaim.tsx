@@ -19,7 +19,7 @@ export default function ClaimForm() {
     onDrop,
     accept: {
       "image/*": [],
-      "video/*": [],
+      "video/*": [],  
     },
     multiple: true,
   });

@@ -1,0 +1,12 @@
+.container-items{
+ display: flex;
+    justify-content: space-between;
+}
+
+.group-size{
+  width: 48%;
+}
+
+.group-size-3-items{
+  width: 30%;
+}

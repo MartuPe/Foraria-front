@@ -1,7 +1,6 @@
 
 import { useState } from "react";
-import { TextField, Button, MenuItem, Box, Typography } from "@mui/material";
-import { useDropzone } from "react-dropzone";
+import { TextField, Button, MenuItem } from "@mui/material";
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 
@@ -9,7 +8,6 @@ export default function ClaimForm() {
   const [area, setArea] = useState("");
   const [description, setDescription] = useState("");
  
-  const espacios = []
 const horarios = [
   "09:00", "10:00", "11:00", "12:00",
   "13:00", "14:00", "15:00", "16:00",
@@ -99,7 +97,7 @@ const [horarioSeleccionado, setHorarioSeleccionado] = useState<string | null>(nu
     
       <div className="foraria-form-actions">
         <Button type="submit" className="foraria-gradient-button boton-crear-reclamo">
-          Enviar Reclamo
+          Confirmar Reserva
         </Button>
         <Button className="foraria-outlined-white-button">Cancelar</Button>
       </div>

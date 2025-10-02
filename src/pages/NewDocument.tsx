@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { TextField, Button, MenuItem, Box, Typography } from "@mui/material";
 import { useDropzone } from "react-dropzone";
-import "../styles/claim.css";
 
 export default function ClaimForm() {
   const [title, setTitle] = useState("");
@@ -118,7 +117,7 @@ export default function ClaimForm() {
     
       <div className="foraria-form-actions">
         <Button type="submit" className="foraria-gradient-button boton-crear-reclamo">
-          Enviar Reclamo
+          Subir Documento
         </Button>
         <Button className="foraria-outlined-white-button">Cancelar</Button>
       </div>
