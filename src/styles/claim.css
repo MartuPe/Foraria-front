@@ -1,0 +1,26 @@
+.foraria-claim-form {
+  max-width: 600px; 
+  margin: 0 auto;
+  padding: 16px;
+  background: #f0f4f8; 
+  border-radius: 0.5rem;
+}
+
+
+.foraria-upload-area {
+  border: 2px dashed #083d77;  
+  border-radius: 0.5rem;
+  padding: 24px;
+  text-align: center;
+  color: #6c757d;
+  margin-bottom: 16px;
+  cursor: pointer;
+}
+
+
+.foraria-claim-buttons {
+  display: flex;
+  justify-content: flex-start; 
+  gap: 16px; 
+}
+

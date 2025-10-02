@@ -13,7 +13,6 @@ import RecoverPassword from './pages/RecoverPassword';
 import UpdateData from './pages/UpdateData';
 import Profile from './pages/Profile';
 import ChangeData from './pages/ChangeData';
-// Si TENÉS esta página, dejala; si no existe, borrá import + ruta:
 // import ReclamosPage from './pages/ReclamosPage';
 
 // Tus páginas nuevas
@@ -22,6 +21,7 @@ import Meetings from './pages/Meetings';
 import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
+import NewClaim from './pages/NewClaim';
 import Dashboard from './pages/Dashboard';
 
 function App() {
@@ -30,10 +30,10 @@ function App() {
       <CssBaseline />
       <Router>
         <Routes>
-          {/* Redirect raíz a login (ajustá si querés otro landing) */}
+          {}
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
 
-          {/* Auth / Perfil (del main) */}
+          {}
           <Route path="/iniciarSesion" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
@@ -42,15 +42,17 @@ function App() {
           <Route path="/editarInformacion" element={<ChangeData />} />
           {/* <Route path="/reclamos" element={<ReclamosPage />} /> */}
 
-          {/* Nuevos módulos */}
+
+          {}
           <Route path="/votaciones" element={<Votes />} />
           <Route path="/reuniones" element={<Meetings />} />
           <Route path="/documentos" element={<Documents />} />
           <Route path="/expensas" element={<ExpensesPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reclamos" element={<ReclamosPage />} />
+          <Route path="/nuevoReclamo" element={<NewClaim />} />
 
-          {/* catch-all */}
+          {}
           <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />
         </Routes>
       </Router>
