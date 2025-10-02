@@ -20,6 +20,9 @@ import ChangeData from './pages/ChangeData';
 import Votes from './pages/Votes';
 import Meetings from './pages/Meetings';
 import Documents from './pages/Documents';
+import ExpensesPage from './pages/Expenses';
+import ReclamosPage from './pages/ReclamosPage';
+import Dashboard from './pages/Dashboard';
 
 function App() {
   return (
@@ -43,6 +46,9 @@ function App() {
           <Route path="/votaciones" element={<Votes />} />
           <Route path="/reuniones" element={<Meetings />} />
           <Route path="/documentos" element={<Documents />} />
+          <Route path="/expensas" element={<ExpensesPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/reclamos" element={<ReclamosPage />} />
 
           {/* catch-all */}
           <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />
