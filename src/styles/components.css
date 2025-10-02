@@ -41,16 +41,12 @@
 }
 
 .foraria-form-title {
-  color: var(--foraria-light-text);
+
   font-weight: var(--font-weight-medium);
   margin-bottom: 16px;
   text-align: center;
 }
 
-.foraria-form-label {
-  color: var(--foraria-light-text);
-  font-size: 14px;
-}
 
 
 .foraria-form-link {
