@@ -23,6 +23,8 @@ export default function ClaimForm() {
     multiple: true,
   });
 
+  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     console.log({ title, category, description, files });
