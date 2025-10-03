@@ -47,7 +47,7 @@ export default function Documents() {
   const [activeTab, setActiveTab] = useState<TabKey>("general");
   const [search, setSearch] = useState("");
   const [generalDocs] = useState<GeneralDoc[]>(GENERAL_DOCS);
-  const [myDocs, setMyDocs] = useState<MyDoc[]>(MY_DOCS_SEED);
+  const [myDocs, /**setMyDocs**/] = useState<MyDoc[]>(MY_DOCS_SEED);
   const [filterGeneral, setFilterGeneral] = useState<GeneralCategory | "Todas">("Todas");
   const [filterMine, setFilterMine] = useState<MyCategory | "Todas">("Todas");
 
