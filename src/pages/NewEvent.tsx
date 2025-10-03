@@ -36,23 +36,22 @@ const onDrop = (acceptedFiles: File[]) => {
 
   return (
     <form className="foraria-form" onSubmit={handleSubmit}>
-      <h2 className="foraria-form-title">Nuevo Gasto</h2>
+      <h2 className="foraria-form-title">Nuevo Evento</h2>
 
-      <div className="foraria-form-group">
-        <label className="foraria-form-label">Titular de la reunion</label>
+       <div className="foraria-form-group">
+        <label className="foraria-form-label">Titulo del Evento</label>
         <TextField
           fullWidth
           value={title}
           onChange={(e) => setTitle(e.target.value)}
-          placeholder="Ej: Asamblea Ordinaria"
+          placeholder="Fumigacion"
           variant="outlined"
           className="foraria-form-input"
         />
         </div>
 
-
-     
-
+    
+      
  <div className="foraria-form-group container-items">
  
         <div className="foraria-form-group group-size">
@@ -83,10 +82,12 @@ const onDrop = (acceptedFiles: File[]) => {
         </div>
         </div>
 
-<div className="foraria-form-group container-items">
+
+    
+     <div className="foraria-form-group container-items">
     
       <div className="foraria-form-group group-size ">
-        <label className="foraria-form-label">Fecha</label>
+        <label className="foraria-form-label">Fecha de Inicio</label>
         <TextField
           fullWidth
           value={title}
@@ -99,7 +100,7 @@ const onDrop = (acceptedFiles: File[]) => {
         </div>
     
       <div className="foraria-form-group group-size">
-        <label className="foraria-form-label">Hora</label>
+        <label className="foraria-form-label">Hora de Inicio</label>
         <TextField
           fullWidth
           value={title}
@@ -113,6 +114,37 @@ const onDrop = (acceptedFiles: File[]) => {
 
         </div>
 
+      <div className="foraria-form-group container-items">
+    
+      <div className="foraria-form-group group-size ">
+        <label className="foraria-form-label">Fecha de Fin</label>
+        <TextField
+          fullWidth
+          value={title}
+          type="date"
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="dd/mm/aaaa"
+          variant="outlined"
+          className="foraria-form-input"
+        />
+        </div>
+    
+      <div className="foraria-form-group group-size">
+        <label className="foraria-form-label">Hora de Fin</label>
+        <TextField
+          fullWidth
+          value={title}
+           type="hour"
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="--:-- --"
+          variant="outlined"
+          className="foraria-form-input"
+        />
+           </div> 
+
+        </div>
+
+      
 
  <div className="foraria-form-group">
         <label className="foraria-form-label">Descripción</label>
@@ -122,14 +154,16 @@ const onDrop = (acceptedFiles: File[]) => {
           minRows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Descripcion del gasto"
+          placeholder="Descripcion del evento"
           className="foraria-form-textarea"
         />
       </div>
+
+
      
       <div className="foraria-form-actions">
         <Button type="submit" className="foraria-gradient-button boton-crear-reclamo">
-          Crear reunion
+          Crear Evento
         </Button>
         <Button className="foraria-outlined-white-button">Cancelar</Button>
       </div>
