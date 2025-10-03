@@ -21,7 +21,6 @@ import {
   Error as ErrorIcon,
   AttachFile as AttachFileIcon,
   Download as DownloadIcon,
-  NetworkCell,
 } from '@mui/icons-material';
 import { Layout } from '../components/layout';
 import NewClaim from './NewClaim';

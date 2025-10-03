@@ -47,7 +47,7 @@ export default function Documents() {
   const [activeTab, setActiveTab] = useState<TabKey>("general");
   const [search, setSearch] = useState("");
   const [generalDocs] = useState<GeneralDoc[]>(GENERAL_DOCS);
-  const [myDocs, setMyDocs] = useState<MyDoc[]>(MY_DOCS_SEED);
+  const [myDocs, /**setMyDocs**/] = useState<MyDoc[]>(MY_DOCS_SEED);
   const [filterGeneral, setFilterGeneral] = useState<GeneralCategory | "Todas">("Todas");
   const [filterMine, setFilterMine] = useState<MyCategory | "Todas">("Todas");
 
@@ -106,11 +106,11 @@ export default function Documents() {
     setSnack({ open: true, msg: `Descargando "${doc.title}"...` });
   };
 
-  const handleUploadConfirm = (newDoc: MyDoc) => {
-    setMyDocs((prev) => [newDoc, ...prev]);
-    setOpenUpload(false);
-    setSnack({ open: true, msg: "Documento subido" });
-  };
+  //const handleUploadConfirm = (newDoc: MyDoc) => {
+   // setMyDocs((prev) => [newDoc, ...prev]);
+   // setOpenUpload(false);
+   // setSnack({ open: true, msg: "Documento subido" });
+  //};
 
   return (
     <Box sx={{ bgcolor: (t) => t.palette.secondary.main, minHeight: "100vh", p: { xs: 2, md: 3 } }}>
