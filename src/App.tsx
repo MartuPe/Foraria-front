@@ -22,7 +22,7 @@ import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
 import Dashboard from './pages/Dashboard';
-import NewReserve from './pages/NewVote';
+import NewReserve from './pages/NewMeet';
 
 function App() {
   return (
