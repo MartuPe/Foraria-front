@@ -106,11 +106,11 @@ export default function Documents() {
     setSnack({ open: true, msg: `Descargando "${doc.title}"...` });
   };
 
-  const handleUploadConfirm = (newDoc: MyDoc) => {
-    setMyDocs((prev) => [newDoc, ...prev]);
-    setOpenUpload(false);
-    setSnack({ open: true, msg: "Documento subido" });
-  };
+  //const handleUploadConfirm = (newDoc: MyDoc) => {
+   // setMyDocs((prev) => [newDoc, ...prev]);
+   // setOpenUpload(false);
+   // setSnack({ open: true, msg: "Documento subido" });
+  //};
 
   return (
     <Box sx={{ bgcolor: (t) => t.palette.secondary.main, minHeight: "100vh", p: { xs: 2, md: 3 } }}>

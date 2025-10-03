@@ -2,8 +2,6 @@
 import { useState } from "react";
 import { TextField, Button} from "@mui/material";
 import { MenuItem } from "@mui/material";
-import { useDropzone } from "react-dropzone";
-import { Box, Typography } from "@mui/material";
 import "../styles/spent.css";
 
 
@@ -12,20 +10,9 @@ import "../styles/spent.css";
 export default function ClaimForm() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
-  
-const onDrop = (acceptedFiles: File[]) => {
-    setFiles([...files, ...acceptedFiles]);
-  };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    onDrop,
-    accept: {
-      "image/*": [],
-      "video/*": [],  
-    },
-    multiple: true,
-  });
+  
+
 
   
 
