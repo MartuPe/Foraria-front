@@ -69,6 +69,8 @@
   transition: all 0.3s ease;
 }
 .foraria-outlined-white-button:hover {
-  background: rgba(255, 255, 255, 0.9) !important;
-  border-color: var(--accent) !important;
+  background: linear-gradient(135deg, var(--foraria-secondary), var(--foraria-accent)) !important;
+  color: white !important;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(238, 150, 75, 0.3) !important;
 }

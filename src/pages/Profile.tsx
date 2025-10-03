@@ -1,4 +1,5 @@
 import React from 'react';
+import '../styles/profile.css';
 import { Box, Typography, Avatar, Button, Chip, Grid, Link } from '@mui/material';
 import { Link as RouterLink } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';  

@@ -53,15 +53,24 @@ const theme = createTheme({
           borderRadius: '0.75rem',
           textTransform: 'none',
           padding: '16.5px 14px',
-           '&.foraria-edit-button': {
-          minWidth: 'auto',
-          padding: '4px 8px',
-          fontSize: '0.875rem',
-          textTransform: 'none',
+          '&.foraria-edit-button': {
+            minWidth: 'auto',
+            padding: '4px 8px',
+            fontSize: '0.875rem',
+            textTransform: 'none',
+          },
+          '&.foraria-submit-button': {  
+            background: 'linear-gradient(135deg, #f4d35e, #ee964b)',
+            color: '#083d77',
+            borderRadius: '0.5rem',
+          },
+          '&.foraria-cancel-button': {  
+            borderColor: '#083d77',
+            color: '#083d77',
+            background: 'transparent',
+            borderRadius: '0.5rem',
           },
         },
-        
-        
         contained: {
           boxShadow: 'none',
           '&:hover': {
@@ -81,29 +90,37 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           '& .MuiInputLabel-root': {
-            color: '#ebebd3 !important',  
-            transform: 'translate(14px, -20px) scale(0.75)',  
-          },
-          '& .MuiOutlinedInput-root': {
-            backgroundColor: '#ebebd3 !important', 
-            borderRadius: '8px',
-            '& fieldset': {
-              borderColor: 'rgba(0, 0, 0, 0.2)',
-            },
-            '&:hover fieldset': {
-              borderColor: '#f4d35e',
-            },
-            '&.Mui-focused fieldset': {
-              borderColor: '#f4d35e',
-              boxShadow: '0 0 0 3px rgba(244, 211, 94, 0.2)',
-            },
-          },
-          '& .MuiInputBase-input::placeholder': {
-            color: 'rgba(108, 117, 125, 0.7)',
-          },
-          '& .MuiInputAdornment-root .MuiIconButton-root': {
-            color: '#000000 !important',  
-          },
+        color: '#083D77',
+        transform: 'translate(14px, -20px) scale(0.75)',
+      },
+      '& .MuiOutlinedInput-root': {
+        backgroundColor: '#F2F5F8',
+        borderRadius: '8px',
+        '& fieldset': {
+          borderColor: 'rgba(0, 0, 0, 0.2)',
+        },
+        '&:hover fieldset': {
+          borderColor: '#f4d35e',
+        },
+        '&.Mui-focused': {
+          backgroundColor: '#FEFBEF', 
+        },
+        '&.Mui-focused fieldset': {
+          borderColor: '#f4d35e',
+          boxShadow: '0 0 0 3px rgba(244, 211, 94, 0.2)',
+        },
+        '& .MuiInputBase-input': {
+          color: '#083D77', 
+        },
+        '& .MuiInputBase-input::placeholder': {
+          color: 'rgba(108, 117, 125, 0.7)',
+        },
+        '& .MuiInputAdornment-root .MuiIconButton-root': {
+          color: '#000000 !important',
+        },
+      },
+        
+
           
         },
       },
@@ -119,8 +136,7 @@ const theme = createTheme({
         },
       },
     },
-
- MuiCard: {
+    MuiCard: {
       styleOverrides: {
         root: {
           backgroundColor: '#ffffff',
@@ -128,31 +144,58 @@ const theme = createTheme({
         },
       },
     },
-MuiAvatar: {
-    styleOverrides: {
-      root: {
-        width: 150,
-        height: 150, 
-      },
-    },
-  },
-  MuiChip: {
-    styleOverrides: {
-      root: {
-        borderRadius: '1rem',
-        '&.foraria-role-chip': {
-          backgroundColor: 'transparent',
-          color: '#f4d35e',
-        },
-        '&.foraria-status-chip': {
-          backgroundColor: 'rgba(76, 175, 80, 0.1)',
-          color: '#4caf50',
+    MuiAvatar: {
+      styleOverrides: {
+        root: {
+          width: 150,
+          height: 150, 
         },
       },
     },
-  },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: '1rem',
+          '&.foraria-role-chip': {
+            backgroundColor: 'transparent',
+            color: '#f4d35e',
+          },
+          '&.foraria-status-chip': {
+            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+            color: '#4caf50',
+          },
+        },
+      },
+    },
 
+MuiMenuItem: {
+  styleOverrides: {
+    root: {
+      '&.Mui-selected': {
+        backgroundColor: '#f4d35e', // amarillo cuando está seleccionado
+        '&:hover': {
+          backgroundColor: '#f4d35e', // mantener amarillo al hacer hover en el seleccionado
+        },
+      },
+      '&:hover': {
+        backgroundColor: '#f0f4f8', // color neutro al hacer hover en otros
+      },
+    },
   },
+},
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          backgroundColor: '#f0f4f8',
+          borderRadius: '0.5rem',
+          '& fieldset': {
+            borderColor: 'transparent',
+          },
+        },
+      },
+    },
+  },
+  
 });
 
 export default theme;

@@ -24,30 +24,6 @@
   transition: all 0.3s ease;
 }
 
-
-.foraria-input {
-  background: var(--foraria-background); 
-  border: 1px solid var(--foraria-input-border); 
-  color: var(--primary);
-  padding: 16px 20px;
-  font-size: 16px;
-  border-radius: 8px;
-  transition: all 0.3s ease;
-}
-.foraria-input:focus {
-  border-color: var(--foraria-accent);
-  background: rgba(244, 211, 94, 0.05); 
-  box-shadow: 0 0 0 3px rgba(244, 211, 94, 0.2),
-              0 4px 8px rgba(8, 61, 119, 0.15);
-  outline: none;
-}
-.foraria-input::placeholder {
-  color: rgba(108, 117, 125, 0.7); 
-}
-
-
-
-
 .foraria-form-container {
   background: var(--muted-foreground);
   color: var(--foraria-light-text); 
@@ -64,19 +40,13 @@
   justify-content: space-around;
 }
 
-
-
 .foraria-form-title {
-  color: var(--foraria-light-text);
+
   font-weight: var(--font-weight-medium);
   margin-bottom: 16px;
   text-align: center;
 }
 
-.foraria-form-label {
-  color: var(--foraria-light-text);
-  font-size: 14px;
-}
 
 
 .foraria-form-link {
@@ -99,12 +69,6 @@
   display: block;
 }
 
-.foraria-login-page {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
 
 .foraria-logo {
   width: 40%; 
@@ -123,6 +87,10 @@
       display: flex;
     align-items: center;
     margin-bottom: 15px;
+}
+
+.foraria-input{
+  background-color: black !important;
 }
 
 
@@ -149,95 +117,5 @@
   background-color: rgba(244, 211, 94, 0.05) !important;
   box-shadow: 0 0 0 3px rgba(244, 211, 94, 0.2) ,
               0 4px 8px rgba(8, 61, 119, 0.15) !important;
-}
-
-.foraria-profile-section {
-  background: #ffffff;
-  border-radius: 1rem; 
-  box-shadow: 0 4px 12px rgba(0.1, 0.1, 0.1, 0.1);
-  padding: 16px;
-  margin-bottom: 24px;
-  width: 100%;
-  position: relative; 
-}
-
-
-.foraria-profile-header {
-    display: flex;
-    margin: 16px;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-}
-
-
-
-.foraria-profile-name {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #083d77;
-  margin-left: 16px;
-}
-
-.foraria-profile-depto {
-  font-size: 0.875rem;
-  color: #6c757d;
-  margin-left: 16px;
-}
-
-
-.foraria-profile-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.foraria-profile-label {
-  color: #083d77;  
-  font-weight: normal;
-  flex: 1;
-}
-
-.foraria-profile-value {
-  background: #f8f9fa;  
-  border-radius: 0.5rem;
-  padding: 8px 12px;
-  flex: 2;
-  text-align: left;  
-  color: #6c757d;
-}
-
-.foraria-profile-value-status {
-  background: rgba(76, 175, 80, 0.1);  
-  border-radius: 0.5rem;
-  padding: 8px 12px;
-  flex: 2;
-  text-align: left; 
-  color: #4caf50;
-}
-
-
-.foraria-edit-button {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  font-size: 0.875rem;
-  color: #61dafb; 
-}
-
-.foraria-profile-edit-button-container {
- display: flex;
- flex-direction: row-reverse;
-}
-
-
-.foraria-role-chip {
-  margin-left: 8px;
-  color: #ee964b !important;  
-}
-
-.foraria-status-chip {
-  background: none !important; 
-  color: #4caf50;
 }
 
