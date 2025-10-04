@@ -1,5 +1,5 @@
-import React from "react";
-import Card  from "./ui/ExpensesCard";
+import * as React from "react";
+import { Paper, Stack, Typography, Box } from "@mui/material";
 
 export default function StatCard({
   icon,
@@ -9,16 +9,46 @@ export default function StatCard({
 }: {
   icon?: React.ReactNode;
   label: string;
-  value: string;
+  value: React.ReactNode;
   accent?: "success" | "warning" | "none";
 }) {
   return (
-    <Card className={`stat ${accent !== "none" ? `stat--${accent}` : ""}`}>
-      <div className="stat__icon">{icon}</div>
-      <div className="stat__content">
-        <div className="stat__label">{label}</div>
-        <div className="stat__value">{value}</div>
-      </div>
-    </Card>
+    <Paper
+      sx={{
+        p: 2,
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "space-between",
+        borderColor: "divider",
+        outline: accent !== "none" ? `2px solid rgba(0,0,0,0.05)` : "none",
+      }}
+    >
+      <Stack spacing={0.5}>
+        <Typography variant="subtitle2" sx={{ color: "foraria.muted" }}>
+          {label}
+        </Typography>
+        <Typography variant="h6" sx={{ fontWeight: 900 }}>
+          {value}
+        </Typography>
+      </Stack>
+
+      {icon ? (
+        <Box
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: 2,
+            bgcolor: "#f1f5fb",
+            color: "#7285a7",
+            display: "grid",
+            placeItems: "center",
+            fontSize: 20,
+            border: "1px solid #e8edf3",
+          }}
+        >
+          {icon}
+        </Box>
+      ) : null}
+    </Paper>
   );
 }

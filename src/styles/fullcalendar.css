@@ -1,0 +1,22 @@
+.cal-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #F59E0B;
+  margin-right: 8px;
+  vertical-align: middle;
+}
+
+.cal-event-name {
+  font-size: 13px;
+  color: #6B7A8C;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-cursor-event {
+  cursor: pointer;
+}
