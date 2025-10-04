@@ -13,16 +13,14 @@ import RecoverPassword from './pages/RecoverPassword';
 import UpdateData from './pages/UpdateData';
 import Profile from './pages/Profile';
 import ChangeData from './pages/ChangeData';
-// Si TENÉS esta página, dejala; si no existe, borrá import + ruta:
-// import ReclamosPage from './pages/ReclamosPage';
 
-// Tus páginas nuevas
 import Votes from './pages/Votes';
 import Meetings from './pages/Meetings';
 import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
 import Dashboard from './pages/Dashboard';
+import Calendar from './pages/Calendar'; 
 
 function App() {
   return (
@@ -49,6 +47,7 @@ function App() {
           <Route path="/expensas" element={<ExpensesPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reclamos" element={<ReclamosPage />} />
+          <Route path="/calendario" element={<Calendar />} />
 
           {/* catch-all */}
           <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />
