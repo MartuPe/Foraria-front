@@ -11,9 +11,14 @@ import "../styles/fullcalendar.css";
 
 // Mock de eventos
 const EVENTS = [
-  { id: "1", title: "Fumigación", start: "2024-08-12" },
-  { id: "2", title: "Limpieza de Tanques", start: "2024-08-15" },
-  { id: "3", title: "Reunión de Consorcio", start: "2024-08-22" },
+  { id: "1", title: "Fumigación", start: "2025-10-12" },
+  { id: "2", title: "Limpieza de Tanques", start: "2025-10-15" },
+  { id: "3", title: "Reunión de Consorcio", start: "2025-10-22" },
+  { id: "4", title: "Reunión de Consorcio", start: "2025-10-22" },
+  { id: "5", title: "Reunión de Consorcio", start: "2025-10-22" },
+  { id: "6", title: "Reunión de Consorcio", start: "2025-10-22" },
+  { id: "7", title: "Reunión de Consorcio", start: "2025-10-22" },
+  { id: "8", title: "Reunión de Consorcio", start: "2025-10-22" },
 ];
 
 export default function Calendar() {
@@ -36,15 +41,19 @@ export default function Calendar() {
   const goPrev = () => { calendarRef.current?.getApi().prev(); updateTitle(); };
   const goNext = () => { calendarRef.current?.getApi().next(); updateTitle(); };
 
-  const isPast = (iso: string) => {
-    const today = new Date(); today.setHours(0,0,0,0);
-    const d = new Date(iso); d.setHours(0,0,0,0);
-    return d < today;
+  // Detectar si la fecha es pasada
+  const isPast = (d: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const copy = new Date(d);
+    copy.setHours(0, 0, 0, 0);
+    return copy < today;
   };
 
+  // Clic en día del calendario
   const onDateClick = (arg: DateClickArg) => {
-    if (isPast(arg.dateStr)) return;
-    setOpenDay(arg.dateStr);
+    if (isPast(arg.date)) return;
+    setOpenDay(arg.date.toISOString()); // guardar como string ISO
   };
 
   return (
