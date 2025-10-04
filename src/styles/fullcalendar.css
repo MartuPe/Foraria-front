@@ -1,102 +1,22 @@
-.reserva-cal .fc, .reserva-cal .fc * { box-sizing: border-box; }
-
-.reserva-cal .fc .fc-toolbar.fc-header-toolbar { display: none !important; }
-
-.reserva-cal .fc-theme-standard td, .reserva-cal .fc-theme-standard th { border: 0 !important; }
-
-.reserva-cal .fc .fc-scrollgrid, .reserva-cal .fc .fc-scrollgrid table {
-  border: 0 !important;
-  border-collapse: separate !important;
-  border-spacing: 22px !important;
+.cal-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #F59E0B;
+  margin-right: 8px;
+  vertical-align: middle;
 }
 
-.reserva-cal .fc .fc-col-header-cell-cushion {
-  display: block !important;
-  font-weight: 600 !important;
-  color: #7A8798 !important; 
-  padding: 0 !important;
-  text-transform: none !important;
-  text-align: center !important;
-  background: transparent !important;
-  box-shadow: none !important;
+.cal-event-name {
+  font-size: 13px;
+  color: #6B7A8C;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.reserva-cal .fc .fc-daygrid-day-frame {
-  min-height: 120px !important; 
-  padding: 14px 16px !important;
-  border-radius: 18px !important; 
-  background: #ffffff !important;
-  box-shadow: inset 0 0 0 1px #E9EEF5 !important;
-  overflow: hidden !important;
-  transition: box-shadow .15s ease !important;
-}
-
-.reserva-cal .fc .fc-daygrid-day:hover .fc-daygrid-day-frame {
-  box-shadow: inset 0 0 0 2px #E6EBF3 !important;
-}
-
-/* Días fuera del mes: apenas gris */
-.reserva-cal .fc .fc-day-other .fc-daygrid-day-frame {
-  background: #FAFBFD !important;
-}
-
-/* Días pasados: atenuados y sin interacción */
-.reserva-cal .fc .fc-day-past .fc-daygrid-day-frame { opacity: .6 !important; }
-.reserva-cal .fc .fc-day-past { pointer-events: none !important; }
-
-.reserva-cal .fc .fc-daygrid-day-top { justify-content: flex-start !important; padding: 0 !important; }
-.reserva-cal .fc .fc-daygrid-day-number {
-  font-weight: 700 !important;
-  color: #0B3A6E !important;
-  line-height: 1 !important;
-}
-
-@supports selector(.fc-daygrid-day:has(.fc-daygrid-event)) {
-  .reserva-cal .fc .fc-daygrid-day:has(.fc-daygrid-event) .fc-daygrid-day-frame::after {
-    content: "";
-    position: absolute;
-    top: 10px;
-    right: 12px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #F59E0B;
-  }
-  .reserva-cal .fc .fc-daygrid-day-frame { position: relative; }
-}
-
-.reserva-cal .fc .fc-daygrid-event {
-  border: 0 !important;
-  background: transparent !important;
-  padding: 0 !important;
-  margin-top: 10px !important;
-}
-.reserva-cal .fc .fc-daygrid-event-dot {
-  width: 8px !important;
-  height: 8px !important;
-  border-radius: 50% !important;
-  background: #F59E0B !important;
-  display: inline-block !important;
-  margin-right: 8px !important;
-}
-.reserva-cal .fc .fc-event-title {
-  font-size: 13px !important;
-  color: #6B7A8C !important;
-  white-space: nowrap !important;
-  overflow: hidden !important;
-  text-overflow: ellipsis !important;
-}
-
-@media (max-width: 1200px) {
-  .reserva-cal .fc .fc-scrollgrid, .reserva-cal .fc .fc-scrollgrid table { border-spacing: 18px !important; }
-  .reserva-cal .fc .fc-daygrid-day-frame { min-height: 110px !important; }
-}
-@media (max-width: 900px) {
-  .reserva-cal .fc .fc-scrollgrid, .reserva-cal .fc .fc-scrollgrid table { border-spacing: 14px !important; }
-  .reserva-cal .fc .fc-daygrid-day-frame { min-height: 100px !important; padding: 12px 12px !important; }
-}
-@media (max-width: 600px) {
-  .reserva-cal .fc .fc-scrollgrid, .reserva-cal .fc .fc-scrollgrid table { border-spacing: 10px !important; }
-  .reserva-cal .fc .fc-daygrid-day-frame { min-height: 90px !important; padding: 10px 10px !important; border-radius: 14px !important; }
-  .reserva-cal .fc .fc-event-title { font-size: 12px !important; }
+.cal-cursor-event {
+  cursor: pointer;
 }

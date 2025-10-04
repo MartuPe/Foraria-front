@@ -11,7 +11,7 @@ import "../styles/fullcalendar.css";
 
 // Mock de eventos
 const EVENTS = [
-  { id: "1", title: "Fumigación", start: "2025-10-12" },
+  { id: "1", title: "Fumigación", start: "2025-11-12" },
   { id: "2", title: "Limpieza de Tanques", start: "2025-10-15" },
   { id: "3", title: "Reunión de Consorcio", start: "2025-10-22" },
   { id: "4", title: "Reunión de Consorcio", start: "2025-10-22" },
@@ -41,7 +41,6 @@ export default function Calendar() {
   const goPrev = () => { calendarRef.current?.getApi().prev(); updateTitle(); };
   const goNext = () => { calendarRef.current?.getApi().next(); updateTitle(); };
 
-  // Detectar si la fecha es pasada
   const isPast = (d: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -50,10 +49,9 @@ export default function Calendar() {
     return copy < today;
   };
 
-  // Clic en día del calendario
   const onDateClick = (arg: DateClickArg) => {
     if (isPast(arg.date)) return;
-    setOpenDay(arg.date.toISOString()); // guardar como string ISO
+    setOpenDay(arg.date.toISOString());
   };
 
   return (
@@ -90,7 +88,7 @@ export default function Calendar() {
           </IconButton>
         </Stack>
 
-        <FullCalendar
+         <FullCalendar
           ref={calendarRef}
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
@@ -102,11 +100,22 @@ export default function Calendar() {
           events={EVENTS}
           dateClick={onDateClick}
           headerToolbar={false}
-          /* Render de evento como dot + texto (el CSS le da el look) */
-          eventContent={(arg) => ({
-            html: `<span class="fc-daygrid-event-dot"></span><span class="fc-event-title">${arg.event.title}</span>`,
-          })}
-          /* El número del día ya va arriba-izq por CSS, pero si quisieras algún prefijo, usa dayCellContent */
+          eventDisplay="list-item"
+          eventContent={(arg) => (
+            <>
+              <span className="cal-dot" />
+              <span className="cal-event-name">{arg.event.title}</span>
+            </>
+          )}
+
+          dayCellDidMount={(info) => {
+            const el = info.el;
+            const isPastCell = el.classList.contains("fc-day-past");
+            const isOtherMonth = el.classList.contains("fc-day-other");
+            if (!isPastCell && !isOtherMonth) {
+              el.classList.add("cal-cursor-event");
+            }
+          }}
         />
       </Box>
 
