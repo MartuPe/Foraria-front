@@ -57,6 +57,12 @@ const Login: React.FC = () => {
           variant="outlined"
           fullWidth
           margin="normal"
+           sx={{
+    '& .MuiInputLabel-root': {
+      color: '#ebebd3',
+      transform: 'translate(14px, -20px) scale(0.75)',
+    },
+  }}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Tu nombre"
@@ -68,6 +74,12 @@ const Login: React.FC = () => {
           variant="outlined"
           fullWidth
           margin="normal"
+           sx={{
+    '& .MuiInputLabel-root': {
+      color: '#ebebd3',
+      transform: 'translate(14px, -20px) scale(0.75)',
+    },
+  }}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Tu apellido"
@@ -79,6 +91,12 @@ const Login: React.FC = () => {
           variant="outlined"
           fullWidth
           margin="normal"
+           sx={{
+    '& .MuiInputLabel-root': {
+      color: '#ebebd3',
+      transform: 'translate(14px, -20px) scale(0.75)',
+    },
+  }}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Tu numero de DNI"
@@ -90,6 +108,12 @@ const Login: React.FC = () => {
           variant="outlined"
           fullWidth
           margin="normal"
+           sx={{
+    '& .MuiInputLabel-root': {
+      color: '#ebebd3',
+      transform: 'translate(14px, -20px) scale(0.75)',
+    },
+  }}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Tu numero de DNI"
@@ -101,6 +125,12 @@ const Login: React.FC = () => {
           variant="outlined"
           fullWidth
           margin="normal"
+           sx={{
+    '& .MuiInputLabel-root': {
+      color: '#ebebd3',
+      transform: 'translate(14px, -20px) scale(0.75)',
+    },
+  }}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Tu numero de DNI"
@@ -112,6 +142,12 @@ const Login: React.FC = () => {
           variant="outlined"
           fullWidth
           margin="normal"
+           sx={{
+    '& .MuiInputLabel-root': {
+      color: '#ebebd3',
+      transform: 'translate(14px, -20px) scale(0.75)',
+    },
+  }}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Tu numero de DNI"

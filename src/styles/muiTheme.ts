@@ -3,23 +3,23 @@ import { createTheme } from '@mui/material/styles';
 export const forariaTheme = createTheme({
   palette: {
     primary: {
-      main: '#083d77', // --foraria-primary
+      main: '#083d77', 
       contrastText: '#ffffff',
     },
     secondary: {
-      main: '#ee964b', // --foraria-secondary
+      main: '#ee964b', 
       contrastText: '#ffffff',
     },
     warning: {
-      main: '#f4d35e', // --foraria-accent (amarillo)
+      main: '#f4d35e', 
       contrastText: '#083d77',
     },
     error: {
-      main: '#f95738', // --foraria-alert
+      main: '#f95738', 
       contrastText: '#ffffff',
     },
     background: {
-      default: '#ebebd3', // --foraria-background
+      default: '#ebebd3',
       paper: '#ffffff',
     },
     text: {
@@ -43,14 +43,14 @@ export const forariaTheme = createTheme({
     },
   },
   shape: {
-    borderRadius: 12, // --radius convertido a px
+    borderRadius: 12, 
   },
   components: {
-    // Personalizar componentes específicos
+    
     MuiButton: {
       styleOverrides: {
         root: {
-          textTransform: 'none', // Sin mayúsculas automáticas
+          textTransform: 'none', 
           borderRadius: 12,
           fontWeight: 500,
         },
@@ -68,7 +68,7 @@ export const forariaTheme = createTheme({
           borderRadius: 20,
           fontWeight: 500,
         },
-        // Para los estados de reclamos
+       
         colorPrimary: {
           backgroundColor: '#083d77',
           color: '#ffffff',

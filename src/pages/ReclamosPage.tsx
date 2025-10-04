@@ -10,6 +10,8 @@ import {
   Avatar,
   IconButton,
   Paper,
+  Dialog,
+  DialogContent
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -21,6 +23,7 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { Layout } from '../components/layout';
+import NewClaim from './NewClaim';
 
 // Tipos para los datos
 interface Reclamo {
@@ -102,6 +105,12 @@ const ReclamosPage: React.FC = () => {
   const [filtroEstado, setFiltroEstado] = useState<string>('todos');
   const [filtroPrioridad, setFiltroPrioridad] = useState<string>('todas');
   const [filtroCategoria, setFiltroCategoria] = useState<string>('todas');
+  
+const [open, setOpen] = useState(false);
+
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
+
 
   // Configuración de filtros
   const estadosConfig = [
@@ -186,21 +195,30 @@ const ReclamosPage: React.FC = () => {
           <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}> {/* Reducido de h4 a h5 */}
             📋 Reclamos y Sugerencias
           </Typography>
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<AddIcon />}
-            sx={{ 
-              px: 2.5, // Reducido padding
-              py: 1,
-              borderRadius: 2, // Reducido border radius
-              textTransform: 'none',
-              fontWeight: 600,
-              fontSize: '0.9rem' // Texto más pequeño
-            }}
-          >
-            Nuevo Reclamo
-          </Button>
+        
+      <Button
+        variant="contained"
+        color="secondary"
+        startIcon={<AddIcon />}
+        onClick={handleOpen}
+        sx={{
+          px: 2.5,
+          py: 1,
+          borderRadius: 2,
+          textTransform: "none",
+          fontWeight: 600,
+          fontSize: "0.9rem",
+        }}
+      >
+        Nuevo Reclamo
+      </Button>
+
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogContent>
+          <NewClaim />
+        </DialogContent>
+      </Dialog>
+
         </Box>
 
         {/* Filtros */}

@@ -1,0 +1,12 @@
+.categoria-prioridad-contenedor{
+display: flex;
+    justify-content: space-between;
+}
+
+.categoria-prioridad-select{
+    width: 49%;
+}
+
+.boton-crear-reclamo{
+      margin: 10px 10px 10px 0px !important;
+}

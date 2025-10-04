@@ -10,6 +10,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { Link } from '@mui/material';
 
 
+
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -44,9 +45,17 @@ const Login: React.FC = () => {
         </Typography>
         <TextField
           label="Email"
-          variant="outlined"
+          
           fullWidth
           margin="normal"
+         
+    sx={{
+    '& .MuiInputLabel-root': {
+      color: '#ebebd3',
+      transform: 'translate(14px, -20px) scale(0.75)',
+    },
+  }}
+
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Tu@email.com"
@@ -57,10 +66,18 @@ const Login: React.FC = () => {
           variant="outlined"
           fullWidth
           margin="normal"
+           sx={{
+    '& .MuiInputLabel-root': {
+      color: '#ebebd3',
+      transform: 'translate(14px, -20px) scale(0.75)',
+    },
+  }}
           type={showPassword ? 'text' : 'password'}
           value={password}
+          
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Tu contraseña"
+          
           InputLabelProps={{ className: 'foraria-form-label', shrink: true }}
           InputProps={{
             endAdornment: (
