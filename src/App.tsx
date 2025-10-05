@@ -22,7 +22,7 @@ import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
 import Dashboard from './pages/Dashboard';
-import NewReserve from './pages/NewEvent';
+import UserManagement from './pages/UserManagement';
 
 function App() {
   return (
@@ -34,7 +34,7 @@ function App() {
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
 
           {}
-          <Route path="/iniciarSesion" element={<Login />} />
+          <Route path="/iniciarSesion" element={<UserManagement />} />
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/actualizarInformacion" element={<UpdateData />} />
@@ -50,7 +50,6 @@ function App() {
           <Route path="/expensas" element={<ExpensesPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/reclamos" element={<ReclamosPage />} />
-          <Route path="/nuevaReserva" element={<NewReserve />} />
 
 
           {}
