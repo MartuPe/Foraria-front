@@ -5,7 +5,7 @@ import { AddRounded, CalendarMonthOutlined, ChevronLeft, ChevronRight } from "@m
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
-import esLocale from "@fullcalendar/core/locales/es";
+//import esLocale from "@fullcalendar/core/locales/es";
 
 import "../styles/fullcalendar.css";
 import NewReserve from "./NewReserve";
@@ -29,6 +29,14 @@ export default function Calendar() {
   const [openDay, setOpenDay] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("");
   const [reserveDate, setReserveDate] = React.useState<Date | null>(null);
+  const [fcLocale, setFcLocale] = React.useState<any>(undefined);
+
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "test") return; // en Jest no cargamos nada
+    import("@fullcalendar/core/locales/es")
+      .then((m) => setFcLocale(m.default ?? m))
+      .catch(() => {}); // fallback a inglés si falla
+  }, []);
 
   const updateTitle = () => {
     const api = calendarRef.current?.getApi();
@@ -105,7 +113,7 @@ export default function Calendar() {
           ref={calendarRef}
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
-          locale={esLocale}
+          locale={fcLocale}
           firstDay={0}
           height="auto"
           fixedWeekCount={false}
@@ -132,7 +140,6 @@ export default function Calendar() {
         />
       </Box>
 
-      {/* Popup: Reservar (usa tu componente) */}
       <Dialog open={openReserve} onClose={() => setOpenReserve(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Reservar espacio común</DialogTitle>
         <DialogContent dividers>
@@ -142,10 +149,8 @@ export default function Calendar() {
             onConfirm={handleConfirmReserve}
           />
         </DialogContent>
-        {/* Sin DialogActions porque los botones están dentro del componente */}
       </Dialog>
 
-      {/* Popup: Día clickeado */}
       <Dialog open={!!openDay} onClose={() => setOpenDay(null)} maxWidth="sm" fullWidth>
         <DialogTitle>
           {openDay &&
@@ -169,7 +174,6 @@ export default function Calendar() {
           <Button
             variant="contained"
             onClick={() => {
-              // abrir el popup con la fecha seleccionada
               const d = openDay ? new Date(openDay) : null;
               setOpenDay(null);
               setReserveDate(d);
