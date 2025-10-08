@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "../styles/expenses.css";
-//import Card from "../components/ui/ExpensesCard";
 import StatCard from "../components/StatCard";
 import ExpenseItem, { Expense } from "../components/ExpenseItem";
 import Money from "../components/Money";
 import { fetchExpensesMock, formatDateISO } from "../services/expenses.mock";
+
+import PaymentsIcon from "@mui/icons-material/Payments";
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 
 export default function ExpensesPage() {
   const [items, setItems] = useState<Expense[]>([]);
@@ -25,10 +28,7 @@ export default function ExpensesPage() {
     });
   }, []);
 
-  if (loading) {
-    return <div className="page-loading">Cargando expensas…</div>;
-  }
-
+  if (loading) return <div className="page-loading">Cargando expensas…</div>;
   if (!header) return null;
 
   return (
@@ -39,24 +39,30 @@ export default function ExpensesPage() {
             <h1>Expensas</h1>
           </div>
           <div className="unit">
-            <div>Unidad: <strong>{header.unidad}</strong></div>
-            <div>Titular: <strong>{header.titular}</strong></div>
+            <div>
+              Unidad: <strong>{header.unidad}</strong>
+            </div>
+            <div>
+              Titular: <strong>{header.titular}</strong>
+            </div>
           </div>
         </div>
 
         <div className="stats">
           <StatCard
             accent="warning"
-            //icon={<span className="ico"></span>}
+            icon={<PaymentsIcon color="action" />}
             label="Total Pendiente"
             value={<Money value={header.totalPendiente} /> as unknown as string}
           />
           <StatCard
             accent="success"
+            icon={<CheckCircleOutlineIcon color="action" />}
             label="Última Expensa"
             value={header.ultimaExpensaMes}
           />
           <StatCard
+            icon={<EventAvailableIcon color="action" />}
             label="Próximo Vencimiento"
             value={formatDateISO(header.proximoVencISO)}
           />
