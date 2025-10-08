@@ -1,13 +1,14 @@
 import * as React from "react";
-import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Stack, Typography } from "@mui/material";
 import { AddRounded, CalendarMonthOutlined, ChevronLeft, ChevronRight } from "@mui/icons-material";
 
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
-import esLocale from "@fullcalendar/core/locales/es";
+//import esLocale from "@fullcalendar/core/locales/es";
 
 import "../styles/fullcalendar.css";
+import NewReserve from "./NewReserve";
 
 // Mock de eventos
 const EVENTS = [
@@ -27,6 +28,15 @@ export default function Calendar() {
   const [openReserve, setOpenReserve] = React.useState(false);
   const [openDay, setOpenDay] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("");
+  const [reserveDate, setReserveDate] = React.useState<Date | null>(null);
+  const [fcLocale, setFcLocale] = React.useState<any>(undefined);
+
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "test") return; // en Jest no cargamos nada
+    import("@fullcalendar/core/locales/es")
+      .then((m) => setFcLocale(m.default ?? m))
+      .catch(() => {}); // fallback a inglés si falla
+  }, []);
 
   const updateTitle = () => {
     const api = calendarRef.current?.getApi();
@@ -52,6 +62,17 @@ export default function Calendar() {
   const onDateClick = (arg: DateClickArg) => {
     if (isPast(arg.date)) return;
     setOpenDay(arg.date.toISOString());
+  };
+
+  const handleConfirmReserve = (payload: {
+    area: string;
+    description: string;
+    date: string;
+    time: string | null;
+  }) => {
+    console.log("Reserva confirmada:", payload);
+    setOpenReserve(false);
+    // TODO: persistir en backend y refrescar eventos en FullCalendar
   };
 
   return (
@@ -92,7 +113,7 @@ export default function Calendar() {
           ref={calendarRef}
           plugins={[dayGridPlugin, interactionPlugin]}
           initialView="dayGridMonth"
-          locale={esLocale}
+          locale={fcLocale}
           firstDay={0}
           height="auto"
           fixedWeekCount={false}
@@ -119,40 +140,46 @@ export default function Calendar() {
         />
       </Box>
 
-      {/*reservar (botón) */}
       <Dialog open={openReserve} onClose={() => setOpenReserve(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Reservar espacio común</DialogTitle>
         <DialogContent dividers>
-          <Stack spacing={2}>
-            <TextField label="Espacio" placeholder="SUM, Parrilla, Cancha..." fullWidth />
-            <TextField label="Motivo" placeholder="Cumpleaños, reunión, etc." fullWidth />
-            <Stack direction="row" spacing={2}>
-              <TextField label="Fecha" type="date" fullWidth />
-              <TextField label="Desde" type="time" fullWidth />
-              <TextField label="Hasta" type="time" fullWidth />
-            </Stack>
-          </Stack>
+          <NewReserve
+            date={reserveDate}
+            onCancel={() => setOpenReserve(false)}
+            onConfirm={handleConfirmReserve}
+          />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenReserve(false)}>Cancelar</Button>
-          <Button variant="contained" onClick={() => setOpenReserve(false)}>Guardar</Button>
-        </DialogActions>
       </Dialog>
 
-      {/* día clickeado */}
       <Dialog open={!!openDay} onClose={() => setOpenDay(null)} maxWidth="sm" fullWidth>
         <DialogTitle>
-          {openDay && new Date(openDay).toLocaleDateString("es-ES", {
-            weekday: "long", day: "numeric", month: "long", year: "numeric",
-          })}
+          {openDay &&
+            new Date(openDay).toLocaleDateString("es-ES", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
         </DialogTitle>
         <DialogContent dividers>
-          <Typography variant="subtitle2" gutterBottom>Eventos del día</Typography>
-          <Typography variant="body2" color="text.secondary">No hay eventos.</Typography>
+          <Typography variant="subtitle2" gutterBottom>
+            Eventos del día
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            No hay eventos.
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDay(null)}>Cerrar</Button>
-          <Button variant="contained" onClick={() => { setOpenDay(null); setOpenReserve(true); }}>
+          <Button
+            variant="contained"
+            onClick={() => {
+              const d = openDay ? new Date(openDay) : null;
+              setOpenDay(null);
+              setReserveDate(d);
+              setOpenReserve(true);
+            }}
+          >
             Reservar este día
           </Button>
         </DialogActions>
