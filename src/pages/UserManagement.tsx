@@ -1,6 +1,5 @@
 import InfoCard from "../components/InfoCard";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import DownloadOutlinedIcon from "@mui/icons-material/DownloadOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Box } from "@mui/material";
 import PageHeader from "../components/SectionHeader";

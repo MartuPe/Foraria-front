@@ -74,50 +74,43 @@ export default function PageHeader({
       </Stack>
 
       {/* Métricas */}
-      {stats.length > 0 && (
-        <Stack
-          direction={{ xs: "column", md: "row" }}
-          spacing={2}
-          sx={{ mb: 2, flexWrap: "wrap" }}
+      <Grid container spacing={2} sx={{ mb: 2 }}>
+  {stats.map((s, i) => (
+    <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+      <Paper
+        elevation={0}
+        variant="outlined"
+        sx={{
+          p: 2,
+          borderRadius: 3,
+          display: "flex",
+          alignItems: "center",
+          gap: 2,
+        }}
+      >
+        <Box
+          sx={(t) => ({
+            width: 36,
+            height: 36,
+            display: "grid",
+            placeItems: "center",
+            borderRadius: 2,
+            bgcolor: alpha(t.palette[s.color || "primary"].main, 0.15),
+            color: t.palette[s.color || "primary"].main,
+          })}
         >
-          {stats.map((s, i) => (
-            <Paper
-              key={i}
-              elevation={0}
-              variant="outlined"
-              sx={{
-                p: 2,
-                borderRadius: 3,
-                display: "flex",
-                alignItems: "center",
-                gap: 2,
-                flex: 1,
-                minWidth: 200,
-              }}
-            >
-              <Box
-                sx={(t) => ({
-                  width: 36,
-                  height: 36,
-                  display: "grid",
-                  placeItems: "center",
-                  borderRadius: 2,
-                  bgcolor: alpha(t.palette[s.color || "primary"].main, 0.15),
-                  color: t.palette[s.color || "primary"].main,
-                })}
-              >
-                {s.icon}
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  {s.title}
-                </Typography>
-                <Typography variant="h6">{s.value}</Typography>
-              </Box>
-            </Paper>
-          ))}
-        </Stack>
-      )}
+          {s.icon}
+        </Box>
+        <Box>
+          <Typography variant="body2" color="text.secondary">
+            {s.title}
+          </Typography>
+          <Typography variant="h6">{s.value}</Typography>
+        </Box>
+      </Paper>
+    </Grid>
+  ))}
+</Grid>
 
       {/* Buscador + filtros opcionales */}
       {(showSearch || filters.length > 0) && (
