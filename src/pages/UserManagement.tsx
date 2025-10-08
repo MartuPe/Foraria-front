@@ -12,7 +12,8 @@ import { Select, MenuItem } from "@mui/material";
 
 
 
-export default function FacturaEjemplo() {
+export default function UserManagment() {
+
   return (
 
 

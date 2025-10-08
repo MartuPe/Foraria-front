@@ -158,7 +158,7 @@ export default function InfoCard({
           )}
         </Stack>
       </Stack>
-
+      
          
             <Divider sx={{ my: 1 }} />
 
