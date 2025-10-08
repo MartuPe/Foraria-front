@@ -55,7 +55,10 @@ export default function UserManagment() {
         { label: "+541123455678", value: "" },
         { label: "Depto. 3A", value: "" },
       ]}
-      optionalFields={["Registrado", "Ultimo Acceso"]}
+      optionalFields={
+        [ { label: "Registrado" } ,
+          { label: "Ultimo Acceso" }
+]}
       image="../assets/profile-photo.jpg"
       actions={[
         { label: "Ver", icon: <VisibilityOutlinedIcon /> },
