@@ -11,22 +11,22 @@ import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { Select, MenuItem } from "@mui/material";
 
 
+
 export default function FacturaEjemplo() {
   return (
-
 
 
      <Box className="foraria-page-container">
 
           <PageHeader
-      title="Eventos"
+      title="Gestion de Usuarios"
       showSearch
       onSearchChange={(q) => console.log("Buscar:", q)}
       stats={[
         { icon: <PersonIcon />, title: "Total Usuarios", value: 5, color: "primary" },
         { icon: <ShieldIcon />, title: "Propietarios", value: 2, color: "success" },
-         { icon: <HomeIcon />, title: "Propietarios", value: 2, color: "secondary" },
-          { icon: <CalendarTodayIcon />, title: "Propietarios", value: 1, color: "warning" },
+         { icon: <HomeIcon />, title: "Inquilinos", value: 2, color: "info" },
+          { icon: <CalendarTodayIcon />, title: "Pendientes", value: 1, color: "secondary" },
       ]}
       filters={[
         <Select defaultValue="all" size="small">
@@ -47,8 +47,8 @@ export default function FacturaEjemplo() {
     <InfoCard
       title="Maria Gonzales"
       chips={[
-        { label: "Propietario", color: "info" },
-        { label: "Activo", color: "warning" },
+        { label: "Propietario", color: "primary" },
+        { label: "Activo", color: "success" },
       ]}
       fields={[
         { label: "Maria.gonzales@gmail.com", value: "" },
@@ -65,5 +65,6 @@ export default function FacturaEjemplo() {
 
 
     </Box>
+
   );
 }

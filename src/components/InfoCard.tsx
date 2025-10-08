@@ -115,19 +115,10 @@ export default function InfoCard({
               )}
             </Stack>
 
-            {/* Divider */}
-            <Divider sx={{ my: 1 }} />
+         
 
             {/* Campos opcionales */}
-            {optionalFields.length > 0 && (
-              <Stack direction="row" spacing={2} flexWrap="wrap">
-                {optionalFields.map((text, i) => (
-                  <Typography key={i} variant="body2" color="text.secondary">
-                    {text}
-                  </Typography>
-                ))}
-              </Stack>
-            )}
+          
           </Stack>
         </Box>
 
@@ -146,20 +137,41 @@ export default function InfoCard({
           {actions.length > 0 && (
             <Stack direction="row" spacing={1}>
               {actions.map((a, i) => (
-                <Button
-                  key={i}
-                  variant="outlined"
-                  size="small"
-                  startIcon={a.icon}
-                  onClick={a.onClick}
-                >
-                  {a.label}
-                </Button>
+               <Button
+  key={i}
+  variant="outlined"
+  size="small"
+  startIcon={a.icon}
+  onClick={a.onClick}
+  sx={{
+    minWidth: 0,
+    px: 1.2,
+    py: 0.5,
+    fontSize: "0.75rem",
+    textTransform: "none",
+  }}
+>
+  {a.label}
+</Button>
               ))}
             </Stack>
           )}
         </Stack>
       </Stack>
+
+         
+            <Divider sx={{ my: 1 }} />
+
+  {optionalFields.length > 0 && (
+              <Stack direction="row" spacing={2} flexWrap="wrap">
+                {optionalFields.map((text, i) => (
+                  <Typography key={i} variant="body2" color="text.secondary">
+                    {text}
+                  </Typography>
+                ))}
+              </Stack>
+            )}
+
     </Paper>
   );
 }

@@ -55,8 +55,6 @@ export default function PageHeader({
         p: { xs: 2, md: 3 },
         borderRadius: 3,
         bgcolor: "background.paper",
-        boxShadow: "0 4px 16px rgba(8,61,119,0.08)",
-        border: "1px solid",
         borderColor: "divider",
         ...sx,
       }}
@@ -127,6 +125,7 @@ export default function PageHeader({
           spacing={1.5}
           sx={{ mb: 2 }}
           alignItems={{ xs: "stretch", md: "center" }}
+          
         >
           {showSearch && (
             <TextField
@@ -134,12 +133,13 @@ export default function PageHeader({
               size="small"
               placeholder={searchPlaceholder}
               onChange={(e) => onSearchChange?.(e.target.value)}
+              className="foraria-form-input"
               sx={{
                 "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  bgcolor: "secondary.main",
+                  borderRadius: 1,
                   "& fieldset": { borderColor: "divider" },
                 },
+                
               }}
             />
           )}
