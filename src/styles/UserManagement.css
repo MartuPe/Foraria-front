@@ -1,0 +1,136 @@
+.foraria-page-container {
+  background: var(--foraria-background);  /* #ebebd3 */
+  padding: 24px;
+  min-height: 100vh;
+}
+
+/* Header con título y botón new */
+.foraria-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+/* Título de página */
+.foraria-page-title {
+  font-size: 1.5rem;
+  color: var(--primary);  /* #083d77 */
+}
+
+/* Botón nuevo usuario (naranja) */
+.foraria-new-button {
+  background: linear-gradient(135deg, var(--foraria-accent), var(--foraria-secondary));
+  color: var(--primary);
+}
+
+/* Stats section (cards horizontales) */
+.foraria-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.foraria-stat-card {
+  background: #ffffff;
+  border-radius: var(--radius);
+  padding: 16px;
+  flex: 1;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.foraria-stat-label {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.foraria-stat-value {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--primary);
+}
+
+/* Barra de búsqueda y filtros */
+.foraria-search-bar {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.foraria-search-input {
+  flex: 3;
+}
+
+.foraria-filter-select {
+  flex: 1;
+}
+
+/* Lista de usuarios */
+.foraria-user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.foraria-user-row {
+  background: #ffffff;
+  border-radius: var(--radius);
+  padding: 16px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.foraria-user-avatar {
+  background-color: #a020f0;  /* Morado como en imagen; ajusta por usuario si necesitas */
+  color: #ffffff;
+  margin-right: 16px;
+}
+
+.foraria-user-info {
+  flex: 1;
+}
+
+.foraria-user-name {
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.foraria-user-email {
+  color: #6c757d;
+}
+
+.foraria-user-details {
+  color: #6c757d;
+  font-size: 0.875rem;
+}
+
+.foraria-user-register {
+  color: #6c757d;
+  font-size: 0.75rem;
+}
+
+.foraria-role-chip {
+  margin-right: 8px;
+  background: rgba(76, 175, 80, 0.1);  /* Verde sutil para "Propietario" */
+  color: #4caf50;
+}
+
+.foraria-status-chip {
+  margin-right: 8px;
+  background: rgba(76, 175, 80, 0.1);  /* Verde para "Activo" */
+  color: #4caf50;
+}
+
+.foraria-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Responsive para large screens */
+@media (min-width: 1200px) {
+  .foraria-user-row {
+    padding: 24px;
+  }
+}
