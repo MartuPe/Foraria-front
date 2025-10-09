@@ -59,6 +59,7 @@ export default function UserManagment() {
         [ { label: "Registrado" } ,
           { label: "Ultimo Acceso" }
 ]}
+showDivider={true}
       image="../assets/profile-photo.jpg"
       actions={[
         { label: "Ver", icon: <VisibilityOutlinedIcon /> },

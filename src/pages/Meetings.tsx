@@ -29,6 +29,13 @@ import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
+import PageHeader from "../components/SectionHeader";
+import InfoCard from "../components/InfoCard";
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import ArticleIcon from '@mui/icons-material/Article';
+import QueryBuilderIcon from '@mui/icons-material/QueryBuilder';
+import PersonIcon from '@mui/icons-material/Person';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 
 // ❌ Eliminado: jsPDF y autotable
 // import jsPDF from "jspdf";
@@ -98,18 +105,62 @@ export default function Meetings() {
 
   return (
     <Box className="foraria-page-container">
-      <Paper
+
+   
+       <PageHeader
+      title="Gestion de Usuarios"
+      showSearch
+      onSearchChange={(q) => console.log("Buscar:", q)}
+      stats={[
+        { icon: <CalendarTodayIcon />, title: "Total Usuarios", value: 5, color: "primary" },
+        { icon: <VideocamIcon />, title: "Propietarios", value: 2, color: "success" },
+         { icon: <ArticleIcon />, title: "Inquilinos", value: 2, color: "info" },
+          { icon: <QueryBuilderIcon />, title: "Pendientes", value: 1, color: "secondary" },
+      ]}
+      tabs={[
+         { label: "Todas", value: "todas" },
+         { label: "Activas", value: "actives" },
+         { label: "Finalizadas", value: "finalizada" },
+      ]}
+      selectedTab="all"
+      onTabChange={(v) => console.log("Tab:", v)}
+    />  
+          <InfoCard
+  title="Asamblea Ordinaria Mensual"
+  description="Revisión de expensas, votación de mejoras y temas varios de la comunidad."
+  fields={[
+    {  
+      label: "15 Nov 2025", value: "", icon: <CalendarTodayIcon/>},
+      {  
+      label: "19:00 (2 horas)", value: "", icon: <QueryBuilderIcon/> },
+      {  
+      label: "Virtual", value: "", icon: <VideocamIcon/> },
+      {  
+      label: "5 participantes", value: "", icon: <PersonIcon />}
+]}
+  chips={[{ label: "Programada", color: "secondary" },
+  { label: "Consorcio", color: "warning" }
+
+]}
+showDivider={true}
+  extraActions={[
+    { label: "Unirse", color: "secondary",variant: "contained", onClick: () => alert("Unirse"), icon: <VideocamIcon/> },
+    { label: "Ver Detalles",color: "primary" , variant: "outlined", onClick: () => alert("Detalles"), icon: <VisibilityIcon/> },
+  ]}
+/>
+
+      {/* <Paper
         elevation={0}
     
       >
-        {/* Título */}
+        
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
           <Typography variant="h4" color="primary">
             Reuniones
           </Typography>
         </Stack>
 
-        {/* Métricas */}
+        {  }
         <StatsRow
           scheduled={stats.scheduled}
           inProgress={stats.inProgress}
@@ -117,7 +168,7 @@ export default function Meetings() {
           thisMonth={stats.thisMonth}
         />
 
-        {/* Buscador + Tabs */}
+        {   }
         <Stack spacing={2} sx={{ mb: 2 }}>
           <TextField
             placeholder="Buscar reuniones..."
@@ -164,7 +215,7 @@ export default function Meetings() {
           </Tabs>
         </Stack>
 
-        {/* Lista */}
+        {  }
         <Stack spacing={2.5}>
           {filtered.map((m) => (
             <Card key={m.id} elevation={0} variant="outlined" sx={{ borderRadius: 3 }}>
@@ -232,7 +283,7 @@ export default function Meetings() {
             </Card>
           ))}
         </Stack>
-      </Paper>
+      </Paper> */}
 
       {/* ------ MODALES ------ */}
 

@@ -9,7 +9,6 @@ import {
   LinearProgress,
 } from "@mui/material";
 
-
 export interface InfoChip {
   label: string;
   color?:
@@ -49,15 +48,16 @@ export interface InfoCardProps {
   description?: string;
   chips?: InfoChip[];
   fields?: InfoField[];
-  optionalFields?: { icon?: React.ReactNode, label: string  }[];
+  optionalFields?: { icon?: React.ReactNode; label: string }[];
   price?: string | number;
   filesCount?: number;
   image?: string;
   progress?: number;
   progressLabel?: string;
   actions?: InfoAction[];
-  sx?: object;
   extraActions?: InfoAction[];
+  sx?: object;
+  showDivider?: boolean;
 }
 
 export default function InfoCard({
@@ -73,8 +73,9 @@ export default function InfoCard({
   progress,
   progressLabel,
   actions = [],
-  sx = {},
   extraActions = [],
+  sx = {},
+  showDivider = false,
 }: InfoCardProps) {
   return (
     <Paper
@@ -89,9 +90,9 @@ export default function InfoCard({
       }}
     >
       <Stack spacing={2}>
-        {/* Contenido principal */}
+        
         <Stack direction="row" spacing={2} alignItems="flex-start">
-          {/* Imagen opcional */}
+          
           {image && (
             <Box
               component="img"
@@ -107,7 +108,7 @@ export default function InfoCard({
             />
           )}
 
-          {/* Texto principal */}
+         
           <Box sx={{ flex: 1 }}>
             <Stack
               direction="row"
@@ -134,7 +135,11 @@ export default function InfoCard({
             </Stack>
 
             {subtitle && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 0.5 }}
+              >
                 {subtitle}
               </Typography>
             )}
@@ -145,17 +150,17 @@ export default function InfoCard({
               </Typography>
             )}
 
-            {/* Campos */}
+           
             <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 1 }}>
-             {fields.map((f, i) => (
-  <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-    {f.icon}
-    <Typography variant="body2" color="text.secondary">
-      <strong>{f.label}: </strong>
-      {f.value}
-    </Typography>
-  </Box>
-))}
+              {fields.map((f, i) => (
+                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {f.icon}
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>{f.label} </strong>
+                    {f.value}
+                  </Typography>
+                </Box>
+              ))}
 
               {filesCount !== undefined && (
                 <Typography variant="body2" color="text.secondary">
@@ -165,7 +170,7 @@ export default function InfoCard({
             </Stack>
           </Box>
 
-          {/* Columna derecha: precio y acciones */}
+        
           <Stack spacing={1} alignItems="flex-end" sx={{ minWidth: 160 }}>
             {price && (
               <Typography
@@ -203,12 +208,10 @@ export default function InfoCard({
           </Stack>
         </Stack>
 
-        {/* Divider opcional */}
-        {(optionalFields.length > 0 || progress !== undefined) && (
-          <Divider sx={{ my: 1 }} />
-        )}
+      
+        {showDivider && <Divider sx={{ my: 1 }} />}
 
-        {/* Barra de progreso */}
+       
         {progress !== undefined && (
           <Box sx={{ width: "100%" }}>
             <Stack
@@ -235,43 +238,44 @@ export default function InfoCard({
           </Box>
         )}
 
-        {/* Campos opcionales */}
+      
         {optionalFields.length > 0 && (
-  <Stack direction="row" spacing={2} flexWrap="wrap">
-    {optionalFields.map((field, i) => (
-      <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        {field.icon}
-        <Typography variant="body2" color="text.secondary">
-          {field.label}
-        </Typography>
-      </Box>
-    ))}
-  </Stack>
-)}
- {extraActions.length > 0 && (
-              <Stack direction="row" spacing={1}>
-                {extraActions.map((a, i) => (
-                  <Button
-                    key={i}
-                    variant={a.variant ?? "outlined"}
-                    color={a.color ?? "primary"}
-                    size="small"
-                    startIcon={a.icon}
-                    onClick={a.onClick}
-                    sx={{
-                      minWidth: 0,
-                      px: 1.2,
-                      py: 0.5,
-                      fontSize: "1rem",
-                      textTransform: "none",
-                    }}
-                  >
-                    {a.label}
-                  </Button>
-                ))}
-              </Stack>
-            )}
+          <Stack direction="row" spacing={2} flexWrap="wrap">
+            {optionalFields.map((field, i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {field.icon}
+                <Typography variant="body2" color="text.secondary">
+                  {field.label}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+        )}
 
+        
+        {extraActions.length > 0 && (
+          <Stack direction="row" spacing={1}>
+            {extraActions.map((a, i) => (
+              <Button
+                key={i}
+                variant={a.variant ?? "outlined"}
+                color={a.color ?? "primary"}
+                size="small"
+                startIcon={a.icon}
+                onClick={a.onClick}
+                sx={{
+                  minWidth: 0,
+                  px: 1.2,
+                  py: 0.5,
+                  fontSize: "1rem",
+                  textTransform: "none",
+                }}
+              >
+                {a.label}
+              </Button>
+            ))}
+          </Stack>
+        )}
       </Stack>
     </Paper>
   );
