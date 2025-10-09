@@ -112,10 +112,10 @@ export default function Meetings() {
       showSearch
       onSearchChange={(q) => console.log("Buscar:", q)}
       stats={[
-        { icon: <CalendarTodayIcon />, title: "Total Usuarios", value: 5, color: "primary" },
-        { icon: <VideocamIcon />, title: "Propietarios", value: 2, color: "success" },
-         { icon: <ArticleIcon />, title: "Inquilinos", value: 2, color: "info" },
-          { icon: <QueryBuilderIcon />, title: "Pendientes", value: 1, color: "secondary" },
+        { icon: <CalendarTodayIcon />, title: "Programadas", value: 5, color: "primary" },
+        { icon: <VideocamIcon />, title: "En curso", value: 2, color: "success" },
+         { icon: <ArticleIcon />, title: "Con transcipcion", value: 2, color: "info" },
+          { icon: <QueryBuilderIcon />, title: "Este mes", value: 1, color: "secondary" },
       ]}
       tabs={[
          { label: "Todas", value: "todas" },
