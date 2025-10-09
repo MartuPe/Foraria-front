@@ -43,7 +43,7 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 
 import {
   getMeetings,
-  getStats,
+  // getStats,
   Meeting,
   MeetingStatus,
 } from "../services/meetingService";
@@ -52,28 +52,28 @@ import { Sidebar } from "../components/layout";
 type FilterTab = "all" | MeetingStatus;
 
 /* ---------- Chip coloreado por etiqueta ---------- */
-function ColoredTag({ label }: { label: string }) {
-  const t = useTheme();
-  const styles: Record<string, { bg: string; fg: string }> = {
-    Programada: { bg: alpha(t.palette.primary.main, 0.12), fg: t.palette.primary.main },
-    Finalizada: { bg: alpha(t.palette.grey[500], 0.18), fg: t.palette.text.secondary },
-    Emergencia: { bg: alpha(t.palette.error.main, 0.14), fg: t.palette.error.main },
-    Social: { bg: alpha(t.palette.success.main, 0.14), fg: t.palette.success.main },
-    Mantenimiento: { bg: alpha(t.palette.warning.main, 0.18), fg: t.palette.warning.dark },
-    Consorcio: { bg: alpha(t.palette.info.main, 0.14), fg: t.palette.info.main },
-  };
-  const s = styles[label] ?? { bg: t.palette.secondary.main, fg: t.palette.text.primary };
-  return (
-    <Chip
-      size="small"
-      label={label}
-      sx={{ bgcolor: s.bg, color: s.fg, fontWeight: 600, borderRadius: "999px" }}
-    />
-  );
-}
+// function ColoredTag({ label }: { label: string }) {
+//   const t = useTheme();
+//   const styles: Record<string, { bg: string; fg: string }> = {
+//     Programada: { bg: alpha(t.palette.primary.main, 0.12), fg: t.palette.primary.main },
+//     Finalizada: { bg: alpha(t.palette.grey[500], 0.18), fg: t.palette.text.secondary },
+//     Emergencia: { bg: alpha(t.palette.error.main, 0.14), fg: t.palette.error.main },
+//     Social: { bg: alpha(t.palette.success.main, 0.14), fg: t.palette.success.main },
+//     Mantenimiento: { bg: alpha(t.palette.warning.main, 0.18), fg: t.palette.warning.dark },
+//     Consorcio: { bg: alpha(t.palette.info.main, 0.14), fg: t.palette.info.main },
+//   };
+//   const s = styles[label] ?? { bg: t.palette.secondary.main, fg: t.palette.text.primary };
+//   return (
+//     <Chip
+//       size="small"
+//       label={label}
+//       sx={{ bgcolor: s.bg, color: s.fg, fontWeight: 600, borderRadius: "999px" }}
+//     />
+//   );
+// }
 
 export default function Meetings() {
-  const [query, setQuery] = useState("");
+  const [query, /*setQuery*/] = useState("");
   const [tab, /*setTab*/] = useState<FilterTab>("all");
   const [selected, setSelected] = useState<Meeting | null>(null);
   const [showTranscription, setShowTranscription] = useState(false);
@@ -81,17 +81,17 @@ export default function Meetings() {
   const data = getMeetings();
  //  const stats = getStats(data);
 
-  const filtered = useMemo(() => {
-    const byTab = tab === "all" ? data : data.filter((m) => m.status === tab);
-    if (!query.trim()) return byTab;
-    const q = query.toLowerCase();
-    return byTab.filter(
-      (m) =>
-        m.title.toLowerCase().includes(q) ||
-        m.description.toLowerCase().includes(q) ||
-        m.tags.some((t) => t.toLowerCase().includes(q))
-    );
-  }, [data, tab, query]);
+  // const filtered = useMemo(() => {
+  //   const byTab = tab === "all" ? data : data.filter((m) => m.status === tab);
+  //   if (!query.trim()) return byTab;
+  //   const q = query.toLowerCase();
+  //   return byTab.filter(
+  //     (m) =>
+  //       m.title.toLowerCase().includes(q) ||
+  //       m.description.toLowerCase().includes(q) ||
+  //       m.tags.some((t) => t.toLowerCase().includes(q))
+  //   );
+  // }, [data, tab, query]);
 
   /* ===========================================
    * Descargar transcripción (placeholder)
@@ -293,7 +293,7 @@ showDivider={true}
       {/* ------ MODALES ------ */}
 
       {/* Detalle */}
-      <Dialog
+      {/* <Dialog
         open={!!selected && !showTranscription}
         onClose={() => setSelected(null)}
         maxWidth="sm"
@@ -335,7 +335,7 @@ showDivider={true}
         <DialogActions>
           <Button onClick={() => setSelected(null)}>Cerrar</Button>
         </DialogActions>
-      </Dialog>
+      </Dialog> */}
 
       {/* Transcripción + Descargar */}
       <Dialog
@@ -403,27 +403,26 @@ showDivider={true}
   );
 }
 
-/* ---------- helpers UI ---------- */
-function StatsRow({
-  scheduled,
-  inProgress,
-  withTranscription,
-  thisMonth,
-}: {
-  scheduled: number;
-  inProgress: number;
-  withTranscription: number;
-  thisMonth: number;
-}) {
-  return (
-    <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mb: 2 }}>
-      <StatCard icon={<EventIcon />} title="Programadas" value={scheduled} color="primary" />
-      <StatCard icon={<VideocamIcon />} title="En Curso" value={inProgress} color="success" />
-      <StatCard icon={<ArticleOutlinedIcon />} title="Con Transcripción" value={withTranscription} color="secondary" />
-      <StatCard icon={<AccessTimeIcon />} title="Este Mes" value={thisMonth} color="warning" />
-    </Stack>
-  );
-}
+// function StatsRow({
+//   scheduled,
+//   inProgress,
+//   withTranscription,
+//   thisMonth,
+// }: {
+//   scheduled: number;
+//   inProgress: number;
+//   withTranscription: number;
+//   thisMonth: number;
+// }) {
+//   return (
+//     <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mb: 2 }}>
+//       <StatCard icon={<EventIcon />} title="Programadas" value={scheduled} color="primary" />
+//       <StatCard icon={<VideocamIcon />} title="En Curso" value={inProgress} color="success" />
+//       <StatCard icon={<ArticleOutlinedIcon />} title="Con Transcripción" value={withTranscription} color="secondary" />
+//       <StatCard icon={<AccessTimeIcon />} title="Este Mes" value={thisMonth} color="warning" />
+//     </Stack>
+//   );
+// }
 
 function StatCard({
   icon,
@@ -465,14 +464,14 @@ function StatCard({
   );
 }
 
-function Meta({ icon, text }: { icon: React.ReactNode; text: string }) {
-  return (
-    <Stack direction="row" spacing={0.5} alignItems="center" color="text.secondary">
-      <Box sx={{ display: "grid", placeItems: "center" }}>{icon}</Box>
-      <Typography variant="body2">{text}</Typography>
-    </Stack>
-  );
-}
+// function Meta({ icon, text }: { icon: React.ReactNode; text: string }) {
+//   return (
+//     <Stack direction="row" spacing={0.5} alignItems="center" color="text.secondary">
+//       <Box sx={{ display: "grid", placeItems: "center" }}>{icon}</Box>
+//       <Typography variant="body2">{text}</Typography>
+//     </Stack>
+//   );
+// }
 
 function GridTwoCols({
   leftTitle,

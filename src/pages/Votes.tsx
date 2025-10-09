@@ -37,15 +37,15 @@ import { Sidebar } from "../components/layout";
 
 type TabKey = "all" | "active" | "closed" | "upcoming";
 
-function statusChip(status: VoteStatus) {
-  if (status === "active") {
-    return <Chip label="Activa" color="success" size="small" variant="outlined" />;
-  }
-  if (status === "closed") {
-    return <Chip label="Finalizada" color="default" size="small" variant="outlined" />;
-  }
-  return <Chip label="Próximamente" color="info" size="small" variant="outlined" />;
-}
+// function statusChip(status: VoteStatus) {
+//   if (status === "active") {
+//     return <Chip label="Activa" color="success" size="small" variant="outlined" />;
+//   }
+//   if (status === "closed") {
+//     return <Chip label="Finalizada" color="default" size="small" variant="outlined" />;
+//   }
+//   return <Chip label="Próximamente" color="info" size="small" variant="outlined" />;
+// }
 
 // function percent(value: number, total: number) {
 //   if (total <= 0) return 0;
@@ -54,16 +54,16 @@ function statusChip(status: VoteStatus) {
 // }
 
 export default function Votes() {
-  const [tab, setTab] = useState<TabKey>("all");
+  const [tab, /*setTab*/] = useState<TabKey>("all");
   const [votes, setVotesState] = useState<VoteItem[]>([]);
 
   // confirm dialog
-  const [open, setOpen] = useState(false);
+  const [/*open*/, setOpen] = useState(false);
   const [current, setCurrent] = useState<VoteItem | null>(null);
   const [action, setAction] = useState<VoteAction>("favor");
 
   // toast
-  const [toast, setToast] = useState<{ open: boolean; msg: string }>({
+  const [/*toast*/, setToast] = useState<{ open: boolean; msg: string }>({
     open: false,
     msg: "",
   });
@@ -74,49 +74,49 @@ export default function Votes() {
     setVotesState(data.length ? data : DEFAULT_VOTES);
   }, []);
 
-  const counts = useMemo(() => {
-    const all = votes.length;
-    const active = votes.filter((v) => v.status === "active").length;
-    const closed = votes.filter((v) => v.status === "closed").length;
-    const upcoming = votes.filter((v) => v.status === "upcoming").length;
-    return { all, active, closed, upcoming };
-  }, [votes]);
+  // const counts = useMemo(() => {
+  //   const all = votes.length;
+  //   const active = votes.filter((v) => v.status === "active").length;
+  //   const closed = votes.filter((v) => v.status === "closed").length;
+  //   const upcoming = votes.filter((v) => v.status === "upcoming").length;
+  //   return { all, active, closed, upcoming };
+  // }, [votes]);
 
-  const filtered = useMemo(() => {
-    if (tab === "all") return votes;
-    if (tab === "active") return votes.filter((v) => v.status === "active");
-    if (tab === "closed") return votes.filter((v) => v.status === "closed");
-    return votes.filter((v) => v.status === "upcoming");
-  }, [tab, votes]);
+  // const filtered = useMemo(() => {
+  //   if (tab === "all") return votes;
+  //   if (tab === "active") return votes.filter((v) => v.status === "active");
+  //   if (tab === "closed") return votes.filter((v) => v.status === "closed");
+  //   return votes.filter((v) => v.status === "upcoming");
+  // }, [tab, votes]);
 
-  function openDialog(v: VoteItem, a: VoteAction) {
-    setCurrent(v);
-    setAction(a);
-    setOpen(true);
-  }
+  // function openDialog(v: VoteItem, a: VoteAction) {
+  //   setCurrent(v);
+  //   setAction(a);
+  //   setOpen(true);
+  // }
 
   function closeDialog() {
     setOpen(false);
     setCurrent(null);
   }
 
-  function confirmVote() {
-    if (!current) return;
-    // apply in memory
-    const updated = applyVote(votes, current.id, action);
-    setVotesState(updated);
-    // persist
-    setVotes(updated);
+  // function confirmVote() {
+  //   if (!current) return;
+  //   // apply in memory
+  //   const updated = applyVote(votes, current.id, action);
+  //   setVotesState(updated);
+  //   // persist
+  //   setVotes(updated);
 
-    setToast({
-      open: true,
-      msg:
-        action === "favor"
-          ? `¡Voto a favor confirmado para “${current.title}”!`
-          : `¡Voto en contra confirmado para “${current.title}”!`,
-    });
-    closeDialog();
-  }
+  //   setToast({
+  //     open: true,
+  //     msg:
+  //       action === "favor"
+  //         ? `¡Voto a favor confirmado para “${current.title}”!`
+  //         : `¡Voto en contra confirmado para “${current.title}”!`,
+  //   });
+  //   closeDialog();
+  // }
 
   return (
 <Box className="foraria-layout">
