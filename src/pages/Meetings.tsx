@@ -1,5 +1,5 @@
 // src/pages/Meetings.tsx
-import { useMemo, useState } from "react";
+import { /*useMemo,*/ useState } from "react";
 import {
   Box,
   Typography,
@@ -10,7 +10,7 @@ import {
   // Tab,
   // Card,
   // CardContent,
-  Chip,
+  // Chip,
   Button,
   // Divider,
   Dialog,
@@ -19,10 +19,10 @@ import {
   DialogActions,
   IconButton,
 } from "@mui/material";
-import { alpha, useTheme } from "@mui/material/styles";
+import { alpha, /* useTheme */ } from "@mui/material/styles";
 
-import EventIcon from "@mui/icons-material/Event";
-import AccessTimeIcon from "@mui/icons-material/AccessTime";
+// import EventIcon from "@mui/icons-material/Event";
+// import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import VideocamIcon from "@mui/icons-material/Videocam";
 // import GroupIcon from "@mui/icons-material/Group";
 // import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -73,12 +73,12 @@ type FilterTab = "all" | MeetingStatus;
 // }
 
 export default function Meetings() {
-  const [query, /*setQuery*/] = useState("");
-  const [tab, /*setTab*/] = useState<FilterTab>("all");
+  /*const [ query, setQuery] = useState("");
+  const [ tab, setTab] = useState<FilterTab>("all");*/
   const [selected, setSelected] = useState<Meeting | null>(null);
   const [showTranscription, setShowTranscription] = useState(false);
 
-  const data = getMeetings();
+  // const data = getMeetings();
  //  const stats = getStats(data);
 
   // const filtered = useMemo(() => {
@@ -424,45 +424,45 @@ showDivider={true}
 //   );
 // }
 
-function StatCard({
-  icon,
-  title,
-  value,
-  color = "primary",
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: number;
-  color?: "primary" | "success" | "secondary" | "warning";
-}) {
-  return (
-    <Paper
-      elevation={0}
-      variant="outlined"
-      sx={{ p: 2, borderRadius: 3, minWidth: 220, display: "flex", alignItems: "center", gap: 2 }}
-    >
-      <Box
-        sx={(t) => ({
-          width: 36,
-          height: 36,
-          borderRadius: "10px",
-          display: "grid",
-          placeItems: "center",
-          bgcolor: alpha(t.palette[color].main, 0.2),
-          color: t.palette[color].main,
-        })}
-      >
-        {icon}
-      </Box>
-      <Box>
-        <Typography variant="body2" color="text.secondary">
-          {title}
-        </Typography>
-        <Typography variant="h6">{value}</Typography>
-      </Box>
-    </Paper>
-  );
-}
+// function StatCard({
+//   icon,
+//   title,
+//   value,
+//   color = "primary",
+// }: {
+//   icon: React.ReactNode;
+//   title: string;
+//   value: number;
+//   color?: "primary" | "success" | "secondary" | "warning";
+// }) {
+//   return (
+//     <Paper
+//       elevation={0}
+//       variant="outlined"
+//       sx={{ p: 2, borderRadius: 3, minWidth: 220, display: "flex", alignItems: "center", gap: 2 }}
+//     >
+//       <Box
+//         sx={(t) => ({
+//           width: 36,
+//           height: 36,
+//           borderRadius: "10px",
+//           display: "grid",
+//           placeItems: "center",
+//           bgcolor: alpha(t.palette[color].main, 0.2),
+//           color: t.palette[color].main,
+//         })}
+//       >
+//         {icon}
+//       </Box>
+//       <Box>
+//         <Typography variant="body2" color="text.secondary">
+//           {title}
+//         </Typography>
+//         <Typography variant="h6">{value}</Typography>
+//       </Box>
+//     </Paper>
+//   );
+// }
 
 // function Meta({ icon, text }: { icon: React.ReactNode; text: string }) {
 //   return (
@@ -473,31 +473,31 @@ function StatCard({
 //   );
 // }
 
-function GridTwoCols({
-  leftTitle,
-  leftText,
-  rightTitle,
-  rightText,
-}: {
-  leftTitle?: string;
-  leftText?: string;
-  rightTitle?: string;
-  rightText?: string;
-}) {
-  return (
-    <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 1, sm: 2 }} sx={{ mb: 1.5 }}>
-      <Box sx={{ flex: 1 }}>
-        <Typography variant="subtitle2">{leftTitle}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {leftText}
-        </Typography>
-      </Box>
-      <Box sx={{ flex: 1 }}>
-        <Typography variant="subtitle2">{rightTitle}</Typography>
-        <Typography variant="body2" color="text.secondary">
-          {rightText}
-        </Typography>
-      </Box>
-    </Stack>
-  );
-}
+// function GridTwoCols({
+//   leftTitle,
+//   leftText,
+//   rightTitle,
+//   rightText,
+// }: {
+//   leftTitle?: string;
+//   leftText?: string;
+//   rightTitle?: string;
+//   rightText?: string;
+// }) {
+//   return (
+//     <Stack direction={{ xs: "column", sm: "row" }} spacing={{ xs: 1, sm: 2 }} sx={{ mb: 1.5 }}>
+//       <Box sx={{ flex: 1 }}>
+//         <Typography variant="subtitle2">{leftTitle}</Typography>
+//         <Typography variant="body2" color="text.secondary">
+//           {leftText}
+//         </Typography>
+//       </Box>
+//       <Box sx={{ flex: 1 }}>
+//         <Typography variant="subtitle2">{rightTitle}</Typography>
+//         <Typography variant="body2" color="text.secondary">
+//           {rightText}
+//         </Typography>
+//       </Box>
+//     </Stack>
+//   );
+// }
