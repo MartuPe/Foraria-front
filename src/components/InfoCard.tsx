@@ -262,7 +262,7 @@ export default function InfoCard({
                       minWidth: 0,
                       px: 1.2,
                       py: 0.5,
-                      fontSize: "0.75rem",
+                      fontSize: "1rem",
                       textTransform: "none",
                     }}
                   >

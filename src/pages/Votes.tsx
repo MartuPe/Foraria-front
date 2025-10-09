@@ -29,6 +29,10 @@ import {
 } from "../services/voteService";
 import InfoCard from "../components/InfoCard";
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PageHeader from "../components/SectionHeader";
+import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 
 type TabKey = "all" | "active" | "closed" | "upcoming";
 
@@ -114,20 +118,21 @@ export default function Votes() {
   }
 
   return (
-    <Box className="foraria-page-container">
-      <Box
-        sx={{
-          maxWidth: 1000,
-          mx: "auto",
-          bgcolor: "background.paper",
-          borderRadius: 3,
-          p: 3,
-          boxShadow: 2,
-        }}
-      >   
-      
-      
-      <InfoCard
+
+
+   <Box className="foraria-page-container">
+
+          <PageHeader
+      title="Votaciones del Consorcio"
+      tabs={[
+         { label: "Todas", value: "todas" },
+         { label: "Activas", value: "actives" },
+         { label: "Finalizadas", value: "finalizada" },
+      ]}
+      selectedTab="all"
+      onTabChange={(v) => console.log("Tab:", v)}
+    />  
+          <InfoCard
   title="Encuesta de Satisfacción"
   description="Participa y comparte tu opinión sobre la nueva funcionalidad."
   fields={[
@@ -142,10 +147,14 @@ export default function Votes() {
           { label: "En contra: 12 (21%)" }
 ]}
   extraActions={[
-    { label: "Votar a favor", color: "success",variant: "contained"},
-    { label: "Votar en contra",color: "error" , variant: "contained" },
+    { label: "Votar a favor", color: "success",variant: "contained", onClick: () => alert("Voto a favor"), icon: <CheckCircleOutlineIcon/>},
+    { label: "Votar en contra",color: "error" , variant: "contained", onClick: () => alert("Voto en contra"), icon: <HighlightOffIcon/> },
   ]}
 />
+</Box>
+   /** <Box className="foraria-page-container">
+      <Box>   
+      
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography variant="h5" color="primary">
             Votaciones del Consorcio
@@ -169,7 +178,7 @@ export default function Votes() {
           </Tabs>
         </Box>
 
-        <Stack spacing={2.5} sx={{ mt: 2 }}>
+       <Stack spacing={2.5} sx={{ mt: 2 }}>
           {filtered.map((v) => {
             const participated = v.inFavor + v.against;
             const progress = percent(participated, v.totalOwners);
@@ -177,8 +186,10 @@ export default function Votes() {
             const noPct = percent(v.against, participated);
             const disabled = v.status !== "active" || v.hasVoted === true;
 
+            
             return (
-              <Card key={v.id} variant="outlined" sx={{ borderRadius: 3 }}>
+              
+                <Card key={v.id} variant="outlined" sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Stack
                     direction={{ xs: "column", sm: "row" }}
@@ -206,6 +217,7 @@ export default function Votes() {
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     {v.description}
                   </Typography>
+                  
 
                   <Stack direction="row" spacing={3} sx={{ mt: 1.5 }}>
                     <Typography variant="body2" color="text.secondary">
@@ -282,8 +294,10 @@ export default function Votes() {
           })}
         </Stack>
       </Box>
+*/
 
-      {/* Dialogo de confirmación */}
+
+  /**     { Dialogo de confirmación }
       <Dialog open={open} onClose={closeDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           🗳️ Confirmar Voto
@@ -330,7 +344,7 @@ export default function Votes() {
         </DialogActions>
       </Dialog>
 
-      {/* Toast de éxito */}
+      { Toast de éxito }
       <Snackbar
         open={toast.open}
         autoHideDuration={2500}
@@ -342,5 +356,7 @@ export default function Votes() {
         </Alert>
       </Snackbar>
     </Box>
+
+    */
   );
 }
