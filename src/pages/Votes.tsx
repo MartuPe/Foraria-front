@@ -1,22 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  Typography,
+ //  Tabs,
+ //  Tab,
+ //  Card,
+ //  CardContent,
+ //  Typography,
   Chip,
-  LinearProgress,
-  Stack,
-  Button,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Snackbar,
-  Alert,
+ //  LinearProgress,
+ //  Stack,
+ //  Button,
+ //  Divider,
+ //  Dialog,
+ //  DialogTitle,
+ //  DialogContent,
+ //  DialogActions,
+ //  Snackbar,
+ //  Alert,
 } from "@mui/material";
 import {
   getVotes,
@@ -30,7 +30,7 @@ import {
 import InfoCard from "../components/InfoCard";
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PageHeader from "../components/SectionHeader";
-import TaskAltIcon from '@mui/icons-material/TaskAlt';
+// import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Sidebar } from "../components/layout";
@@ -47,11 +47,11 @@ function statusChip(status: VoteStatus) {
   return <Chip label="Próximamente" color="info" size="small" variant="outlined" />;
 }
 
-function percent(value: number, total: number) {
-  if (total <= 0) return 0;
-  const p = Math.round((value / total) * 100);
-  return Number.isFinite(p) ? p : 0;
-}
+// function percent(value: number, total: number) {
+//   if (total <= 0) return 0;
+//   const p = Math.round((value / total) * 100);
+//   return Number.isFinite(p) ? p : 0;
+// }
 
 export default function Votes() {
   const [tab, setTab] = useState<TabKey>("all");

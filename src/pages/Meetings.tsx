@@ -5,14 +5,14 @@ import {
   Typography,
   Stack,
   Paper,
-  TextField,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
+ //  TextField,
+  // Tabs,
+  // Tab,
+  // Card,
+  // CardContent,
   Chip,
   Button,
-  Divider,
+  // Divider,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -24,8 +24,8 @@ import { alpha, useTheme } from "@mui/material/styles";
 import EventIcon from "@mui/icons-material/Event";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import VideocamIcon from "@mui/icons-material/Videocam";
-import GroupIcon from "@mui/icons-material/Group";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+// import GroupIcon from "@mui/icons-material/Group";
+// import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
@@ -74,12 +74,12 @@ function ColoredTag({ label }: { label: string }) {
 
 export default function Meetings() {
   const [query, setQuery] = useState("");
-  const [tab, setTab] = useState<FilterTab>("all");
+  const [tab, /*setTab*/] = useState<FilterTab>("all");
   const [selected, setSelected] = useState<Meeting | null>(null);
   const [showTranscription, setShowTranscription] = useState(false);
 
   const data = getMeetings();
-  const stats = getStats(data);
+ //  const stats = getStats(data);
 
   const filtered = useMemo(() => {
     const byTab = tab === "all" ? data : data.filter((m) => m.status === tab);
