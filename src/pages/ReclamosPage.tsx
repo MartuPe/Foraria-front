@@ -23,7 +23,7 @@ import {
   Download as DownloadIcon,
 } from '@mui/icons-material';
 import { Layout } from '../components/layout';
-import NewClaim from './NewClaim';
+import NewClaim from '../popups/NewClaim';
 
 // Tipos para los datos
 interface Reclamo {

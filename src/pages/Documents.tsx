@@ -39,7 +39,7 @@ import {
   formatSize,
 } from "../services/documentService";
 
-import NewDocument from "./NewDocument"; // <--- el popup externo
+import NewDocument from "../popups/NewDocument"; // <--- el popup externo
 
 type TabKey = "general" | "mine";
 
