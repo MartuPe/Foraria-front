@@ -47,6 +47,7 @@ import {
   Meeting,
   MeetingStatus,
 } from "../services/meetingService";
+import { Sidebar } from "../components/layout";
 
 type FilterTab = "all" | MeetingStatus;
 
@@ -104,6 +105,9 @@ export default function Meetings() {
   };
 
   return (
+    <Box className="foraria-layout">
+        <Sidebar/>
+
     <Box className="foraria-page-container">
 
    
@@ -148,6 +152,7 @@ showDivider={true}
     { label: "Ver Detalles",color: "primary" , variant: "outlined", onClick: () => alert("Detalles"), icon: <VisibilityIcon/> },
   ]}
 />
+</Box>
 
       {/* <Paper
         elevation={0}

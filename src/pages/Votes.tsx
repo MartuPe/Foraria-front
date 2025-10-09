@@ -33,6 +33,7 @@ import PageHeader from "../components/SectionHeader";
 import TaskAltIcon from '@mui/icons-material/TaskAlt';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { Sidebar } from "../components/layout";
 
 type TabKey = "all" | "active" | "closed" | "upcoming";
 
@@ -118,7 +119,8 @@ export default function Votes() {
   }
 
   return (
-
+<Box className="foraria-layout">
+    <Sidebar/>
 
    <Box className="foraria-page-container">
 
@@ -151,6 +153,7 @@ export default function Votes() {
     { label: "Votar en contra",color: "error" , variant: "contained", onClick: () => alert("Voto en contra"), icon: <HighlightOffIcon/> },
   ]}
 />
+</Box>
 </Box>
    /** <Box className="foraria-page-container">
       <Box>   

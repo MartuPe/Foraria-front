@@ -8,14 +8,15 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import HomeIcon from '@mui/icons-material/Home';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { Select, MenuItem } from "@mui/material";
-
+import { Sidebar } from "../components/layout";
 
 
 export default function UserManagment() {
 
   return (
 
-
+<Box className="foraria-layout">
+        <Sidebar/>
      <Box className="foraria-page-container">
 
           <PageHeader
@@ -68,6 +69,7 @@ showDivider={true}
     />
 
 
+    </Box>
     </Box>
 
   );
