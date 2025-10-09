@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+// import { useEffect, useMemo, useState } from "react";
 import {
   Box,
  //  Tabs,
@@ -6,7 +6,7 @@ import {
  //  Card,
  //  CardContent,
  //  Typography,
-  Chip,
+  // Chip,
  //  LinearProgress,
  //  Stack,
  //  Button,
@@ -18,15 +18,15 @@ import {
  //  Snackbar,
  //  Alert,
 } from "@mui/material";
-import {
-  getVotes,
-  setVotes,
-  applyVote,
-  DEFAULT_VOTES,
-  VoteItem,
-  VoteStatus,
-  VoteAction,
-} from "../services/voteService";
+// import {
+//   getVotes,
+//   setVotes,
+//   applyVote,
+//   DEFAULT_VOTES,
+//   VoteItem,
+//   VoteStatus,
+//   VoteAction,
+// } from "../services/voteService";
 import InfoCard from "../components/InfoCard";
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import PageHeader from "../components/SectionHeader";
@@ -35,7 +35,7 @@ import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import { Sidebar } from "../components/layout";
 
-type TabKey = "all" | "active" | "closed" | "upcoming";
+// type TabKey = "all" | "active" | "closed" | "upcoming";
 
 // function statusChip(status: VoteStatus) {
 //   if (status === "active") {
@@ -54,25 +54,25 @@ type TabKey = "all" | "active" | "closed" | "upcoming";
 // }
 
 export default function Votes() {
-  const [tab, /*setTab*/] = useState<TabKey>("all");
-  const [votes, setVotesState] = useState<VoteItem[]>([]);
+  // const [tab, /*setTab*/] = useState<TabKey>("all");
+  // const [votes, setVotesState] = useState<VoteItem[]>([]);
 
   // confirm dialog
-  const [/*open*/, setOpen] = useState(false);
-  const [current, setCurrent] = useState<VoteItem | null>(null);
-  const [action, setAction] = useState<VoteAction>("favor");
+  // const [/*open*/, setOpen] = useState(false);
+  // const [current, setCurrent] = useState<VoteItem | null>(null);
+  // const [action, setAction] = useState<VoteAction>("favor");
 
   // toast
-  const [/*toast*/, setToast] = useState<{ open: boolean; msg: string }>({
-    open: false,
-    msg: "",
-  });
+  // const [/*toast*/, setToast] = useState<{ open: boolean; msg: string }>({
+  //   open: false,
+  //   msg: "",
+  // });
 
   // load from localStorage (or seed)
-  useEffect(() => {
-    const data = getVotes();
-    setVotesState(data.length ? data : DEFAULT_VOTES);
-  }, []);
+  // useEffect(() => {
+  //   const data = getVotes();
+  //   setVotesState(data.length ? data : DEFAULT_VOTES);
+  // }, []);
 
   // const counts = useMemo(() => {
   //   const all = votes.length;
@@ -95,10 +95,10 @@ export default function Votes() {
   //   setOpen(true);
   // }
 
-  function closeDialog() {
-    setOpen(false);
-    setCurrent(null);
-  }
+  // function closeDialog() {
+  //   setOpen(false);
+  //   setCurrent(null);
+  // }
 
   // function confirmVote() {
   //   if (!current) return;
