@@ -112,7 +112,7 @@ export default function Votes() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "secondary.main", py: 3 }}>
+    <Box className="foraria-page-container">
       <Box
         sx={{
           maxWidth: 1000,

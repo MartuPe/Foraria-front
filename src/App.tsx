@@ -20,10 +20,12 @@ import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
 import Dashboard from './pages/Dashboard';
+import UserManagement from './pages/UserManagement';
 import Calendar from './pages/Calendar'; 
 import NewReserve from './pages/NewEvent';
 import Suppliers from './pages/Suppliers'; 
 import NewSupplier from './pages/NewSupplier';
+
 
 function App() {
   return (
@@ -34,8 +36,10 @@ function App() {
           {/* Redirección inicial */}
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
 
+
           {/* Auth */}
           <Route path="/iniciarSesion" element={<Login />} />
+
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/actualizarInformacion" element={<UpdateData />} />
@@ -53,6 +57,8 @@ function App() {
           <Route path="/nuevaReserva" element={<NewReserve />} />
           <Route path="/proveedores" element={<Suppliers />} /> 
           <Route path="/nuevoProveedor" element={<NewSupplier />} />
+          <Route path="/gestionUsuarios" element={<UserManagement />} />
+
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />

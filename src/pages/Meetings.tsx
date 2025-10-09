@@ -97,19 +97,10 @@ export default function Meetings() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: (t) => t.palette.secondary.main, p: { xs: 2, md: 3 } }}>
+    <Box className="foraria-page-container">
       <Paper
         elevation={0}
-        sx={{
-          maxWidth: 1200,
-          mx: "auto",
-          p: { xs: 2, md: 3 },
-          borderRadius: 3,
-          bgcolor: "background.paper",
-          boxShadow: "0 8px 28px rgba(8,61,119,0.08)",
-          border: "1px solid",
-          borderColor: "divider",
-        }}
+    
       >
         {/* Título */}
         <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
@@ -137,7 +128,6 @@ export default function Meetings() {
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                bgcolor: "secondary.main",
                 "& fieldset": { borderColor: "divider" },
               },
             }}
@@ -233,7 +223,7 @@ export default function Meetings() {
                   )}
 
                   {m.status === "scheduled" && (
-                    <Button variant="contained" color="info" sx={{ ml: "auto" }} startIcon={<VideocamIcon />}>
+                    <Button variant="contained" color="secondary" sx={{ ml: "auto" }} startIcon={<VideocamIcon />}>
                       Unirse
                     </Button>
                   )}

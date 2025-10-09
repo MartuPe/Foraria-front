@@ -113,7 +113,7 @@ export default function Documents() {
   //};
 
   return (
-    <Box sx={{ bgcolor: (t) => t.palette.secondary.main, minHeight: "100vh", p: { xs: 2, md: 3 } }}>
+    <Box className="foraria-page-container" >
       <Paper
         elevation={0}
         sx={{
@@ -141,7 +141,7 @@ export default function Documents() {
               width: 320,
               "& .MuiOutlinedInput-root": {
                 borderRadius: 2,
-                bgcolor: "secondary.main",
+                
                 "& fieldset": { borderColor: "divider" },
               },
             }}
