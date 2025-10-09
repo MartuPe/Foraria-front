@@ -6,42 +6,76 @@ import {
   Paper,
   Divider,
   Button,
+  LinearProgress,
 } from "@mui/material";
 
 export interface InfoChip {
   label: string;
-  color?: "default" | "primary" | "secondary" | "success" | "warning" | "error" | "info";
+  color?:
+    | "default"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "warning"
+    | "error"
+    | "info";
 }
 
 export interface InfoField {
   label: string;
   value: string | number;
+  icon?: React.ReactNode;
+}
+
+export interface InfoAction {
+  label: string;
+  icon?: React.ReactNode;
+  onClick?: () => void;
+  variant?: "text" | "outlined" | "contained";
+  color?:
+    | "inherit"
+    | "primary"
+    | "secondary"
+    | "success"
+    | "error"
+    | "info"
+    | "warning";
 }
 
 export interface InfoCardProps {
   title: string;
   subtitle?: string;
+  description?: string;
   chips?: InfoChip[];
   fields?: InfoField[];
-  optionalFields?: string[];
+  optionalFields?: { icon?: React.ReactNode; label: string }[];
   price?: string | number;
   filesCount?: number;
   image?: string;
-  actions?: { label: string; icon?: React.ReactNode; onClick?: () => void }[];
+  progress?: number;
+  progressLabel?: string;
+  actions?: InfoAction[];
+  extraActions?: InfoAction[];
   sx?: object;
+  showDivider?: boolean;
 }
 
 export default function InfoCard({
   title,
   subtitle,
+  description,
   chips = [],
   fields = [],
   optionalFields = [],
   price,
   filesCount,
   image,
+  progress,
+  progressLabel,
   actions = [],
+  extraActions = [],
   sx = {},
+  showDivider = false,
 }: InfoCardProps) {
   return (
     <Paper
@@ -55,123 +89,194 @@ export default function InfoCard({
         ...sx,
       }}
     >
-      <Stack direction="row" spacing={2} alignItems="flex-start">
-        {/* Columna izquierda: contenido */}
-        <Box sx={{ flex: 1 }}>
-          <Stack spacing={1}>
-            {/* Imagen + título + chips */}
-            <Stack direction="row" spacing={2} alignItems="flex-start">
-              {image && (
-                <Box
-                  component="img"
-                  src={image}
-                  alt="imagen"
-                  sx={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: 2,
-                    objectFit: "cover",
-                    flexShrink: 0,
-                  }}
+      <Stack spacing={2}>
+        
+        <Stack direction="row" spacing={2} alignItems="flex-start">
+          
+          {image && (
+            <Box
+              component="img"
+              src={image}
+              alt="imagen"
+              sx={{
+                width: 60,
+                height: 60,
+                borderRadius: 2,
+                objectFit: "cover",
+                flexShrink: 0,
+              }}
+            />
+          )}
+
+         
+          <Box sx={{ flex: 1 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
+              flexWrap="wrap"
+            >
+              <Typography variant="subtitle1" fontWeight={600} color="primary">
+                {title}
+              </Typography>
+              {chips.map((chip, i) => (
+                <Chip
+                  key={i}
+                  size="small"
+                  label={chip.label}
+                  color={
+                    chip.color && chip.color !== "default"
+                      ? chip.color
+                      : undefined
+                  }
+                  sx={{ fontWeight: 500 }}
                 />
-              )}
-
-              <Box sx={{ flex: 1 }}>
-                <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-                  <Typography variant="subtitle1" fontWeight={600} color="primary">
-                    {title}
-                  </Typography>
-                  {chips.map((chip, i) => (
-                    <Chip
-                      key={i}
-                      size="small"
-                      label={chip.label}
-                      color={chip.color && chip.color !== "default" ? chip.color : undefined}
-                      sx={{ fontWeight: 500 }}
-                    />
-                  ))}
-                </Stack>
-
-                {subtitle && (
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                    {subtitle}
-                  </Typography>
-                )}
-              </Box>
+              ))}
             </Stack>
 
-            {/* Campos + Archivos */}
-            <Stack direction="row" spacing={2} flexWrap="wrap">
+            {subtitle && (
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 0.5 }}
+              >
+                {subtitle}
+              </Typography>
+            )}
+
+            {description && (
+              <Typography variant="body2" color="text.secondary">
+                {description}
+              </Typography>
+            )}
+
+           
+            <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 1 }}>
               {fields.map((f, i) => (
-                <Typography key={i} variant="body2" color="text.secondary">
-                  <strong>{f.label}: </strong>
-                  {f.value}
-                </Typography>
+                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  {f.icon}
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>{f.label} </strong>
+                    {f.value}
+                  </Typography>
+                </Box>
               ))}
+
               {filesCount !== undefined && (
                 <Typography variant="body2" color="text.secondary">
                   📄 {filesCount} archivo(s)
                 </Typography>
               )}
             </Stack>
+          </Box>
 
-         
-
-            {/* Campos opcionales */}
-          
-          </Stack>
-        </Box>
-
-        {/* Columna derecha: acciones + precio */}
-        <Stack spacing={1} alignItems="flex-end" sx={{ minWidth: 160 }}>
-          {price && (
-            <Typography
-              variant="h6"
-              fontWeight={700}
-              color="primary"
-              sx={{ whiteSpace: "nowrap" }}
-            >
-              ${price}
-            </Typography>
-          )}
-          {actions.length > 0 && (
-            <Stack direction="row" spacing={1}>
-              {actions.map((a, i) => (
-               <Button
-  key={i}
-  variant="outlined"
-  size="small"
-  startIcon={a.icon}
-  onClick={a.onClick}
-  sx={{
-    minWidth: 0,
-    px: 1.2,
-    py: 0.5,
-    fontSize: "0.75rem",
-    textTransform: "none",
-  }}
->
-  {a.label}
-</Button>
-              ))}
-            </Stack>
-          )}
-        </Stack>
-      </Stack>
-      
-         
-            <Divider sx={{ my: 1 }} />
-
-  {optionalFields.length > 0 && (
-              <Stack direction="row" spacing={2} flexWrap="wrap">
-                {optionalFields.map((text, i) => (
-                  <Typography key={i} variant="body2" color="text.secondary">
-                    {text}
-                  </Typography>
+        
+          <Stack spacing={1} alignItems="flex-end" sx={{ minWidth: 160 }}>
+            {price && (
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                color="primary"
+                sx={{ whiteSpace: "nowrap" }}
+              >
+                ${price}
+              </Typography>
+            )}
+            {actions.length > 0 && (
+              <Stack direction="row" spacing={1}>
+                {actions.map((a, i) => (
+                  <Button
+                    key={i}
+                    variant={a.variant ?? "outlined"}
+                    color={a.color ?? "primary"}
+                    size="small"
+                    startIcon={a.icon}
+                    onClick={a.onClick}
+                    sx={{
+                      minWidth: 0,
+                      px: 1.2,
+                      py: 0.5,
+                      fontSize: "0.75rem",
+                      textTransform: "none",
+                    }}
+                  >
+                    {a.label}
+                  </Button>
                 ))}
               </Stack>
             )}
+          </Stack>
+        </Stack>
 
+      
+        {showDivider && <Divider sx={{ my: 1 }} />}
+
+       
+        {progress !== undefined && (
+          <Box sx={{ width: "100%" }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 0.5 }}
+            >
+              {progressLabel && (
+                <Typography variant="body2" color="text.secondary">
+                  {progressLabel}
+                </Typography>
+              )}
+              <Typography variant="body2" color="text.secondary">
+                {progress}%
+              </Typography>
+            </Stack>
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              color="primary"
+              sx={{ borderRadius: 2, height: 8 }}
+            />
+          </Box>
+        )}
+
+      
+        {optionalFields.length > 0 && (
+          <Stack direction="row" spacing={2} flexWrap="wrap">
+            {optionalFields.map((field, i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {field.icon}
+                <Typography variant="body2" color="text.secondary">
+                  {field.label}
+                </Typography>
+              </Box>
+            ))}
+          </Stack>
+        )}
+
+        
+        {extraActions.length > 0 && (
+          <Stack direction="row" spacing={1}>
+            {extraActions.map((a, i) => (
+              <Button
+                key={i}
+                variant={a.variant ?? "outlined"}
+                color={a.color ?? "primary"}
+                size="small"
+                startIcon={a.icon}
+                onClick={a.onClick}
+                sx={{
+                  minWidth: 0,
+                  px: 1.2,
+                  py: 0.5,
+                  fontSize: "1rem",
+                  textTransform: "none",
+                }}
+              >
+                {a.label}
+              </Button>
+            ))}
+          </Stack>
+        )}
+      </Stack>
     </Paper>
   );
 }

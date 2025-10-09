@@ -8,14 +8,15 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import HomeIcon from '@mui/icons-material/Home';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { Select, MenuItem } from "@mui/material";
-
+import { Sidebar } from "../components/layout";
 
 
 export default function UserManagment() {
 
   return (
 
-
+<Box className="foraria-layout">
+        <Sidebar/>
      <Box className="foraria-page-container">
 
           <PageHeader
@@ -55,7 +56,11 @@ export default function UserManagment() {
         { label: "+541123455678", value: "" },
         { label: "Depto. 3A", value: "" },
       ]}
-      optionalFields={["Registrado", "Ultimo Acceso"]}
+      optionalFields={
+        [ { label: "Registrado" } ,
+          { label: "Ultimo Acceso" }
+]}
+showDivider={true}
       image="../assets/profile-photo.jpg"
       actions={[
         { label: "Ver", icon: <VisibilityOutlinedIcon /> },
@@ -64,6 +69,7 @@ export default function UserManagment() {
     />
 
 
+    </Box>
     </Box>
 
   );

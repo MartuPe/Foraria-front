@@ -1,128 +1,163 @@
-import { useEffect, useMemo, useState } from "react";
+// import { useEffect, useMemo, useState } from "react";
 import {
   Box,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  LinearProgress,
-  Stack,
-  Button,
-  Divider,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Snackbar,
-  Alert,
+ //  Tabs,
+ //  Tab,
+ //  Card,
+ //  CardContent,
+ //  Typography,
+  // Chip,
+ //  LinearProgress,
+ //  Stack,
+ //  Button,
+ //  Divider,
+ //  Dialog,
+ //  DialogTitle,
+ //  DialogContent,
+ //  DialogActions,
+ //  Snackbar,
+ //  Alert,
 } from "@mui/material";
-import {
-  getVotes,
-  setVotes,
-  applyVote,
-  DEFAULT_VOTES,
-  VoteItem,
-  VoteStatus,
-  VoteAction,
-} from "../services/voteService";
+// import {
+//   getVotes,
+//   setVotes,
+//   applyVote,
+//   DEFAULT_VOTES,
+//   VoteItem,
+//   VoteStatus,
+//   VoteAction,
+// } from "../services/voteService";
+import InfoCard from "../components/InfoCard";
+import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PageHeader from "../components/SectionHeader";
+// import TaskAltIcon from '@mui/icons-material/TaskAlt';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import { Sidebar } from "../components/layout";
 
-type TabKey = "all" | "active" | "closed" | "upcoming";
+// type TabKey = "all" | "active" | "closed" | "upcoming";
 
-function statusChip(status: VoteStatus) {
-  if (status === "active") {
-    return <Chip label="Activa" color="success" size="small" variant="outlined" />;
-  }
-  if (status === "closed") {
-    return <Chip label="Finalizada" color="default" size="small" variant="outlined" />;
-  }
-  return <Chip label="Próximamente" color="info" size="small" variant="outlined" />;
-}
+// function statusChip(status: VoteStatus) {
+//   if (status === "active") {
+//     return <Chip label="Activa" color="success" size="small" variant="outlined" />;
+//   }
+//   if (status === "closed") {
+//     return <Chip label="Finalizada" color="default" size="small" variant="outlined" />;
+//   }
+//   return <Chip label="Próximamente" color="info" size="small" variant="outlined" />;
+// }
 
-function percent(value: number, total: number) {
-  if (total <= 0) return 0;
-  const p = Math.round((value / total) * 100);
-  return Number.isFinite(p) ? p : 0;
-}
+// function percent(value: number, total: number) {
+//   if (total <= 0) return 0;
+//   const p = Math.round((value / total) * 100);
+//   return Number.isFinite(p) ? p : 0;
+// }
 
 export default function Votes() {
-  const [tab, setTab] = useState<TabKey>("all");
-  const [votes, setVotesState] = useState<VoteItem[]>([]);
+  // const [tab, /*setTab*/] = useState<TabKey>("all");
+  // const [votes, setVotesState] = useState<VoteItem[]>([]);
 
   // confirm dialog
-  const [open, setOpen] = useState(false);
-  const [current, setCurrent] = useState<VoteItem | null>(null);
-  const [action, setAction] = useState<VoteAction>("favor");
+  // const [/*open*/, setOpen] = useState(false);
+  // const [current, setCurrent] = useState<VoteItem | null>(null);
+  // const [action, setAction] = useState<VoteAction>("favor");
 
   // toast
-  const [toast, setToast] = useState<{ open: boolean; msg: string }>({
-    open: false,
-    msg: "",
-  });
+  // const [/*toast*/, setToast] = useState<{ open: boolean; msg: string }>({
+  //   open: false,
+  //   msg: "",
+  // });
 
   // load from localStorage (or seed)
-  useEffect(() => {
-    const data = getVotes();
-    setVotesState(data.length ? data : DEFAULT_VOTES);
-  }, []);
+  // useEffect(() => {
+  //   const data = getVotes();
+  //   setVotesState(data.length ? data : DEFAULT_VOTES);
+  // }, []);
 
-  const counts = useMemo(() => {
-    const all = votes.length;
-    const active = votes.filter((v) => v.status === "active").length;
-    const closed = votes.filter((v) => v.status === "closed").length;
-    const upcoming = votes.filter((v) => v.status === "upcoming").length;
-    return { all, active, closed, upcoming };
-  }, [votes]);
+  // const counts = useMemo(() => {
+  //   const all = votes.length;
+  //   const active = votes.filter((v) => v.status === "active").length;
+  //   const closed = votes.filter((v) => v.status === "closed").length;
+  //   const upcoming = votes.filter((v) => v.status === "upcoming").length;
+  //   return { all, active, closed, upcoming };
+  // }, [votes]);
 
-  const filtered = useMemo(() => {
-    if (tab === "all") return votes;
-    if (tab === "active") return votes.filter((v) => v.status === "active");
-    if (tab === "closed") return votes.filter((v) => v.status === "closed");
-    return votes.filter((v) => v.status === "upcoming");
-  }, [tab, votes]);
+  // const filtered = useMemo(() => {
+  //   if (tab === "all") return votes;
+  //   if (tab === "active") return votes.filter((v) => v.status === "active");
+  //   if (tab === "closed") return votes.filter((v) => v.status === "closed");
+  //   return votes.filter((v) => v.status === "upcoming");
+  // }, [tab, votes]);
 
-  function openDialog(v: VoteItem, a: VoteAction) {
-    setCurrent(v);
-    setAction(a);
-    setOpen(true);
-  }
+  // function openDialog(v: VoteItem, a: VoteAction) {
+  //   setCurrent(v);
+  //   setAction(a);
+  //   setOpen(true);
+  // }
 
-  function closeDialog() {
-    setOpen(false);
-    setCurrent(null);
-  }
+  // function closeDialog() {
+  //   setOpen(false);
+  //   setCurrent(null);
+  // }
 
-  function confirmVote() {
-    if (!current) return;
-    // apply in memory
-    const updated = applyVote(votes, current.id, action);
-    setVotesState(updated);
-    // persist
-    setVotes(updated);
+  // function confirmVote() {
+  //   if (!current) return;
+  //   // apply in memory
+  //   const updated = applyVote(votes, current.id, action);
+  //   setVotesState(updated);
+  //   // persist
+  //   setVotes(updated);
 
-    setToast({
-      open: true,
-      msg:
-        action === "favor"
-          ? `¡Voto a favor confirmado para “${current.title}”!`
-          : `¡Voto en contra confirmado para “${current.title}”!`,
-    });
-    closeDialog();
-  }
+  //   setToast({
+  //     open: true,
+  //     msg:
+  //       action === "favor"
+  //         ? `¡Voto a favor confirmado para “${current.title}”!`
+  //         : `¡Voto en contra confirmado para “${current.title}”!`,
+  //   });
+  //   closeDialog();
+  // }
 
   return (
-    <Box className="foraria-page-container">
-      <Box
-        sx={{
-          maxWidth: 1000,
-          mx: "auto",
-          bgcolor: "background.paper",
-          borderRadius: 3,
-          p: 3,
-          boxShadow: 2,
-        }}
-      >
+<Box className="foraria-layout">
+    <Sidebar/>
+
+   <Box className="foraria-page-container">
+
+          <PageHeader
+      title="Votaciones del Consorcio"
+      tabs={[
+         { label: "Todas", value: "todas" },
+         { label: "Activas", value: "actives" },
+         { label: "Finalizadas", value: "finalizada" },
+      ]}
+      selectedTab="all"
+      onTabChange={(v) => console.log("Tab:", v)}
+    />  
+          <InfoCard
+  title="Encuesta de Satisfacción"
+  description="Participa y comparte tu opinión sobre la nueva funcionalidad."
+  fields={[
+    {  icon: <CalendarTodayIcon fontSize="small"/>,
+      label: "15 Nov 2024 - 30 Nov 2024", value: ""},
+]}
+  chips={[{ label: "Activa", color: "success" }]}
+  progress={64}
+  progressLabel="Votos registrados"
+  optionalFields={
+        [ { label: "A favor: 45 (79%)" } ,
+          { label: "En contra: 12 (21%)" }
+]}
+  extraActions={[
+    { label: "Votar a favor", color: "success",variant: "contained", onClick: () => alert("Voto a favor"), icon: <CheckCircleOutlineIcon/>},
+    { label: "Votar en contra",color: "error" , variant: "contained", onClick: () => alert("Voto en contra"), icon: <HighlightOffIcon/> },
+  ]}
+/>
+</Box>
+</Box>
+   /** <Box className="foraria-page-container">
+      <Box>   
+      
         <Stack direction="row" alignItems="center" justifyContent="space-between">
           <Typography variant="h5" color="primary">
             Votaciones del Consorcio
@@ -146,7 +181,7 @@ export default function Votes() {
           </Tabs>
         </Box>
 
-        <Stack spacing={2.5} sx={{ mt: 2 }}>
+       <Stack spacing={2.5} sx={{ mt: 2 }}>
           {filtered.map((v) => {
             const participated = v.inFavor + v.against;
             const progress = percent(participated, v.totalOwners);
@@ -154,8 +189,10 @@ export default function Votes() {
             const noPct = percent(v.against, participated);
             const disabled = v.status !== "active" || v.hasVoted === true;
 
+            
             return (
-              <Card key={v.id} variant="outlined" sx={{ borderRadius: 3 }}>
+              
+                <Card key={v.id} variant="outlined" sx={{ borderRadius: 3 }}>
                 <CardContent>
                   <Stack
                     direction={{ xs: "column", sm: "row" }}
@@ -183,6 +220,7 @@ export default function Votes() {
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                     {v.description}
                   </Typography>
+                  
 
                   <Stack direction="row" spacing={3} sx={{ mt: 1.5 }}>
                     <Typography variant="body2" color="text.secondary">
@@ -259,8 +297,10 @@ export default function Votes() {
           })}
         </Stack>
       </Box>
+*/
 
-      {/* Dialogo de confirmación */}
+
+  /**     { Dialogo de confirmación }
       <Dialog open={open} onClose={closeDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           🗳️ Confirmar Voto
@@ -307,7 +347,7 @@ export default function Votes() {
         </DialogActions>
       </Dialog>
 
-      {/* Toast de éxito */}
+      { Toast de éxito }
       <Snackbar
         open={toast.open}
         autoHideDuration={2500}
@@ -319,5 +359,7 @@ export default function Votes() {
         </Alert>
       </Snackbar>
     </Box>
+
+    */
   );
 }

@@ -8,7 +8,7 @@ import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 //import esLocale from "@fullcalendar/core/locales/es";
 
 import "../styles/fullcalendar.css";
-import NewReserve from "./NewReserve";
+import NewReserve from "../popups/NewReserve";
 
 // Mock de eventos
 const EVENTS = [
