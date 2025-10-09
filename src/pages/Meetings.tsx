@@ -4,7 +4,7 @@ import {
   Box,
   Typography,
   Stack,
-  Paper,
+  // Paper,
  //  TextField,
   // Tabs,
   // Tab,
@@ -19,7 +19,7 @@ import {
   DialogActions,
   IconButton,
 } from "@mui/material";
-import { alpha, /* useTheme */ } from "@mui/material/styles";
+// import { alpha, useTheme  } from "@mui/material/styles";
 
 // import EventIcon from "@mui/icons-material/Event";
 // import AccessTimeIcon from "@mui/icons-material/AccessTime";
@@ -42,14 +42,14 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 // import autoTable from "jspdf-autotable";
 
 import {
-  getMeetings,
+  // getMeetings,
   // getStats,
   Meeting,
   MeetingStatus,
 } from "../services/meetingService";
 import { Sidebar } from "../components/layout";
 
-type FilterTab = "all" | MeetingStatus;
+// type FilterTab = "all" | MeetingStatus;
 
 /* ---------- Chip coloreado por etiqueta ---------- */
 // function ColoredTag({ label }: { label: string }) {
