@@ -42,13 +42,13 @@ interface ForumPost {
   lastActivity: string;
 }
 
-// Stats del foro
-const forumStats = {
-  totalPosts: 2,
-  activeParticipants: 2,
-  totalReplies: 27,
-  pinnedPosts: 0
-};
+// Comentar la declaración global no utilizada
+// const forumStats = {
+//   totalPosts: 2,
+//   activeParticipants: 2,
+//   totalReplies: 27,
+//   pinnedPosts: 0
+// };
 
 const Forums: React.FC = () => {
   const [open, setOpen] = useState(false);
@@ -256,10 +256,10 @@ const Forums: React.FC = () => {
 
   const currentPosts = getPostsByCategory(currentCategory);
 
-  // Stats dinámicas por categoría
+  // Stats dinámicas por categoría (esta SÍ se usa)
   const forumStats = {
     totalPosts: currentPosts.length,
-    activeParticipants: currentPosts.length, // Simplificado
+    activeParticipants: currentPosts.length,
     totalReplies: currentPosts.reduce((sum, post) => sum + post.replies, 0),
     pinnedPosts: currentPosts.filter(post => post.isPinned).length
   };
