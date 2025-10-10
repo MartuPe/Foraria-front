@@ -5,11 +5,8 @@ import {
   Switch,
   FormControlLabel,
   Stack,
-  Card,
-  CardContent,
   Button,
   Divider,
-  Chip,
 } from '@mui/material';
 import {
   Settings as SettingsIcon,
@@ -283,3 +280,5 @@ const Configuration: React.FC = () => {
 };
 
 export default Configuration;
+
+

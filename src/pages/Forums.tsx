@@ -42,36 +42,6 @@ interface ForumPost {
   lastActivity: string;
 }
 
-// Datos mockeados
-const forumPostsMock: ForumPost[] = [
-  {
-    id: '1',
-    title: 'Propuesta: Horarios extendidos para el SUM los fines de semana',
-    content: 'Hola vecinos! Quería proponer que se extiendan los horarios del SUM durante los fines de semana hasta las 2 AM para eventos familiares. Muchas veces necesitamos más tiempo para celebraciones y el horario actual se queda corto. ¿Qué opinan?',
-    author: 'María González',
-    authorInitials: 'MG',
-    timeAgo: 'hace 4 horas',
-    category: 'General',
-    likes: 15,
-    dislikes: 3,
-    replies: 12,
-    lastActivity: 'hace 1 hora'
-  },
-  {
-    id: '2',
-    title: 'Intercambio de plantas y semillas 🌱',
-    content: 'Hola! Soy una apasionada de la jardinería y me gustaría organizar un intercambio de plantas y semillas entre vecinos. Tengo muchas suculentas, hierbas aromáticas y algunas flores. ¿A alguien le interesa participar?',
-    author: 'Ana Martínez',
-    authorInitials: 'AM',
-    timeAgo: 'hace 2 días',
-    category: 'General',
-    likes: 18,
-    dislikes: 0,
-    replies: 15,
-    lastActivity: 'hace 5 horas'
-  }
-];
-
 // Stats del foro
 const forumStats = {
   totalPosts: 2,
