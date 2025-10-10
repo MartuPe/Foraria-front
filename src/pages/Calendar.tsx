@@ -1,26 +1,13 @@
 import * as React from "react";
-import {
-  Box,
-  Button,
-  Container,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  Divider,
-  IconButton,
-  Paper,
-  Stack,
-  Typography
-} from "@mui/material";
-import { AddRounded, ChevronLeft, ChevronRight} from "@mui/icons-material";
+import { Box, Button, Container, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Stack, TextField, Typography } from "@mui/material";
+import { AddRounded, CalendarMonthOutlined, ChevronLeft, ChevronRight } from "@mui/icons-material";
+
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
+
 import "../styles/fullcalendar.css";
-import NewReserve from "../popups/NewReserve";
-import PageHeader from "../components/SectionHeader";
-import { Sidebar } from "../components/layout";
+import { Layout } from '../components/layout';
 
 // Mock
 const EVENTS = [
@@ -36,13 +23,12 @@ const EVENTS = [
 
 export default function Calendar() {
   const calendarRef = React.useRef<FullCalendar | null>(null);
-
   const [openReserve, setOpenReserve] = React.useState(false);
   const [openDay, setOpenDay] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("");
-  const [reserveDate, setReserveDate] = React.useState<Date | null>(null);
-  const [fcLocale, setFcLocale] = React.useState<any>(undefined);
+  const [fcLocale, setFcLocale] = React.useState<any>(undefined); // AGREGAR ESTADO
 
+  // AGREGAR USEEFFECT PARA IMPORT DINÁMICO
   React.useEffect(() => {
     if (process.env.NODE_ENV === "test") return;
     import("@fullcalendar/core/locales/es")
@@ -84,155 +70,111 @@ export default function Calendar() {
     setOpenDay(arg.date.toISOString());
   };
 
-  const handleConfirmReserve = (payload: {
-    area: string;
-    description: string;
-    date: string;
-    time: string | null;
-  }) => {
-    console.log("Reserva confirmada:", payload);
-    setOpenReserve(false);
-    // TODO: persistir en backend y refrescar eventos en FullCalendar
-  };
-
   return (
-    <Box className="foraria-layout">
-      <Sidebar />
+    <Layout>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Box sx={{ bgcolor: "#fff", borderRadius: 4, p: { xs: 2, md: 3 } }}>
 
-      <Box className="foraria-page-container">
-        <Container maxWidth="lg" sx={{ py: 3 }}>
-          <PageHeader
-            title="Calendario y Reservas"
-            actions={
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<AddRounded />}
-                onClick={() => setOpenReserve(true)}
-              >
-                Reservar espacio común
-              </Button>
-            }
-            sx={{ mb: 2 }}
-          />
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ mb: 1 }}>
+          <CalendarMonthOutlined sx={{ fontSize: 36, color: "#0B3A6E" }} />
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography variant="h4" sx={{ fontWeight: 800, color: "#0B3A6E", lineHeight: 1.1,}}>
+              Calendario y Reservas
+            </Typography>
+            <Typography variant="body1" sx={{ color: "text.secondary", mt: 0.5 }} >
+              Visualiza eventos y reserva espacios comunes
+            </Typography>
+          </Box>
 
-          <Paper
-            elevation={0}
-            variant="outlined"
-            sx={{
-              p: { xs: 1.5, md: 2 },
-              borderRadius: 3,
-              borderColor: "divider",
+          <Button variant="contained" startIcon={<AddRounded />} onClick={() => setOpenReserve(true)}
+            sx={{ borderRadius: 999, px: 2.4, py: 1.1, textTransform: "none", fontWeight: 800, boxShadow: "none", bgcolor: "#F59E0B", color: "#fff", "&:hover": { bgcolor: "#ea960b", boxShadow: "none", cursor: "pointer" }, }} >
+            Reservar espacio común
+          </Button>
+        </Stack>
+        <Divider sx={{ my: 2 }} />
+
+          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+            <IconButton onClick={goPrev} size="small">
+              <ChevronLeft />
+            </IconButton>
+            <Typography variant="h4" fontWeight={800} color="#0B3A6E">
+              {title}
+            </Typography>
+            <IconButton onClick={goNext} size="small">
+              <ChevronRight />
+            </IconButton>
+          </Stack>
+
+           <FullCalendar
+            ref={calendarRef}
+            plugins={[dayGridPlugin, interactionPlugin]}
+            initialView="dayGridMonth"
+            locale={fcLocale} // CAMBIAR de esLocale a fcLocale
+            firstDay={0}
+            height="auto"
+            fixedWeekCount={false}
+            dayMaxEventRows={2}
+            events={EVENTS}
+            dateClick={onDateClick}
+            headerToolbar={false}
+            eventDisplay="list-item"
+            eventContent={(arg) => (
+              <>
+                <span className="cal-dot" />
+                <span className="cal-event-name">{arg.event.title}</span>
+              </>
+            )}
+
+            dayCellDidMount={(info) => {
+              const el = info.el;
+              const isPastCell = el.classList.contains("fc-day-past");
+              const isOtherMonth = el.classList.contains("fc-day-other");
+              if (!isPastCell && !isOtherMonth) {
+                el.classList.add("cal-cursor-event");
+              }
             }}
-          >
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 1.5 }}
-            >
-              <IconButton onClick={goPrev} size="small" aria-label="Mes anterior">
-                <ChevronLeft />
-              </IconButton>
+          />
+        </Box>
 
-              <Typography variant="h5" fontWeight={600} color="primary">
-                {title}
-              </Typography>
-
-              <IconButton onClick={goNext} size="small" aria-label="Mes siguiente">
-                <ChevronRight />
-              </IconButton>
-            </Stack>
-
-            <Divider sx={{ mb: 1.5 }} />
-
-            <FullCalendar
-              ref={calendarRef}
-              plugins={[dayGridPlugin, interactionPlugin]}
-              initialView="dayGridMonth"
-              locale={fcLocale}
-              firstDay={0}
-              height="auto"
-              fixedWeekCount={false}
-              dayMaxEventRows={2}
-              events={EVENTS}
-              dateClick={onDateClick}
-              headerToolbar={false}
-              eventDisplay="list-item"
-              eventContent={(arg) => (
-                <>
-                  <span className="cal-dot" />
-                  <span className="cal-event-name">{arg.event.title}</span>
-                </>
-              )}
-              dayCellDidMount={(info) => {
-                const el = info.el;
-                const isPastCell = el.classList.contains("fc-day-past");
-                const isOtherMonth = el.classList.contains("fc-day-other");
-                if (!isPastCell && !isOtherMonth) {
-                  el.classList.add("cal-cursor-event");
-                }
-              }}
-            />
-          </Paper>
-        </Container>
-
-        <Dialog
-          open={openReserve}
-          onClose={() => setOpenReserve(false)}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{ sx: { borderRadius: 3 } }}
-        >
+        {/*reservar (botón) */}
+        <Dialog open={openReserve} onClose={() => setOpenReserve(false)} maxWidth="sm" fullWidth>
           <DialogTitle>Reservar espacio común</DialogTitle>
           <DialogContent dividers>
-            <NewReserve
-              date={reserveDate}
-              onCancel={() => setOpenReserve(false)}
-              onConfirm={handleConfirmReserve}
-            />
+            <Stack spacing={2}>
+              <TextField label="Espacio" placeholder="SUM, Parrilla, Cancha..." fullWidth />
+              <TextField label="Motivo" placeholder="Cumpleaños, reunión, etc." fullWidth />
+              <Stack direction="row" spacing={2}>
+                <TextField label="Fecha" type="date" fullWidth />
+                <TextField label="Desde" type="time" fullWidth />
+                <TextField label="Hasta" type="time" fullWidth />
+              </Stack>
+            </Stack>
           </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setOpenReserve(false)}>Cancelar</Button>
+            <Button variant="contained" onClick={() => setOpenReserve(false)}>Guardar</Button>
+          </DialogActions>
         </Dialog>
 
-        <Dialog
-          open={!!openDay}
-          onClose={() => setOpenDay(null)}
-          maxWidth="sm"
-          fullWidth
-          PaperProps={{ sx: { borderRadius: 3 } }}
-        >
+        {/* día clickeado */}
+        <Dialog open={!!openDay} onClose={() => setOpenDay(null)} maxWidth="sm" fullWidth>
           <DialogTitle>
-            {openDay &&
-              new Date(openDay).toLocaleDateString("es-ES", {
-                weekday: "long",
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
+            {openDay && new Date(openDay).toLocaleDateString("es-ES", {
+              weekday: "long", day: "numeric", month: "long", year: "numeric",
+            })}
           </DialogTitle>
           <DialogContent dividers>
-            <Typography variant="subtitle2" gutterBottom>
-              Eventos del día
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              No hay eventos.
-            </Typography>
+            <Typography variant="subtitle2" gutterBottom>Eventos del día</Typography>
+            <Typography variant="body2" color="text.secondary">No hay eventos.</Typography>
           </DialogContent>
           <DialogActions>
             <Button onClick={() => setOpenDay(null)}>Cerrar</Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                const d = openDay ? new Date(openDay) : null;
-                setOpenDay(null);
-                setReserveDate(d);
-                setOpenReserve(true);
-              }}>
+            <Button variant="contained" onClick={() => { setOpenDay(null); setOpenReserve(true); }}>
               Reservar este día
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
-    </Box>
+      </Container>
+    </Layout>
   );
 }
