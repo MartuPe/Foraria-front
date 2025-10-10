@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import "../styles/dashboard.css";
-
 import { Paper, Button } from "@mui/material";
 import PageHeader from "../components/SectionHeader";
 import Money from "../components/Money";
@@ -9,7 +8,6 @@ import BarsChart from "../components/charts/Bar";
 import QuickAction from "../components/QuickAction";
 import { fetchDashboardMock } from "../services/dashboard.mock";
 import { Sidebar } from "../components/layout";
-
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import EventIcon from "@mui/icons-material/Event";

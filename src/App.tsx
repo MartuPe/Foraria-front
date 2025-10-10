@@ -1,4 +1,3 @@
-
 // src/App.tsx
 import React from 'react';
 import './App.css';
@@ -20,12 +19,19 @@ import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
 import Dashboard from './pages/Dashboard';
-import UserManagement from './pages/UserManagement';
 import Calendar from './pages/Calendar'; 
 import NewReserve from './popups/NewEvent';
 import Suppliers from './pages/Suppliers'; 
 import NewSupplier from './popups/NewSupplier';
 
+// Importar Forums
+import Forums from './pages/Forums';
+
+// Importar Configuration
+import Configuration from './pages/Configuration';
+
+// Importar AdminReclaims
+import AdminReclaims from './pages/admin/AdminReclaims';
 
 function App() {
   return (
@@ -33,17 +39,15 @@ function App() {
       <CssBaseline />
       <Router>
         <Routes>
-          {/* Redirección inicial */}
+          {/* Redirección inicial - CAMBIAR TEMPORALMENTE */}
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
-
 
           {/* Auth */}
           <Route path="/iniciarSesion" element={<Login />} />
-
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/actualizarInformacion" element={<UpdateData />} />
-          <Route path="/perfil" element={<Profile />} />
+          <Route path="/perfil" element={<Profile />} /> {/* YA EXISTE */}
           <Route path="/editarInformacion" element={<ChangeData />} />
 
           {/* Funcionalidades */}
@@ -57,11 +61,23 @@ function App() {
           <Route path="/nuevaReserva" element={<NewReserve />} />
           <Route path="/proveedores" element={<Suppliers />} /> 
           <Route path="/nuevoProveedor" element={<NewSupplier />} />
-          <Route path="/gestionUsuarios" element={<UserManagement />} />
 
+          {/* Nueva ruta para Forums */}
+          <Route path="/forums/general" element={<Forums />} />
+          <Route path="/forums/administracion" element={<Forums />} />
+          <Route path="/forums/seguridad" element={<Forums />} />
+          <Route path="/forums/mantenimiento" element={<Forums />} />
+          <Route path="/forums/espacios-comunes" element={<Forums />} />
+          <Route path="/forums/garage-parking" element={<Forums />} />
+
+          {/* Agregar ruta de configuración */}
+          <Route path="/configuracion" element={<Configuration />} />
+
+          {/* Rutas del Admin */}
+          <Route path="/admin/reclaims" element={<AdminReclaims />} />
 
           {/* Fallback */}
-          <Route path="*" element={<Navigate to="/iniciarSesion" replace />} />
+          <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
       </Router>
     </ThemeProvider>

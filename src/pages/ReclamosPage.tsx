@@ -112,33 +112,33 @@ const [open, setOpen] = useState(false);
   const handleClose = () => setOpen(false);
 
 
-  // Configuración de filtros
+  // Configuración de filtros con colores específicos
   const estadosConfig = [
-    { key: 'todos', label: 'Todos', count: 5, color: 'default' as const },
-    { key: 'nuevo', label: 'Nuevos', count: 1, color: 'info' as const },
-    { key: 'en-proceso', label: 'En Proceso', count: 2, color: 'warning' as const },
-    { key: 'resuelto', label: 'Resueltos', count: 1, color: 'success' as const },
-    { key: 'cerrado', label: 'Cerrados', count: 1, color: 'default' as const }
+    { key: 'todos', label: 'Todos', count: 5, color: 'default' as const, textColor: '#666666' },
+    { key: 'nuevo', label: 'Nuevos', count: 1, color: 'info' as const, textColor: '#2196f3' },
+    { key: 'en-proceso', label: 'En Proceso', count: 2, color: 'warning' as const, textColor: '#ff9800' },
+    { key: 'resuelto', label: 'Resueltos', count: 1, color: 'success' as const, textColor: '#4caf50' },
+    { key: 'cerrado', label: 'Cerrados', count: 1, color: 'default' as const, textColor: '#666666' }
   ];
 
   const prioridadesConfig = [
-    { key: 'todas', label: 'Todas', count: 5, color: 'default' as const },
-    { key: 'baja', label: 'Baja', count: 0, color: 'success' as const },
-    { key: 'media', label: 'Media', count: 3, color: 'info' as const },
-    { key: 'alta', label: 'Alta', count: 2, color: 'warning' as const },
-    { key: 'urgente', label: 'Urgente', count: 0, color: 'error' as const }
+    { key: 'todas', label: 'Todas', count: 5, color: 'default' as const, textColor: '#666666' },
+    { key: 'baja', label: 'Baja', count: 0, color: 'success' as const, textColor: '#4caf50' },
+    { key: 'media', label: 'Media', count: 3, color: 'info' as const, textColor: '#ff9800' },
+    { key: 'alta', label: 'Alta', count: 2, color: 'warning' as const, textColor: '#f44336' },
+    { key: 'urgente', label: 'Urgente', count: 0, color: 'error' as const, textColor: '#d32f2f' }
   ];
 
   const categoriasConfig = [
-    { key: 'todas', label: 'Todas', count: 5 },
-    { key: 'mantenimiento', label: 'Mantenimiento', count: 1 },
-    { key: 'plomeria', label: 'Plomería', count: 1 },
-    { key: 'electricidad', label: 'Electricidad', count: 1 },
-    { key: 'limpieza', label: 'Limpieza', count: 1 },
-    { key: 'seguridad', label: 'Seguridad', count: 0 },
-    { key: 'convivencia', label: 'Convivencia', count: 1 },
-    { key: 'administracion', label: 'Administración', count: 0 },
-    { key: 'otros', label: 'Otros', count: 0 }
+    { key: 'todas', label: 'Todas', count: 5, textColor: '#666666' },
+    { key: 'mantenimiento', label: 'Mantenimiento', count: 1, textColor: '#f97316' },
+    { key: 'plomeria', label: 'Plomería', count: 1, textColor: '#f97316' },
+    { key: 'electricidad', label: 'Electricidad', count: 1, textColor: '#f97316' },
+    { key: 'limpieza', label: 'Limpieza', count: 1, textColor: '#f97316' },
+    { key: 'seguridad', label: 'Seguridad', count: 0, textColor: '#f97316' },
+    { key: 'convivencia', label: 'Convivencia', count: 1, textColor: '#f97316' },
+    { key: 'administracion', label: 'Administración', count: 0, textColor: '#f97316' },
+    { key: 'otros', label: 'Otros', count: 0, textColor: '#f97316' }
   ];
 
   // Funciones para obtener iconos y colores
@@ -184,135 +184,183 @@ const [open, setOpen] = useState(false);
 
   return (
     <Layout>
-      <Box sx={{ maxWidth: 1400, mx: 'auto' }}> {/* Aumentado max width */}
-        {/* Header */}
+      {/* Contenedor principal con fondo blanco */}
+      <Box sx={{ 
+          maxWidth: 1400, 
+          mx: 'auto',
+          backgroundColor: 'white',
+          borderRadius: 2,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+          overflow: 'hidden'
+        }}
+      >
+        {/* Header dentro del contenedor blanco */}
         <Box sx={{ 
           display: 'flex', 
           justifyContent: 'space-between', 
           alignItems: 'center', 
-          mb: 2 // Reducido margen
+          p: 3,
+          borderBottom: '1px solid #f0f0f0'
         }}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}> {/* Reducido de h4 a h5 */}
-            📋 Reclamos y Sugerencias
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box sx={{
+              width: 24,
+              height: 24,
+              backgroundColor: '#f97316',
+              borderRadius: '4px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontSize: '12px',
+              fontWeight: 600
+            }}>
+              📋
+            </Box>
+            <Typography variant="h5" sx={{ fontWeight: 600, color: '#333' }}>
+              Reclamos y Sugerencias
+            </Typography>
+          </Box>
         
-      <Button
-        variant="contained"
-        color="secondary"
-        startIcon={<AddIcon />}
-        onClick={handleOpen}
-        sx={{
-          px: 2.5,
-          py: 1,
-          borderRadius: 2,
-          textTransform: "none",
-          fontWeight: 600,
-          fontSize: "0.9rem",
-        }}
-      >
-        Nuevo Reclamo
-      </Button>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpen}
+            sx={{
+              px: 3,
+              py: 1,
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
+              fontSize: "0.9rem",
+              backgroundColor: '#f97316',
+              '&:hover': {
+                backgroundColor: '#ea580c'
+              }
+            }}
+          >
+            Nuevo Reclamo
+          </Button>
 
-      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-        <DialogContent>
-          <NewClaim />
-        </DialogContent>
-      </Dialog>
+          <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+            <DialogContent>
+              <NewClaim />
+            </DialogContent>
+          </Dialog>
 
         </Box>
 
-        {/* Filtros */}
-        <Stack spacing={2} sx={{ mb: 3 }}> {/* Reducido spacing y margen */}
-          {/* Filtro por Estado */}
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 0.8, fontWeight: 600, fontSize: '0.85rem' }}> {/* Más pequeño */}
-              Filtrar por Estado
-            </Typography>
-            <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap> {/* Reducido spacing */}
-              {estadosConfig.map((estado) => (
-                <Chip
-                  key={estado.key}
-                  label={`${estado.label} (${estado.count})`}
-                  color={filtroEstado === estado.key ? estado.color : 'default'}
-                  onClick={() => setFiltroEstado(estado.key)}
-                  variant={filtroEstado === estado.key ? 'filled' : 'outlined'}
-                  size="small" // Agregado tamaño pequeño
-                  sx={{ 
-                    fontWeight: filtroEstado === estado.key ? 600 : 400,
-                    cursor: 'pointer',
-                    fontSize: '0.75rem', // Texto más pequeño
-                    height: 28 // Altura fija más pequeña
-                  }}
-                />
-              ))}
-            </Stack>
-          </Box>
+        {/* Filtros dentro del contenedor blanco */}
+        <Box sx={{ p: 3 }}>
+          <Stack spacing={3}>
+            {/* Filtro por Estado */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, fontSize: '0.9rem', color: '#333' }}>
+                Filtrar por Estado
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {estadosConfig.map((estado) => (
+                  <Chip
+                    key={estado.key}
+                    label={`${estado.label} (${estado.count})`}
+                    onClick={() => setFiltroEstado(estado.key)}
+                    variant={filtroEstado === estado.key ? 'filled' : 'outlined'}
+                    size="small"
+                    sx={{ 
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      height: 32,
+                      backgroundColor: filtroEstado === estado.key ? estado.textColor : 'transparent',
+                      color: filtroEstado === estado.key ? 'white' : estado.textColor,
+                      borderColor: estado.textColor,
+                      '&:hover': {
+                        backgroundColor: filtroEstado === estado.key ? estado.textColor : `${estado.textColor}15`,
+                      }
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
 
-          {/* Filtro por Prioridad */}
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 0.8, fontWeight: 600, fontSize: '0.85rem' }}>
-              Filtrar por Prioridad
-            </Typography>
-            <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
-              {prioridadesConfig.map((prioridad) => (
-                <Chip
-                  key={prioridad.key}
-                  label={`${prioridad.label} (${prioridad.count})`}
-                  color={filtroPrioridad === prioridad.key ? prioridad.color : 'default'}
-                  onClick={() => setFiltroPrioridad(prioridad.key)}
-                  variant={filtroPrioridad === prioridad.key ? 'filled' : 'outlined'}
-                  size="small"
-                  sx={{ 
-                    fontWeight: filtroPrioridad === prioridad.key ? 600 : 400,
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    height: 28
-                  }}
-                />
-              ))}
-            </Stack>
-          </Box>
+            {/* Filtro por Prioridad */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, fontSize: '0.9rem', color: '#333' }}>
+                Filtrar por Prioridad
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {prioridadesConfig.map((prioridad) => (
+                  <Chip
+                    key={prioridad.key}
+                    label={`${prioridad.label} (${prioridad.count})`}
+                    onClick={() => setFiltroPrioridad(prioridad.key)}
+                    variant={filtroPrioridad === prioridad.key ? 'filled' : 'outlined'}
+                    size="small"
+                    sx={{ 
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      height: 32,
+                      backgroundColor: filtroPrioridad === prioridad.key ? prioridad.textColor : 'transparent',
+                      color: filtroPrioridad === prioridad.key ? 'white' : prioridad.textColor,
+                      borderColor: prioridad.textColor,
+                      '&:hover': {
+                        backgroundColor: filtroPrioridad === prioridad.key ? prioridad.textColor : `${prioridad.textColor}15`,
+                      }
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
 
-          {/* Filtro por Categoría */}
-          <Box>
-            <Typography variant="subtitle2" sx={{ mb: 0.8, fontWeight: 600, fontSize: '0.85rem' }}>
-              Filtrar por Categoría
-            </Typography>
-            <Stack direction="row" spacing={0.8} flexWrap="wrap" useFlexGap>
-              {categoriasConfig.map((categoria) => (
-                <Chip
-                  key={categoria.key}
-                  label={`${categoria.label} (${categoria.count})`}
-                  color={filtroCategoria === categoria.key ? 'primary' : 'default'}
-                  onClick={() => setFiltroCategoria(categoria.key)}
-                  variant={filtroCategoria === categoria.key ? 'filled' : 'outlined'}
-                  size="small"
-                  sx={{ 
-                    fontWeight: filtroCategoria === categoria.key ? 600 : 400,
-                    cursor: 'pointer',
-                    fontSize: '0.75rem',
-                    height: 28
-                  }}
-                />
-              ))}
-            </Stack>
-          </Box>
-        </Stack>
+            {/* Filtro por Categoría */}
+            <Box>
+              <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, fontSize: '0.9rem', color: '#333' }}>
+                Filtrar por Categoría
+              </Typography>
+              <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                {categoriasConfig.map((categoria) => (
+                  <Chip
+                    key={categoria.key}
+                    label={`${categoria.label} (${categoria.count})`}
+                    onClick={() => setFiltroCategoria(categoria.key)}
+                    variant={filtroCategoria === categoria.key ? 'filled' : 'outlined'}
+                    size="small"
+                    sx={{ 
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      fontSize: '0.75rem',
+                      height: 32,
+                      backgroundColor: filtroCategoria === categoria.key ? categoria.textColor : 'transparent',
+                      color: filtroCategoria === categoria.key ? 'white' : categoria.textColor,
+                      borderColor: categoria.textColor,
+                      '&:hover': {
+                        backgroundColor: filtroCategoria === categoria.key ? categoria.textColor : `${categoria.textColor}15`,
+                      }
+                    }}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          </Stack>
+        </Box>
 
         {/* Lista de Reclamos */}
-        <Stack spacing={2}> {/* Reducido spacing */}
-          {reclamosFiltrados.map((reclamo) => (
-            <Card 
-              key={reclamo.id} 
-              sx={{ 
-                '&:hover': { 
-                  boxShadow: (theme) => theme.shadows[6], // Reducido shadow
-                  transform: 'translateY(-1px)', // Reducido movimiento
-                  transition: 'all 0.2s ease-in-out'
-                } 
-              }}
-            >
-              <CardContent sx={{ p: 2.5 }}> {/* Reducido padding */}
+        <Box sx={{ p: 3, pt: 0 }}>
+          <Stack spacing={2}>
+            {reclamosFiltrados.map((reclamo) => (
+              <Card 
+                key={reclamo.id} 
+                sx={{ 
+                  '&:hover': { 
+                    boxShadow: (theme) => theme.shadows[4],
+                    transform: 'translateY(-1px)',
+                    transition: 'all 0.2s ease-in-out'
+                  },
+                  border: '1px solid #f0f0f0'
+                }}
+              >
+                <CardContent sx={{ p: 2.5 }}> {/* Reducido padding */}
                 {/* Header del reclamo */}
                 <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 2, mb: 1.5 }}>
                   <Box sx={{ flexGrow: 1 }}>
@@ -434,13 +482,15 @@ const [open, setOpen] = useState(false);
 
         {/* Mensaje si no hay resultados */}
         {reclamosFiltrados.length === 0 && (
-          <Paper sx={{ p: 4, textAlign: 'center' }}>
+          <Paper sx={{ p: 4, textAlign: 'center', border: '1px solid #f0f0f0' }}>
             <ErrorIcon sx={{ fontSize: 48, color: 'text.secondary', mb: 2 }} />
             <Typography variant="h6" color="text.secondary">
               No se encontraron reclamos con los filtros aplicados
             </Typography>
           </Paper>
         )}
+                    </Box>
+
       </Box>
     </Layout>
   );
