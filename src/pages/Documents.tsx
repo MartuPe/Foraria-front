@@ -1,6 +1,4 @@
-import React from "react";
 import { useMemo, useState } from "react";
-import { Layout } from '../components/layout';
 import {
   Box,
   Paper,
@@ -41,15 +39,15 @@ import {
   formatSize,
 } from "../services/documentService";
 
-import NewDocument from "../popups/NewDocument"; // <--- el popup externo
-
+import NewDocument from "../popups/NewDocument";
+import { Sidebar } from "../components/layout";
 type TabKey = "general" | "mine";
 
 export default function Documents() {
   const [activeTab, setActiveTab] = useState<TabKey>("general");
   const [search, setSearch] = useState("");
   const [generalDocs] = useState<GeneralDoc[]>(GENERAL_DOCS);
-  const [myDocs, /**setMyDocs**/] = useState<MyDoc[]>(MY_DOCS_SEED);
+  const [myDocs /*, setMyDocs*/] = useState<MyDoc[]>(MY_DOCS_SEED);
   const [filterGeneral, setFilterGeneral] = useState<GeneralCategory | "Todas">("Todas");
   const [filterMine, setFilterMine] = useState<MyCategory | "Todas">("Todas");
 
@@ -61,17 +59,13 @@ export default function Documents() {
     msg: "",
   });
 
-  // métricas mock
   const totalGeneral = generalDocs.length;
   const downloadsThisMonth = 156;
   const lastUpdate = "15 Nov";
 
-  // filtros
   const filteredGeneral = useMemo(() => {
     let list = generalDocs;
-    if (filterGeneral !== "Todas") {
-      list = list.filter((d) => d.category === filterGeneral);
-    }
+    if (filterGeneral !== "Todas") list = list.filter((d) => d.category === filterGeneral);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -86,9 +80,7 @@ export default function Documents() {
 
   const filteredMine = useMemo(() => {
     let list = myDocs;
-    if (filterMine !== "Todas") {
-      list = list.filter((d) => d.category === filterMine);
-    }
+    if (filterMine !== "Todas") list = list.filter((d) => d.category === filterMine);
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
@@ -108,15 +100,11 @@ export default function Documents() {
     setSnack({ open: true, msg: `Descargando "${doc.title}"...` });
   };
 
-  //const handleUploadConfirm = (newDoc: MyDoc) => {
-   // setMyDocs((prev) => [newDoc, ...prev]);
-   // setOpenUpload(false);
-   // setSnack({ open: true, msg: "Documento subido" });
-  //};
-
   return (
-    <Layout>
-      <Box sx={{ minHeight: "100vh", p: { xs: 2, md: 3 } }}>
+    <Box className="foraria-layout">
+      <Sidebar />
+
+      <Box className="foraria-page-container">
         <Paper
           elevation={0}
           sx={{
@@ -128,9 +116,7 @@ export default function Documents() {
             boxShadow: "0 8px 28px rgba(8,61,119,0.08)",
             border: "1px solid",
             borderColor: "divider",
-          }}
-        >
-          {/* Título + buscador */}
+          }}>
           <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
             <DescriptionIcon color="primary" />
             <Typography variant="h5" color="primary">Documentos</Typography>
@@ -144,14 +130,12 @@ export default function Documents() {
                 width: 320,
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
-                
                   "& fieldset": { borderColor: "divider" },
                 },
               }}
             />
           </Stack>
 
-          {/* Pestañas */}
           <Tabs
             value={activeTab}
             onChange={(_, v) => setActiveTab(v)}
@@ -163,24 +147,14 @@ export default function Documents() {
                 fontWeight: 600,
                 minHeight: 36,
                 px: 2,
-                color: "text.primary", // Color normal para pestañas no seleccionadas
-                border: "1px solid",
-                borderColor: "divider",
-                borderRadius: 2,
-                mr: 1,
-                "&:hover": {
-                  backgroundColor: "action.hover",
-                },
               },
               "& .Mui-selected": {
-                color: "white !important", // TEXTO BLANCO para contraste
-                backgroundColor: "primary.main",
-                borderColor: "primary.main",
+                color: "primary.contrastText !important",
+                bgcolor: "primary.main",
+                borderRadius: 2,
                 boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
               },
-              "& .MuiTabs-indicator": { 
-                display: "none" // Sin indicador para mantener el efecto visual
-              },
+              "& .MuiTabs-indicator": { display: "none" },
             }}
           >
             <Tab value="general" label="Documentos Generales" />
@@ -211,7 +185,6 @@ export default function Documents() {
             </Stack>
           )}
 
-          {/* Lista de documentos */}
           <Stack spacing={2.0}>
             {(activeTab === "general" ? filteredGeneral : filteredMine).map((d) => (
               <Card key={d.id} elevation={0} variant="outlined" sx={{ borderRadius: 3 }}>
@@ -255,7 +228,6 @@ export default function Documents() {
           </Stack>
         </Paper>
 
-        {/* Modal Preview */}
         <Dialog open={!!preview} onClose={() => setPreview(null)} maxWidth="sm" fullWidth>
           <DialogContent>
             <Typography variant="h6">{preview?.title}</Typography>
@@ -269,7 +241,6 @@ export default function Documents() {
           </DialogContent>
         </Dialog>
 
-     
         <Dialog open={openUpload} onClose={() => setOpenUpload(false)} maxWidth="md" fullWidth>
           <DialogContent>
             <NewDocument />
@@ -287,11 +258,9 @@ export default function Documents() {
           </Alert>
         </Snackbar>
       </Box>
-    </Layout>
+    </Box>
   );
 }
-
-/* ----------------- Subcomponentes ----------------- */
 
 function Kpi({
   icon,
@@ -305,10 +274,7 @@ function Kpi({
   color?: "primary" | "success" | "secondary";
 }) {
   return (
-    <Paper
-      variant="outlined"
-      sx={{ p: 2, borderRadius: 3, display: "flex", alignItems: "center", gap: 2, minWidth: 280 }}
-    >
+    <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: "flex", alignItems: "center", gap: 2, minWidth: 280 }}>
       <Box
         sx={(t) => ({
           width: 36,
