@@ -4,6 +4,7 @@ import StatCard from "../components/StatCard";
 import ExpenseItem, { Expense } from "../components/ExpenseItem";
 import Money from "../components/Money";
 import { fetchExpensesMock, formatDateISO } from "../services/expenses.mock";
+import { Layout } from "../components/layout";
 
 import PaymentsIcon from "@mui/icons-material/Payments";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -32,48 +33,52 @@ export default function ExpensesPage() {
   if (!header) return null;
 
   return (
-    <div className="page">
-      <header className="page__header">
-        <div className="title-row">
-          <div className="title-left">
-            <h1>Expensas</h1>
-          </div>
-          <div className="unit">
-            <div>
-              Unidad: <strong>{header.unidad}</strong>
+    <Layout>
+      <div className="page">
+        <header className="page__header">
+          <div className="title-row">
+            <div className="title-left">
+              <h1>Expensas</h1>
             </div>
-            <div>
-              Titular: <strong>{header.titular}</strong>
+            <div className="unit">
+              <div>
+                Unidad: <strong>{header.unidad}</strong>
+              </div>
+              <div>
+                Titular: <strong>{header.titular}</strong>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="stats">
-          <StatCard
-            accent="warning"
-            icon={<PaymentsIcon color="action" />}
-            label="Total Pendiente"
-            value={<Money value={header.totalPendiente} /> as unknown as string}
-          />
-          <StatCard
-            accent="success"
-            icon={<CheckCircleOutlineIcon color="action" />}
-            label="Última Expensa"
-            value={header.ultimaExpensaMes}
-          />
-          <StatCard
-            icon={<EventAvailableIcon color="action" />}
-            label="Próximo Vencimiento"
-            value={formatDateISO(header.proximoVencISO)}
-          />
-        </div>
-      </header>
+          <div className="stats">
+            <StatCard
+              accent="warning"
+              icon={<PaymentsIcon color="action" />}
+              label="Total Pendiente"
+              value={
+                <Money value={header.totalPendiente} /> as unknown as string
+              }
+            />
+            <StatCard
+              accent="success"
+              icon={<CheckCircleOutlineIcon color="action" />}
+              label="Última Expensa"
+              value={header.ultimaExpensaMes}
+            />
+            <StatCard
+              icon={<EventAvailableIcon color="action" />}
+              label="Próximo Vencimiento"
+              value={formatDateISO(header.proximoVencISO)}
+            />
+          </div>
+        </header>
 
-      <main className="page__content">
-        {items.map((exp) => (
-          <ExpenseItem key={exp.id} exp={exp} />
-        ))}
-      </main>
-    </div>
+        <main className="page__content">
+          {items.map((exp) => (
+            <ExpenseItem key={exp.id} exp={exp} />
+          ))}
+        </main>
+      </div>
+    </Layout>
   );
 }

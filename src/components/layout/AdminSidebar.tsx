@@ -13,14 +13,16 @@ import {
 } from '@mui/material';
 import {
   BarChart as DashboardIcon,
-  Warning as ReclamosIcon,
-  Receipt as ExpensasIcon,
-  CalendarToday,
-  HowToVote as VotacionesIcon,
-  Groups as ReunionesIcon,
-  Description as DocumentosIcon,
-  Chat as ChatbotIcon,
-  Forum as ForosIcon,
+  SupervisorAccount as UsersIcon,
+  Receipt as ExpensesIcon,
+  Description as SuppliersIcon,
+  AddBox as CreateVotesIcon,
+  GroupAdd as CreateMeetingsIcon,
+  Event as CreateEventsIcon,
+  Assignment as ReclaimsIcon,
+  BarChart as StatsIcon,
+  VolumeUp as AuditIcon,
+  Forum as ForumsIcon,
   Settings,
   ChevronRight,
   ExpandLess,
@@ -46,32 +48,34 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
-  { id: 'reclamos', label: 'Reclamos', icon: <ReclamosIcon />, path: '/reclamos' },
-  { id: 'expensas', label: 'Expensas', icon: <ExpensasIcon />, path: '/expensas' },
-  { id: 'calendario', label: 'Calendario', icon: <CalendarToday />, path: '/calendario' },
-  { id: 'votaciones', label: 'Votaciones', icon: <VotacionesIcon />, path: '/votaciones' },
-  { id: 'reuniones', label: 'Reuniones', icon: <ReunionesIcon />, path: '/reuniones' },
-  { id: 'documentos', label: 'Documentos', icon: <DocumentosIcon />, path: '/documentos' },
-  { id: 'chatbot', label: 'Chatbot', icon: <ChatbotIcon />, path: '/chatbot' },
+  { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
+  { id: 'users', label: 'Gestión de Usuarios', icon: <UsersIcon />, path: '/admin/users' },
+  { id: 'expenses', label: 'Gastos y Facturas', icon: <ExpensesIcon />, path: '/admin/expenses' },
+  { id: 'suppliers', label: 'Proveedores', icon: <SuppliersIcon />, path: '/admin/suppliers' },
+  { id: 'votes', label: 'Crear Votaciones', icon: <CreateVotesIcon />, path: '/admin/votes' },
+  { id: 'meetings', label: 'Crear Reuniones', icon: <CreateMeetingsIcon />, path: '/admin/meetings' },
+  { id: 'events', label: 'Crear Eventos', icon: <CreateEventsIcon />, path: '/admin/events' },
+  { id: 'reclaims', label: 'Gestión Reclamos', icon: <ReclaimsIcon />, path: '/admin/reclaims' },
+  { id: 'stats', label: 'Estadísticas', icon: <StatsIcon />, path: '/admin/stats' },
+  { id: 'audit', label: 'Auditoría', icon: <AuditIcon />, path: '/admin/audit' },
 ];
 
-// Nuevo: Submenu de Foros
+// Submenu de Foros (igual que en el Sidebar normal)
 const forosSubMenu = [
-  { id: 'foros-general', label: 'General', icon: <ForosIcon />, path: '/forums/general' },
-  { id: 'foros-administracion', label: 'Administración', icon: <AdminPanelSettings />, path: '/forums/administracion' },
-  { id: 'foros-seguridad', label: 'Seguridad', icon: <Security />, path: '/forums/seguridad' },
-  { id: 'foros-mantenimiento', label: 'Mantenimiento', icon: <Build />, path: '/forums/mantenimiento' },
-  { id: 'foros-espacios-comunes', label: 'Espacios Comunes', icon: <Park />, path: '/forums/espacios-comunes' },
-  { id: 'foros-garage-parking', label: 'Garage y Parking', icon: <DirectionsCar />, path: '/forums/garage-parking' },
+  { id: 'foros-general', label: 'General', icon: <ForumsIcon />, path: '/admin/forums/general' },
+  { id: 'foros-administracion', label: 'Administración', icon: <AdminPanelSettings />, path: '/admin/forums/administracion' },
+  { id: 'foros-seguridad', label: 'Seguridad', icon: <Security />, path: '/admin/forums/seguridad' },
+  { id: 'foros-mantenimiento', label: 'Mantenimiento', icon: <Build />, path: '/admin/forums/mantenimiento' },
+  { id: 'foros-espacios-comunes', label: 'Espacios Comunes', icon: <Park />, path: '/admin/forums/espacios-comunes' },
+  { id: 'foros-garage-parking', label: 'Garage y Parking', icon: <DirectionsCar />, path: '/admin/forums/garage-parking' },
 ];
 
-interface SidebarProps {
+interface AdminSidebarProps {
   open?: boolean;
   onClose?: () => void;
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
+export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [forosOpen, setForosOpen] = useState(false);
@@ -86,7 +90,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
   };
 
   const isForosActive = () => {
-    return location.pathname.startsWith('/forums');
+    return location.pathname.startsWith('/admin/forums');
   };
 
   const handleForosClick = () => {
@@ -113,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
         },
       }}
     >
-      {/* Header con logo - ACTUALIZADO */}
+      {/* Header con logo - EXACTAMENTE IGUAL */}
       <Box
         sx={{
           p: 2,
@@ -139,52 +143,51 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
           <Typography variant="h6" sx={{ fontWeight: 700, color: 'white', fontSize: '1.1rem' }}>
             Foraria
           </Typography>
-          <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.75rem' }}>
-            Sistema de Gestión
+          <Typography variant="body2" sx={{ color: '#f97316', fontSize: '0.75rem', fontWeight: 600 }}>
+            Panel Administrativo
           </Typography>
         </Box>
       </Box>
 
-      {/* Menu Items */}
+      {/* Menu Items - EXACTAMENTE IGUAL */}
       <List sx={{ 
-        px: 1.5, // Reducido padding horizontal
-        py: 1, // Reducido padding vertical
+        px: 1.5,
+        py: 1,
         flexGrow: 1,
         overflow: 'auto',
-        // Remover maxHeight fijo y usar flex para distribución automática
         display: 'flex',
         flexDirection: 'column',
-        gap: 0.5, // Espacio entre items
+        gap: 0.5,
       }}>
         {menuItems.map((item) => (
-          <ListItem key={item.id} disablePadding sx={{ mb: 0 }}> {/* Sin margen bottom */}
+          <ListItem key={item.id} disablePadding sx={{ mb: 0 }}>
             <ListItemButton
               onClick={() => handleNavigation(item.path)}
               sx={{
-                borderRadius: 1.5, // Reducido border radius
-                minHeight: 42, // Reducida altura mínima
-                px: 1.5, // Reducido padding horizontal
-                py: 1, // Reducido padding vertical
+                borderRadius: 1.5,
+                minHeight: 42,
+                px: 1.5,
+                py: 1,
                 position: 'relative',
                 backgroundColor: isActiveRoute(item.path) 
-                  ? '#f97316' 
+                  ? '#F59E0B' // AMARILLO para Admin (en lugar de '#f97316')
                   : 'transparent',
                 '&:hover': {
                   backgroundColor: isActiveRoute(item.path)
-                    ? '#f97316'
+                    ? '#F59E0B' // AMARILLO para Admin
                     : 'rgba(255,255,255,0.08)',
                 },
                 color: 'white',
                 justifyContent: 'space-between',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}> {/* Reducido gap */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
                 <ListItemIcon
                   sx={{
                     color: 'white',
-                    minWidth: 20, // Reducido ancho mínimo
+                    minWidth: 20,
                     '& .MuiSvgIcon-root': {
-                      fontSize: '1.1rem' // Iconos más pequeños
+                      fontSize: '1.1rem'
                     }
                   }}
                 >
@@ -193,9 +196,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
                 <ListItemText
                   primary={item.label}
                   primaryTypographyProps={{
-                    fontSize: '0.875rem', // Texto más pequeño
+                    fontSize: '0.875rem',
                     fontWeight: isActiveRoute(item.path) ? 600 : 500,
-                    lineHeight: 1.2, // Altura de línea reducida
+                    lineHeight: 1.2,
                   }}
                 />
               </Box>
@@ -206,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
           </ListItem>
         ))}
 
-        {/* Foros con submenu */}
+        {/* Foros con submenu - EXACTAMENTE IGUAL */}
         <ListItem disablePadding sx={{ mb: 0 }}>
           <ListItemButton
             onClick={handleForosClick}
@@ -215,9 +218,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
               minHeight: 42,
               px: 1.5,
               py: 1,
-              backgroundColor: isForosActive() ? '#f97316' : 'transparent',
+              backgroundColor: isForosActive() ? '#F59E0B' : 'transparent', // AMARILLO para Foros
               '&:hover': {
-                backgroundColor: isForosActive() ? '#f97316' : 'rgba(255,255,255,0.08)',
+                backgroundColor: isForosActive() ? '#F59E0B' : 'rgba(255,255,255,0.08)', // AMARILLO
               },
               color: 'white',
               justifyContent: 'space-between',
@@ -233,7 +236,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
                   }
                 }}
               >
-                <ForosIcon />
+                <ForumsIcon />
               </ListItemIcon>
               <ListItemText
                 primary="Foros"
@@ -248,7 +251,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
           </ListItemButton>
         </ListItem>
 
-        {/* Submenu de Foros */}
+        {/* Submenu de Foros - EXACTAMENTE IGUAL */}
         <Collapse in={forosOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding sx={{ pl: 2 }}>
             {forosSubMenu.map((subItem) => (
@@ -260,9 +263,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
                     minHeight: 36,
                     px: 1.5,
                     py: 0.5,
-                    backgroundColor: isActiveRoute(subItem.path) ? '#f97316' : 'transparent',
+                    backgroundColor: isActiveRoute(subItem.path) ? '#F59E0B' : 'transparent', // AMARILLO para submenu
                     '&:hover': {
-                      backgroundColor: isActiveRoute(subItem.path) ? '#f97316' : 'rgba(255,255,255,0.08)',
+                      backgroundColor: isActiveRoute(subItem.path) ? '#F59E0B' : 'rgba(255,255,255,0.08)', // AMARILLO
                     },
                     color: 'white',
                   }}
@@ -293,14 +296,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
         </Collapse>
       </List>
 
-      {/* Configuración */}
-      <Box sx={{ px: 1.5, pb: 0.5, flexShrink: 0 }}> {/* Reducido padding */}
+      {/* Configuración - EXACTAMENTE IGUAL */}
+      <Box sx={{ px: 1.5, pb: 0.5, flexShrink: 0 }}>
         <ListItemButton
-          onClick={() => handleNavigation('/configuracion')}
+          onClick={() => handleNavigation('/admin/configuracion')}
           sx={{
             borderRadius: 1.5,
             color: 'white',
-            minHeight: 42, // Reducida altura
+            minHeight: 42,
             px: 1.5,
             py: 1,
             '&:hover': {
@@ -322,14 +325,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
         </ListItemButton>
       </Box>
 
-      {/* Usuario en la parte inferior - ACTUALIZAR */}
+      {/* Usuario Admin - EXACTAMENTE IGUAL */}
       <Box sx={{ 
         p: 1.5,
         borderTop: '1px solid rgba(255,255,255,0.1)',
         flexShrink: 0,
       }}>
         <Box
-          onClick={() => handleNavigation('/perfil')} // AGREGAR CLICK HANDLER
+          onClick={() => handleNavigation('/admin/perfil')}
           sx={{
             display: 'flex',
             alignItems: 'center',
@@ -337,9 +340,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
             p: 1.5,
             borderRadius: 1.5,
             backgroundColor: 'rgba(255,255,255,0.08)',
-            cursor: 'pointer', // AGREGAR CURSOR
+            cursor: 'pointer',
             '&:hover': {
-              backgroundColor: 'rgba(255,255,255,0.15)', // AGREGAR HOVER
+              backgroundColor: 'rgba(255,255,255,0.15)',
             },
           }}
         >
@@ -347,13 +350,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
             sx={{
               width: 36,
               height: 36,
-              backgroundColor: '#f97316',
+              backgroundColor: '#F59E0B', // AMARILLO para avatar admin
               color: 'white',
               fontWeight: 700,
               fontSize: '1rem'
             }}
           >
-            U
+            AD
           </Avatar>
           <Box sx={{ flexGrow: 1, minWidth: 0 }}>
             <Typography 
@@ -368,7 +371,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
                 whiteSpace: 'nowrap'
               }}
             >
-              Usuario
+              Administrador
             </Typography>
             <Typography 
               variant="caption" 
@@ -381,7 +384,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
                 whiteSpace: 'nowrap'
               }}
             >
-              Depto 4B
+              Admin Panel
             </Typography>
           </Box>
         </Box>
