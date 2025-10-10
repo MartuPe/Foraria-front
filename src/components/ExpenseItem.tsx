@@ -1,7 +1,7 @@
 import React from "react";
-import ExpenseCard  from "./ui/ExpensesCard";
 import Badge from "./ui/Badge";
-import Button from "./ui/ExpensesButton";
+import { Button } from "@mui/material";
+import { PictureAsPdfOutlined, PaymentOutlined } from "@mui/icons-material";
 import Money from "./Money";
 
 export type ExpenseConcepts = {
@@ -40,7 +40,7 @@ export default function ExpenseItem({ exp }: { exp: Expense }) {
   });
 
   return (
-    <ExpenseCard className="expense">
+    <div className="expense">
       <div className="expense__header">
         <div className="expense__title">
           <span className={`status-dot status-dot--${exp.status}`} />
@@ -68,22 +68,33 @@ export default function ExpenseItem({ exp }: { exp: Expense }) {
       </div>
 
       <div className="expense__actions">
-        {exp.canPay ? (
-          <Button variant={exp.status === "vencida" ? "danger" : "primary"}>
-            {exp.status === "vencida" ? "Pagar (Vencida)" : "Pagar Online"}
-          </Button>
-        ) : null}
+  {exp.canPay && (
+    <Button
+      variant="contained"
+      color={exp.status === "vencida" ? "error" : "secondary"}
+      startIcon={<PaymentOutlined />}
+      onClick={() => alert("Pago")}
+    >
+      {exp.status === "vencida" ? "Pagar (Vencida)" : "Pagar Online"}
+    </Button>
+  )}
 
-        <Button variant="outline" iconLeft={<span></span>}>
-          Descargar PDF
-        </Button>
+  <Button
+    variant="outlined"
+    color="primary"
+    startIcon={<PictureAsPdfOutlined />}
+    onClick={() => alert("Descargar PDF")}
+  >
+    Descargar PDF
+  </Button>
 
-        {exp.status === "pagada" ? (
-          <div className="paid-inline">
-            <span className="ico"></span> <span>Pagada</span>
-          </div>
-        ) : null}
-      </div>
-    </ExpenseCard>
+  {exp.status === "pagada" && (
+    <div className="paid-inline">
+      <span className="ico"></span> <span>Pagada</span>
+    </div>
+  )}
+</div>
+
+    </div>
   );
 }
