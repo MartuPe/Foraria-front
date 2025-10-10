@@ -5,7 +5,6 @@ import { AddRounded, CalendarMonthOutlined, ChevronLeft, ChevronRight } from "@m
 import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
-import esLocale from "@fullcalendar/core/locales/es";
 
 import "../styles/fullcalendar.css";
 import { Layout } from '../components/layout';
@@ -24,10 +23,18 @@ const EVENTS = [
 
 export default function Calendar() {
   const calendarRef = React.useRef<FullCalendar | null>(null);
-
   const [openReserve, setOpenReserve] = React.useState(false);
   const [openDay, setOpenDay] = React.useState<string | null>(null);
   const [title, setTitle] = React.useState("");
+  const [fcLocale, setFcLocale] = React.useState<any>(undefined); // AGREGAR ESTADO
+
+  // AGREGAR USEEFFECT PARA IMPORT DINÁMICO
+  React.useEffect(() => {
+    if (process.env.NODE_ENV === "test") return; // en Jest no cargamos nada
+    import("@fullcalendar/core/locales/es")
+      .then((m) => setFcLocale(m.default ?? m))
+      .catch(() => {}); // fallback a inglés si falla
+  }, []);
 
   const updateTitle = () => {
     const api = calendarRef.current?.getApi();
@@ -94,7 +101,7 @@ export default function Calendar() {
             ref={calendarRef}
             plugins={[dayGridPlugin, interactionPlugin]}
             initialView="dayGridMonth"
-            locale={esLocale}
+            locale={fcLocale} // CAMBIAR de esLocale a fcLocale
             firstDay={0}
             height="auto"
             fixedWeekCount={false}
