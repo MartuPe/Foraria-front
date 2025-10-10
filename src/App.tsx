@@ -20,9 +20,9 @@ import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
 import Dashboard from './pages/Dashboard';
 import Calendar from './pages/Calendar'; 
-import NewReserve from './pages/NewEvent';
+import NewReserve from './popups/NewEvent';
 import Suppliers from './pages/Suppliers'; 
-import NewSupplier from './pages/NewSupplier';
+import NewSupplier from './popups/NewSupplier';
 
 // Importar Forums
 import Forums from './pages/Forums';

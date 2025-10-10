@@ -170,11 +170,11 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
                 py: 1,
                 position: 'relative',
                 backgroundColor: isActiveRoute(item.path) 
-                  ? '#f97316' 
+                  ? '#F59E0B' // AMARILLO para Admin (en lugar de '#f97316')
                   : 'transparent',
                 '&:hover': {
                   backgroundColor: isActiveRoute(item.path)
-                    ? '#f97316'
+                    ? '#F59E0B' // AMARILLO para Admin
                     : 'rgba(255,255,255,0.08)',
                 },
                 color: 'white',
@@ -218,9 +218,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
               minHeight: 42,
               px: 1.5,
               py: 1,
-              backgroundColor: isForosActive() ? '#f97316' : 'transparent',
+              backgroundColor: isForosActive() ? '#F59E0B' : 'transparent', // AMARILLO para Foros
               '&:hover': {
-                backgroundColor: isForosActive() ? '#f97316' : 'rgba(255,255,255,0.08)',
+                backgroundColor: isForosActive() ? '#F59E0B' : 'rgba(255,255,255,0.08)', // AMARILLO
               },
               color: 'white',
               justifyContent: 'space-between',
@@ -263,9 +263,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
                     minHeight: 36,
                     px: 1.5,
                     py: 0.5,
-                    backgroundColor: isActiveRoute(subItem.path) ? '#f97316' : 'transparent',
+                    backgroundColor: isActiveRoute(subItem.path) ? '#F59E0B' : 'transparent', // AMARILLO para submenu
                     '&:hover': {
-                      backgroundColor: isActiveRoute(subItem.path) ? '#f97316' : 'rgba(255,255,255,0.08)',
+                      backgroundColor: isActiveRoute(subItem.path) ? '#F59E0B' : 'rgba(255,255,255,0.08)', // AMARILLO
                     },
                     color: 'white',
                   }}
@@ -350,7 +350,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
             sx={{
               width: 36,
               height: 36,
-              backgroundColor: '#f97316',
+              backgroundColor: '#F59E0B', // AMARILLO para avatar admin
               color: 'white',
               fontWeight: 700,
               fontSize: '1rem'

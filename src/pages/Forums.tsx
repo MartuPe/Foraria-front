@@ -23,7 +23,7 @@ import {
   Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { Layout } from '../components/layout';
-import NewPost from './NewPost';
+import NewPost from '../popups/NewPost';
 import { useLocation } from 'react-router-dom';
 
 // Tipos para los datos
