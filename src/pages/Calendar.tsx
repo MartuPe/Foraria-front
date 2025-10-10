@@ -9,7 +9,7 @@ import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import "../styles/fullcalendar.css";
 import { Layout } from '../components/layout';
 
-// Mock de eventos
+// Mock
 const EVENTS = [
   { id: "1", title: "Fumigación", start: "2025-11-12" },
   { id: "2", title: "Limpieza de Tanques", start: "2025-10-15" },
@@ -30,10 +30,10 @@ export default function Calendar() {
 
   // AGREGAR USEEFFECT PARA IMPORT DINÁMICO
   React.useEffect(() => {
-    if (process.env.NODE_ENV === "test") return; // en Jest no cargamos nada
+    if (process.env.NODE_ENV === "test") return;
     import("@fullcalendar/core/locales/es")
       .then((m) => setFcLocale(m.default ?? m))
-      .catch(() => {}); // fallback a inglés si falla
+      .catch(() => {});
   }, []);
 
   const updateTitle = () => {
@@ -44,10 +44,18 @@ export default function Calendar() {
     setTitle(t.charAt(0).toUpperCase() + t.slice(1));
   };
 
-  React.useEffect(() => { setTimeout(updateTitle, 0); }, []);
+  React.useEffect(() => {
+    setTimeout(updateTitle, 0);
+  }, []);
 
-  const goPrev = () => { calendarRef.current?.getApi().prev(); updateTitle(); };
-  const goNext = () => { calendarRef.current?.getApi().next(); updateTitle(); };
+  const goPrev = () => {
+    calendarRef.current?.getApi().prev();
+    updateTitle();
+  };
+  const goNext = () => {
+    calendarRef.current?.getApi().next();
+    updateTitle();
+  };
 
   const isPast = (d: Date) => {
     const today = new Date();
