@@ -23,6 +23,7 @@ import Calendar from './pages/Calendar';
 import NewReserve from './popups/NewEvent';
 import Suppliers from './pages/Suppliers'; 
 import NewSupplier from './popups/NewSupplier';
+import UserManagment from './pages/UserManagement';
 
 // Importar Forums
 import Forums from './pages/Forums';
@@ -61,6 +62,7 @@ function App() {
           <Route path="/nuevaReserva" element={<NewReserve />} />
           <Route path="/proveedores" element={<Suppliers />} /> 
           <Route path="/nuevoProveedor" element={<NewSupplier />} />
+           <Route path="/gestionUsuario" element={<UserManagment />} />
 
           {/* Nueva ruta para Forums */}
           <Route path="/forums/general" element={<Forums />} />
@@ -75,6 +77,7 @@ function App() {
 
           {/* Rutas del Admin */}
           <Route path="/admin/reclaims" element={<AdminReclaims />} />
+         
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
