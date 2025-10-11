@@ -32,7 +32,7 @@ interface PageHeaderProps {
   selectedTab?: string;
   onTabChange?: (value: string) => void;
   actions?: React.ReactNode;
-  filters?: React.ReactNode[]; // 👈 Aquí admitimos filtros adicionales
+  filters?: React.ReactNode[];
   sx?: object;
 }
 
@@ -67,7 +67,7 @@ export default function PageHeader({
         justifyContent="space-between"
         sx={{ mb: 2 }}
       >
-        <Typography variant="h5" color="primary">
+        <Typography variant="h5" fontWeight={600} color="primary">
           {title}
         </Typography>
         {actions && <Box>{actions}</Box>}
