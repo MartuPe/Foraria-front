@@ -280,7 +280,7 @@ const Forums: React.FC = () => {
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
             <GroupsIcon sx={{ color: 'primary.main', fontSize: 28 }} />
             <Typography variant="h5" sx={{ fontWeight: 600, color: 'primary.main' }}>
-              Forums - {currentCategory}
+              Foro - {currentCategory}
             </Typography>
           </Box>
           

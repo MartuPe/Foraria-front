@@ -1,4 +1,4 @@
-// src/App.tsx
+
 import React from 'react';
 import './App.css';
 
@@ -17,22 +17,25 @@ import Votes from './pages/Votes';
 import Meetings from './pages/Meetings';
 import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
-import ReclamosPage from './pages/ReclamosPage';
+import Claims from './pages/Claims';
 import Dashboard from './pages/Dashboard';
-import Calendar from './pages/Calendar'; 
+import Calendar from './pages/Calendar';
 import NewReserve from './popups/NewEvent';
-import Suppliers from './pages/Suppliers'; 
+import Suppliers from './pages/Suppliers';
 import NewSupplier from './popups/NewSupplier';
 import UserManagment from './pages/UserManagement';
 
-// Importar Forums
+// Forums (usuario)
 import Forums from './pages/Forums';
 
-// Importar Configuration
+// Configuración
 import Configuration from './pages/Configuration';
 
-// Importar AdminReclaims
+// Admin + layout
+import AdminLayout from './components/layout/AdminLayout';
 import AdminReclaims from './pages/admin/AdminReclaims';
+import AdminForums from './pages/admin/AdminForums';
+import AdminAudit from './pages/admin/AdminAudit'; 
 
 function App() {
   return (
@@ -48,7 +51,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/actualizarInformacion" element={<UpdateData />} />
-          <Route path="/perfil" element={<Profile />} /> {/* YA EXISTE */}
+          <Route path="/perfil" element={<Profile />} />
           <Route path="/editarInformacion" element={<ChangeData />} />
 
           {/* Funcionalidades */}
@@ -57,14 +60,14 @@ function App() {
           <Route path="/documentos" element={<Documents />} />
           <Route path="/expensas" element={<ExpensesPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/reclamos" element={<ReclamosPage />} />
+          <Route path="/reclamos" element={<Claims />} />
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
-          <Route path="/proveedores" element={<Suppliers />} /> 
+          <Route path="/proveedores" element={<Suppliers />} />
           <Route path="/nuevoProveedor" element={<NewSupplier />} />
            <Route path="/gestionUsuario" element={<UserManagment />} />
 
-          {/* Nueva ruta para Forums */}
+          {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
           <Route path="/forums/administracion" element={<Forums />} />
           <Route path="/forums/seguridad" element={<Forums />} />
@@ -72,12 +75,16 @@ function App() {
           <Route path="/forums/espacios-comunes" element={<Forums />} />
           <Route path="/forums/garage-parking" element={<Forums />} />
 
-          {/* Agregar ruta de configuración */}
+          {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
 
-          {/* Rutas del Admin */}
-          <Route path="/admin/reclaims" element={<AdminReclaims />} />
-         
+          {/* Rutas del Admin con layout (sidebar + outlet) */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="reclaims" element={<AdminReclaims />} />
+            <Route path="forums" element={<AdminForums />} />
+            <Route path="audit" element={<AdminAudit />} />   
+          </Route>
+
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
