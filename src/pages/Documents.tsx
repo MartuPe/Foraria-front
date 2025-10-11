@@ -3,8 +3,6 @@ import {
   Box,
   Paper,
   Typography,
-  Tabs,
-  Tab,
   Stack,
   TextField,
   Chip,
@@ -16,17 +14,18 @@ import {
   Divider,
   Snackbar,
   Alert,
+  Tabs,
+  Tab,
+  Grid
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
-
-import DescriptionIcon from "@mui/icons-material/Description";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import UploadIcon from "@mui/icons-material/Upload";
 import FolderIcon from "@mui/icons-material/Folder";
 import QueryBuilderIcon from "@mui/icons-material/QueryBuilder";
 import DownloadDoneIcon from "@mui/icons-material/DownloadDone";
-
+import PageHeader from "../components/SectionHeader";
 import {
   GENERAL_DOCS,
   MY_DOCS_SEED,
@@ -38,9 +37,10 @@ import {
   formatDate,
   formatSize,
 } from "../services/documentService";
-
 import NewDocument from "../popups/NewDocument";
 import { Sidebar } from "../components/layout";
+import "../styles/documents.css";
+
 type TabKey = "general" | "mine";
 
 export default function Documents() {
@@ -59,6 +59,7 @@ export default function Documents() {
     msg: "",
   });
 
+  // KPIs mock
   const totalGeneral = generalDocs.length;
   const downloadsThisMonth = 156;
   const lastUpdate = "15 Nov";
@@ -105,81 +106,43 @@ export default function Documents() {
       <Sidebar />
 
       <Box className="foraria-page-container">
-        <Paper
-          elevation={0}
-          sx={{
-            maxWidth: 1200,
-            mx: "auto",
-            p: { xs: 2, md: 3 },
-            borderRadius: 3,
-            bgcolor: "background.paper",
-            boxShadow: "0 8px 28px rgba(8,61,119,0.08)",
-            border: "1px solid",
-            borderColor: "divider",
-          }}>
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
-            <DescriptionIcon color="primary" />
-            <Typography variant="h5" color="primary">Documentos</Typography>
-            <Box sx={{ flex: 1 }} />
-            <TextField
-              size="small"
-              placeholder="Buscar documentos..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              sx={{
-                width: 320,
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  "& fieldset": { borderColor: "divider" },
-                },
-              }}
-            />
-          </Stack>
+        <Paper elevation={0} className="doc-container">
+          <PageHeader title="Documentos" sx={{ mb: 2 }} />
 
           <Tabs
+            className="doc-tabs"
             value={activeTab}
-            onChange={(_, v) => setActiveTab(v)}
-            centered
-            sx={{
-              mb: 2,
-              "& .MuiTab-root": {
-                textTransform: "none",
-                fontWeight: 600,
-                minHeight: 36,
-                px: 2,
-              },
-              "& .Mui-selected": {
-                color: "primary.contrastText !important",
-                bgcolor: "primary.main",
-                borderRadius: 2,
-                boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
-              },
-              "& .MuiTabs-indicator": { display: "none" },
-            }}
-          >
+            onChange={(_, v) => setActiveTab(v as TabKey)}
+            variant="fullWidth">
             <Tab value="general" label="Documentos Generales" />
             <Tab value="mine" label="Mis Documentos" />
           </Tabs>
 
-          {/* KPIs */}
-          <Stack direction={{ xs: "column", md: "row" }} spacing={2} sx={{ mb: 2 }}>
-            <Kpi icon={<FolderIcon />} title="Total Documentos" value={totalGeneral} color="primary" />
-            <Kpi icon={<DownloadDoneIcon />} title="Descargas Este Mes" value={downloadsThisMonth} color="success" />
-            <Kpi icon={<QueryBuilderIcon />} title="Última Actualización" value={lastUpdate} color="secondary" />
-          </Stack>
+          <Grid container spacing={2} sx={{ mb: 2 }}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Kpi icon={<FolderIcon />} title="Total Documentos" value={totalGeneral} color="primary" />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Kpi icon={<DownloadDoneIcon />} title="Descargas Este Mes" value={downloadsThisMonth} color="success" />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+              <Kpi icon={<QueryBuilderIcon />} title="Última Actualización" value={lastUpdate} color="secondary" />
+            </Grid>
+          </Grid>
 
-          {/* Filtros + botón subir */}
+          <TextField
+            size="small"
+            placeholder="Buscar documentos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="doc-search"/>
+
           {activeTab === "general" ? (
             <FilterBarGeneral filter={filterGeneral} onChange={setFilterGeneral} counts={countsGeneral} />
           ) : (
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }} spacing={2}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" className="mine-bar">
               <FilterBarMine filter={filterMine} onChange={setFilterMine} counts={countsMine} />
-              <Button
-                variant="contained"
-                color="info"
-                startIcon={<UploadIcon />}
-                onClick={() => setOpenUpload(true)}
-              >
+              <Button variant="contained" color="secondary" startIcon={<UploadIcon />} onClick={() => setOpenUpload(true)}>
                 Subir Documento
               </Button>
             </Stack>
@@ -187,10 +150,12 @@ export default function Documents() {
 
           <Stack spacing={2.0}>
             {(activeTab === "general" ? filteredGeneral : filteredMine).map((d) => (
-              <Card key={d.id} elevation={0} variant="outlined" sx={{ borderRadius: 3 }}>
+              <Card key={d.id} elevation={0} variant="outlined" className="doc-card">
                 <CardContent>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{d.title}</Typography>
+                    <Typography variant="subtitle1" className="card-title">
+                      {d.title}
+                    </Typography>
                     <Chip
                       size="small"
                       label={d.category}
@@ -198,27 +163,35 @@ export default function Documents() {
                         bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
                         color: "primary.main",
                         fontWeight: 600,
-                      }}
-                    />
+                      }}/>
                   </Stack>
 
-                  <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  <Typography variant="body2" color="text.secondary" className="card-desc">
                     {d.description}
                   </Typography>
 
-                  <Stack direction="row" spacing={2} alignItems="center" color="text.secondary" sx={{ mt: 1 }}>
+                  <Stack direction="row" spacing={2} alignItems="center" color="text.secondary" className="card-meta">
                     <Typography variant="caption">{formatSize(d.sizeKB)}</Typography>
                     <Typography variant="caption">•</Typography>
                     <Typography variant="caption">{formatDate(d.date)}</Typography>
                   </Stack>
 
-                  <Divider sx={{ my: 1.5 }} />
+                  <Divider className="card-divider" />
 
-                  <Stack direction="row" spacing={1}>
-                    <Button variant="outlined" startIcon={<VisibilityIcon />} onClick={() => setPreview(d)}>
+                  <Stack direction="row" spacing={2}>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => setPreview(d)}>
                       Ver Detalle
                     </Button>
-                    <Button variant="outlined" startIcon={<CloudDownloadIcon />} onClick={() => handleDownload(d)}>
+
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      startIcon={<CloudDownloadIcon />}
+                      onClick={() => handleDownload(d)}>
                       Descargar
                     </Button>
                   </Stack>
@@ -231,12 +204,20 @@ export default function Documents() {
         <Dialog open={!!preview} onClose={() => setPreview(null)} maxWidth="sm" fullWidth>
           <DialogContent>
             <Typography variant="h6">{preview?.title}</Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>{preview?.description}</Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>
+              {preview?.description}
+            </Typography>
             <Divider sx={{ my: 2 }} />
             <Stack direction="row" spacing={2}>
-              <Typography variant="body2"><b>Categoría:</b> {preview?.category}</Typography>
-              <Typography variant="body2"><b>Tamaño:</b> {preview && formatSize(preview.sizeKB)}</Typography>
-              <Typography variant="body2"><b>Fecha:</b> {preview && formatDate(preview.date)}</Typography>
+              <Typography variant="body2">
+                <b>Categoría:</b> {preview?.category}
+              </Typography>
+              <Typography variant="body2">
+                <b>Tamaño:</b> {preview && formatSize(preview.sizeKB)}
+              </Typography>
+              <Typography variant="body2">
+                <b>Fecha:</b> {preview && formatDate(preview.date)}
+              </Typography>
             </Stack>
           </DialogContent>
         </Dialog>
@@ -262,6 +243,7 @@ export default function Documents() {
   );
 }
 
+/* ===== Subcomponentes con clases ===== */
 function Kpi({
   icon,
   title,
@@ -274,22 +256,12 @@ function Kpi({
   color?: "primary" | "success" | "secondary";
 }) {
   return (
-    <Paper variant="outlined" sx={{ p: 2, borderRadius: 3, display: "flex", alignItems: "center", gap: 2, minWidth: 280 }}>
-      <Box
-        sx={(t) => ({
-          width: 36,
-          height: 36,
-          borderRadius: "10px",
-          display: "grid",
-          placeItems: "center",
-          bgcolor: alpha(t.palette[color].main, 0.18),
-          color: t.palette[color].main,
-        })}
-      >
-        <>{icon}</>
-      </Box>
+    <Paper variant="outlined" className="kpi-card">
+      <Box className={`kpi-icon ${color}`}>{icon}</Box>
       <Box>
-        <Typography variant="body2" color="text.secondary">{title}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          {title}
+        </Typography>
         <Typography variant="h6">{value}</Typography>
       </Box>
     </Paper>
@@ -369,24 +341,13 @@ function ChipsRow({
   onSelect: (v: string) => void;
 }) {
   return (
-    <Stack direction="row" spacing={1} flexWrap="wrap" sx={{ mb: 2 }}>
+    <Stack direction="row" spacing={1} flexWrap="wrap" className="chips-row">
       {items.map((it) => (
         <Chip
           key={it.value}
           label={it.label}
           onClick={() => onSelect(it.value)}
-          sx={{
-            borderRadius: "999px",
-            fontWeight: 600,
-            bgcolor: it.value === selected ? "primary.main" : "secondary.main",
-            color: it.value === selected ? "primary.contrastText" : "text.primary",
-            "&:hover": {
-              bgcolor:
-                it.value === selected
-                  ? "primary.main"
-                  : (t) => alpha(t.palette.primary.main, 0.15),
-            },
-          }}
+          className={`chip${it.value === selected ? " chip--active" : ""}`}
         />
       ))}
     </Stack>

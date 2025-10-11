@@ -1,0 +1,113 @@
+.doc-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 16px;
+  padding-left: 16px;
+  padding-right: 16px;
+  border-radius: 12px;
+  background: var(--doc-bg, #fff);
+  box-shadow: 0 8px 28px rgba(8, 61, 119, 0.08);
+  border: 1px solid var(--doc-divider, #e5e7eb);
+}
+
+.doc-tabs {
+  margin-bottom: 16px;
+  background: rgba(8, 61, 119, 0.06);
+  border-radius: 999px;
+  min-height: 44px;
+  position: relative;
+  overflow: hidden;
+  padding: 0;
+}
+.doc-tabs .MuiTab-root {
+  text-transform: none;
+  font-weight: 700;
+  min-height: 44px;
+  border-radius: 999px;
+  color: #083d77;
+  z-index: 1;
+}
+.doc-tabs .MuiTab-root.Mui-selected {
+  color: #fff !important;
+}
+.doc-tabs .MuiTabs-indicator {
+  top: 0;
+  bottom: 0;
+  height: auto;
+  border-radius: 999px;
+  background: #083d77;
+  box-shadow: 0 6px 16px rgba(8, 61, 119, 0.25);
+}
+
+.kpi-row {
+  margin-bottom: 16px;
+}
+
+.kpi-card {
+  padding: 16px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 280px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+.kpi-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.kpi-icon.primary { background: rgba(8, 61, 119, 0.18); color: #083d77; }
+.kpi-icon.success { background: rgba(46, 204, 113, 0.18); color: #2ecc71; }
+.kpi-icon.secondary { background: rgba(0, 145, 255, 0.18); color: #0091ff; }
+
+.doc-search {
+  width: 100%;
+  margin-bottom: 16px;
+}
+.doc-search .MuiOutlinedInput-root {
+  border-radius: 8px;
+}
+
+.mine-bar {
+  margin-bottom: 16px;
+}
+
+.chips-row {
+  margin-top: 16px;
+  margin-bottom: 16px;
+}
+.chips-row .chip {
+  border-radius: 999px !important;
+  font-weight: 600 !important;
+  background: rgba(8, 61, 119, 0.12);
+  color: inherit;
+}
+.chips-row .chip:hover {
+  background: rgba(8, 61, 119, 0.18);
+}
+.chips-row .chip.chip--active {
+  background: #083d77;
+  color: #fff;
+}
+
+.doc-card {
+  border-radius: 12px !important;
+}
+.card-title {
+  font-weight: 700 !important;
+}
+.card-desc {
+  margin-top: 4px !important;
+}
+.card-meta {
+  margin-top: 6px !important;
+}
+.card-divider {
+  margin: 12px 0 !important;
+}

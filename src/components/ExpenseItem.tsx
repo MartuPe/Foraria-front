@@ -1,7 +1,8 @@
 import React from "react";
 import Badge from "./ui/Badge";
 import { Button } from "@mui/material";
-import { PictureAsPdfOutlined, PaymentOutlined } from "@mui/icons-material";
+import {PaymentOutlined } from "@mui/icons-material";
+import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
 import Money from "./Money";
 
 export type ExpenseConcepts = {
@@ -82,7 +83,7 @@ export default function ExpenseItem({ exp }: { exp: Expense }) {
   <Button
     variant="outlined"
     color="primary"
-    startIcon={<PictureAsPdfOutlined />}
+    startIcon={<CloudDownloadIcon />}
     onClick={() => alert("Descargar PDF")}
   >
     Descargar PDF
