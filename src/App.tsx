@@ -24,15 +24,17 @@ import NewReserve from './popups/NewEvent';
 import Suppliers from './pages/Suppliers';
 import NewSupplier from './popups/NewSupplier';
 
-// Importar Forums
+// Forums (usuario)
 import Forums from './pages/Forums';
 
-// Importar Configuration
+// Configuración
 import Configuration from './pages/Configuration';
 
-// Importar Admin (reclamos + foros)
+// Admin + layout
+import AdminLayout from './components/layout/AdminLayout';
 import AdminReclaims from './pages/admin/AdminReclaims';
-import AdminForums from './pages/admin/AdminForums'; 
+import AdminForums from './pages/admin/AdminForums';
+import AdminAudit from './pages/admin/AdminAudit'; 
 
 function App() {
   return (
@@ -48,7 +50,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/actualizarInformacion" element={<UpdateData />} />
-          <Route path="/perfil" element={<Profile />} /> {/* YA EXISTE */}
+          <Route path="/perfil" element={<Profile />} />
           <Route path="/editarInformacion" element={<ChangeData />} />
 
           {/* Funcionalidades */}
@@ -63,7 +65,7 @@ function App() {
           <Route path="/proveedores" element={<Suppliers />} />
           <Route path="/nuevoProveedor" element={<NewSupplier />} />
 
-          {/* Rutas para Forums (usuario) */}
+          {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
           <Route path="/forums/administracion" element={<Forums />} />
           <Route path="/forums/seguridad" element={<Forums />} />
@@ -74,9 +76,12 @@ function App() {
           {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
 
-          {/* Rutas del Admin */}
-          <Route path="/admin/reclaims" element={<AdminReclaims />} />
-          <Route path="/admin/forums" element={<AdminForums />} /> {}
+          {/* Rutas del Admin con layout (sidebar + outlet) */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="reclaims" element={<AdminReclaims />} />
+            <Route path="forums" element={<AdminForums />} />
+            <Route path="audit" element={<AdminAudit />} />   
+          </Route>
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
