@@ -1,4 +1,4 @@
-// src/App.tsx
+
 import React from 'react';
 import './App.css';
 
@@ -19,9 +19,9 @@ import Documents from './pages/Documents';
 import ExpensesPage from './pages/Expenses';
 import ReclamosPage from './pages/ReclamosPage';
 import Dashboard from './pages/Dashboard';
-import Calendar from './pages/Calendar'; 
+import Calendar from './pages/Calendar';
 import NewReserve from './popups/NewEvent';
-import Suppliers from './pages/Suppliers'; 
+import Suppliers from './pages/Suppliers';
 import NewSupplier from './popups/NewSupplier';
 
 // Importar Forums
@@ -30,8 +30,9 @@ import Forums from './pages/Forums';
 // Importar Configuration
 import Configuration from './pages/Configuration';
 
-// Importar AdminReclaims
+// Importar Admin (reclamos + foros)
 import AdminReclaims from './pages/admin/AdminReclaims';
+import AdminForums from './pages/admin/AdminForums'; 
 
 function App() {
   return (
@@ -59,10 +60,10 @@ function App() {
           <Route path="/reclamos" element={<ReclamosPage />} />
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
-          <Route path="/proveedores" element={<Suppliers />} /> 
+          <Route path="/proveedores" element={<Suppliers />} />
           <Route path="/nuevoProveedor" element={<NewSupplier />} />
 
-          {/* Nueva ruta para Forums */}
+          {/* Rutas para Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
           <Route path="/forums/administracion" element={<Forums />} />
           <Route path="/forums/seguridad" element={<Forums />} />
@@ -70,11 +71,12 @@ function App() {
           <Route path="/forums/espacios-comunes" element={<Forums />} />
           <Route path="/forums/garage-parking" element={<Forums />} />
 
-          {/* Agregar ruta de configuración */}
+          {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
 
           {/* Rutas del Admin */}
           <Route path="/admin/reclaims" element={<AdminReclaims />} />
+          <Route path="/admin/forums" element={<AdminForums />} /> {}
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
