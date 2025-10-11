@@ -37,9 +37,6 @@ import QueryBuilderIcon from '@mui/icons-material/QueryBuilder';
 import PersonIcon from '@mui/icons-material/Person';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 
-// ❌ Eliminado: jsPDF y autotable
-// import jsPDF from "jspdf";
-// import autoTable from "jspdf-autotable";
 
 import {
   // getMeetings,
