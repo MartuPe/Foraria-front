@@ -59,7 +59,7 @@ function App() {
           <Route path="/perfil" element={<Profile />} />
           <Route path="/editarInformacion" element={<ChangeData />} />
 
-          {/* Funcionalidades */}
+          {/* Funcionalidades (usuario normal) */}
           <Route path="/votaciones" element={<Votes />} />
           <Route path="/reuniones" element={<Meetings />} />
           <Route path="/documentos" element={<Documents />} />
@@ -69,10 +69,10 @@ function App() {
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
 
-          {/* Proveedores */}
-          <Route path="/proveedores" element={<Suppliers />} />                {/* listado */}
-          <Route path="/proveedores/nuevo" element={<NewSupplier />} />        {/* alta */}
-          <Route path="/proveedores/:id/editar" element={<NewSupplier />} />   {/* edición (usa useParams) */}
+          {/* Proveedores (SOLO para usuario normal) */}
+          <Route path="/proveedores" element={<Suppliers />} />
+          <Route path="/proveedores/nuevo" element={<NewSupplier />} />
+          <Route path="/proveedores/:id/editar" element={<NewSupplier />} />
 
           {/* Gestión de usuarios */}
           <Route path="/gestionUsuario" element={<UserManagment />} />
@@ -93,6 +93,10 @@ function App() {
             <Route path="reclaims" element={<AdminReclaims />} />
             <Route path="forums" element={<AdminForums />} />
             <Route path="audit" element={<AdminAudit />} />
+            {/* AGREGAR rutas de proveedores para admin */}
+            <Route path="suppliers" element={<Suppliers />} />
+            <Route path="suppliers/nuevo" element={<NewSupplier />} />
+            <Route path="suppliers/:id/editar" element={<NewSupplier />} />
           </Route>
 
           {/* Fallback */}

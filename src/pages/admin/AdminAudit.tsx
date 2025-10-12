@@ -1,6 +1,5 @@
-import * as React from "react";
+import React from "react";
 import {
-  Container,
   Paper,
   Stack,
   TextField,
@@ -17,7 +16,7 @@ import {
   Typography,
 } from "@mui/material";
 import { DownloadOutlined, FilterListOutlined } from "@mui/icons-material";
-import SectionHeader from "../../components/SectionHeader";
+import PageHeader from "../../components/SectionHeader";
 
 // Tipos
 type ActionKind =
@@ -237,143 +236,247 @@ export default function AdminAudit() {
   };
 
   return (
-    <Box sx={{ bgcolor: 'background.default', mx: -3, my: -3, minHeight: '100vh', p: 3 }}>
-      <Container maxWidth="lg" sx={{ py: 3 }}>
-        <SectionHeader title="Registro de Auditoría" />
-            <Box sx={{ px: 3, pt: 1, pb: 2 }}>
-             <Typography variant="body2" color="text.secondary">
-                Monitoreo completo de actividades en la plataforma
-                 </Typography>
-                    </Box>
-
-        {/* Panel de filtros */}
-        <Paper sx={{ p: 2.5, borderRadius: 3, mb: 2, border: '1px solid', borderColor: 'divider' }} elevation={0}>
-          <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1 }}>
-            <FilterListOutlined />
-            <Typography variant="subtitle1" color="primary">Filtros</Typography>
-            <Box sx={{ flex: 1 }} />
-            <Button variant="outlined" startIcon={<DownloadOutlined />} onClick={exportCSV}>
-              Exportar CSV
-            </Button>
-          </Stack>
-
-          <Box
-            sx={{
-              display: "grid",
-              gap: 1.5,
-              gridTemplateColumns: { xs: "1fr", md: "1.1fr .9fr .9fr .6fr" },
-            }}
+    <div className="page">
+      <PageHeader
+        title="Registro de Auditoría"
+        actions={
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<DownloadOutlined />}
+            onClick={exportCSV}
+            size="small"
           >
-            <TextField
-              size="small"
-              label="Buscar"
-              placeholder="usuario, acción, descripción…"
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-            />
-            <TextField
-              select
-              size="small"
-              label="Usuario"
-              value={user}
-              onChange={(e) => setUser(e.target.value)}
-            >
-              <MenuItem value="ALL">Todos los usuarios</MenuItem>
-              {users.map((u) => (
-                <MenuItem key={u} value={u}>
-                  {u}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              select
-              size="small"
-              label="Tipo de Acción"
-              value={type}
-              onChange={(e) => setType(e.target.value as any)}
-            >
-              {types.map((t) => (
-                <MenuItem key={t.value} value={t.value}>
-                  {t.label}
-                </MenuItem>
-              ))}
-            </TextField>
-            <TextField
-              size="small"
-              label="Desde"
-              type="date"
-              value={from}
-              onChange={(e) => setFrom(e.target.value)}
-              InputLabelProps={{ shrink: true }}
-            />
-          </Box>
-        </Paper>
+            Exportar CSV
+          </Button>
+        }
+      />
 
-        {/* Tabla */}
-        <Paper sx={{ p: 2, borderRadius: 3, border: '1px solid', borderColor: 'divider' }} elevation={0}>
-          <Typography variant="subtitle1" sx={{ mb: 1.5 }}>
-            Registros de Actividad
+      {/* Subtitle más compacto */}
+      <Box sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary">
+          Monitoreo de actividades en la plataforma
+        </Typography>
+      </Box>
+
+      {/* Panel de filtros más compacto */}
+      <Paper
+        elevation={0}
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 2, mb: 2 }}
+      >
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
+          <FilterListOutlined color="primary" sx={{ fontSize: 20 }} />
+          <Typography
+            variant="subtitle1"
+            color="primary"
+            sx={{ fontWeight: 600 }}
+          >
+            Filtros
           </Typography>
+        </Stack>
 
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Fecha/Hora</TableCell>
-                  <TableCell>Usuario</TableCell>
-                  <TableCell>Acción</TableCell>
-                  <TableCell>Entidad</TableCell>
-                  <TableCell>Descripción</TableCell>
-                  <TableCell>IP</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {filtered.map((r) => (
-                  <TableRow key={r.id} hover>
-                    <TableCell>{formatDateTime(r.timestamp)}</TableCell>
-                    <TableCell>
-                      <Typography fontWeight={600} component="span">
-                        {r.user}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>{actionChip(r.action)}</TableCell>
-                    <TableCell>
-                      <Box>
-                        <Typography fontWeight={600} variant="body2">
-                          {r.entityType}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {r.entityId}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell sx={{ maxWidth: 420 }}>
+        <Box
+          sx={{
+            display: "grid",
+            gap: 1.5,
+            gridTemplateColumns: {
+              xs: "1fr",
+              sm: "1fr 1fr",
+              md: "2fr 1.5fr 1.5fr 1fr",
+            },
+          }}
+        >
+          <TextField
+            size="small"
+            label="Buscar"
+            placeholder="usuario, acción, descripción…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            fullWidth
+          />
+          <TextField
+            select
+            size="small"
+            label="Usuario"
+            value={user}
+            onChange={(e) => setUser(e.target.value)}
+            fullWidth
+          >
+            <MenuItem value="ALL">Todos</MenuItem>
+            {users.map((u) => (
+              <MenuItem key={u} value={u}>
+                {u.split("@")[0]}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            size="small"
+            label="Acción"
+            value={type}
+            onChange={(e) => setType(e.target.value as any)}
+            fullWidth
+          >
+            {types.map((t) => (
+              <MenuItem key={t.value} value={t.value}>
+                {t.label}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            size="small"
+            label="Desde"
+            type="date"
+            value={from}
+            onChange={(e) => setFrom(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            fullWidth
+          />
+        </Box>
+      </Paper>
+
+      {/* Tabla más compacta y responsive */}
+      <Paper
+        elevation={0}
+        variant="outlined"
+        sx={{ borderRadius: 2, overflow: "hidden" }}
+      >
+        <Box
+          sx={{
+            p: 2,
+            borderBottom: "1px solid",
+            borderColor: "divider",
+            bgcolor: "grey.50",
+          }}
+        >
+          <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
+            Registros ({filtered.length})
+          </Typography>
+        </Box>
+
+        <TableContainer sx={{ maxHeight: { xs: 400, md: 500 } }}>
+          <Table size="small" stickyHeader>
+            <TableHead>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 600, minWidth: 120 }}>
+                  Fecha
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, minWidth: 150 }}>
+                  Usuario
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, minWidth: 120 }}>
+                  Acción
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    minWidth: 100,
+                    display: { xs: "none", md: "table-cell" },
+                  }}
+                >
+                  Entidad
+                </TableCell>
+                <TableCell sx={{ fontWeight: 600, minWidth: 200 }}>
+                  Descripción
+                </TableCell>
+                <TableCell
+                  sx={{
+                    fontWeight: 600,
+                    minWidth: 100,
+                    display: { xs: "none", lg: "table-cell" },
+                  }}
+                >
+                  IP
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {filtered.map((r) => (
+                <TableRow
+                  key={r.id}
+                  hover
+                  sx={{
+                    "&:hover": { backgroundColor: "action.hover" },
+                  }}
+                >
+                  <TableCell>
+                    <Typography variant="body2" sx={{ fontSize: "0.75rem" }}>
+                      {new Date(r.timestamp).toLocaleDateString("es-AR", {
+                        day: "2-digit",
+                        month: "2-digit",
+                        hour: "2-digit",
+                        minute: "2-digit",
+                      })}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontWeight: 600, fontSize: "0.8rem" }}
+                    >
+                      {r.user.split("@")[0]}
+                    </Typography>
+                  </TableCell>
+                  <TableCell>{actionChip(r.action)}</TableCell>
+                  <TableCell sx={{ display: { xs: "none", md: "table-cell" } }}>
+                    <Box>
                       <Typography
                         variant="body2"
-                        color="text.secondary"
-                        noWrap
-                        title={r.description}
+                        sx={{ fontWeight: 600, fontSize: "0.75rem" }}
                       >
-                        {r.description}
+                        {r.entityType}
                       </Typography>
-                    </TableCell>
-                    <TableCell>{r.ip}</TableCell>
-                  </TableRow>
-                ))}
-                {filtered.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={6}>
-                      <Typography variant="body2" color="text.secondary">
-                        Sin resultados para los filtros aplicados.
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: "0.7rem" }}
+                      >
+                        {r.entityId}
                       </Typography>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        </Paper>
-      </Container>
-    </Box>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{
+                        fontSize: "0.75rem",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                        maxWidth: { xs: 150, md: 300 },
+                      }}
+                      title={r.description}
+                    >
+                      {r.description}
+                    </Typography>
+                  </TableCell>
+                  <TableCell sx={{ display: { xs: "none", lg: "table-cell" } }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ fontFamily: "monospace", fontSize: "0.7rem" }}
+                    >
+                      {r.ip}
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              ))}
+              {filtered.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={6} sx={{ textAlign: "center", py: 3 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      No hay registros para los filtros aplicados
+                    </Typography>
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Paper>
+    </div>
   );
 }

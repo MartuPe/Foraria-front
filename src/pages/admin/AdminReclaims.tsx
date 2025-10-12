@@ -23,8 +23,9 @@ import {
   Schedule as ScheduleIcon,
   AttachFile as AttachFileIcon,
   Download as DownloadIcon,
+  FilterList as FilterListIcon,
 } from '@mui/icons-material';
-import { AdminLayout } from '../../components/layout/AdminLayout';
+import PageHeader from '../../components/SectionHeader';
 
 // Usar los mismos tipos que en ReclamosPage
 interface Reclamo {
@@ -119,199 +120,258 @@ const AdminReclaims: React.FC = () => {
     return pasaEstado && pasaPrioridad;
   });
 
-  return (
-    <AdminLayout>
-      <Box sx={{ 
-        maxWidth: 1400, 
-        mx: 'auto',
-        backgroundColor: 'white',
-        borderRadius: 2,
-        boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-        overflow: 'hidden'
-      }}>
-        {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          p: 3,
-          borderBottom: '1px solid #f0f0f0'
-        }}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: '#1976d2' }}>
-            Gestión de Reclamos
-          </Typography>
+  // Calcular estadísticas dinámicamente
+  const stats = {
+    nuevos: reclamosAdminMock.filter(r => r.estado === 'nuevo').length,
+    enProceso: reclamosAdminMock.filter(r => r.estado === 'en-proceso').length,
+    urgentes: reclamosAdminMock.filter(r => r.prioridad === 'urgente').length,
+  };
 
-          {/* Stats Cards */}
-          <Stack direction="row" spacing={2}>
-            <Box sx={{ textAlign: 'center', px: 2 }}>
-              <Typography variant="h6" sx={{ color: '#2196f3', fontWeight: 600 }}>3</Typography>
-              <Typography variant="caption" color="text.secondary">Reclamos Nuevos</Typography>
+  return (
+    <div className="page">
+      <PageHeader
+        title="Gestión de Reclamos"
+        actions={
+          <Stack direction="row" spacing={3}>
+            {/* Stats Cards más compactas */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="h6" sx={{ color: '#2196f3', fontWeight: 600, fontSize: '1rem' }}>
+                {stats.nuevos}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">Nuevos</Typography>
             </Box>
-            <Box sx={{ textAlign: 'center', px: 2 }}>
-              <Typography variant="h6" sx={{ color: '#ff9800', fontWeight: 600 }}>1</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="h6" sx={{ color: '#ff9800', fontWeight: 600, fontSize: '1rem' }}>
+                {stats.enProceso}
+              </Typography>
               <Typography variant="caption" color="text.secondary">En Proceso</Typography>
             </Box>
-            <Box sx={{ textAlign: 'center', px: 2 }}>
-              <Typography variant="h6" sx={{ color: '#f44336', fontWeight: 600 }}>0</Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <Typography variant="h6" sx={{ color: '#f44336', fontWeight: 600, fontSize: '1rem' }}>
+                {stats.urgentes}
+              </Typography>
               <Typography variant="caption" color="text.secondary">Urgentes</Typography>
             </Box>
           </Stack>
-        </Box>
+        }
+      />
 
-        {/* Filtros */}
-        <Box sx={{ p: 3, borderBottom: '1px solid #f0f0f0' }}>
-          <Stack direction="row" spacing={3} alignItems="center">
-            <Typography variant="body2" sx={{ fontWeight: 600, color: '#333' }}>
-              Filtros:
-            </Typography>
-            
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Todos los estados</InputLabel>
-              <Select
-                value={estadoFilter}
-                onChange={(e) => setEstadoFilter(e.target.value)}
-                label="Todos los estados"
-              >
-                <MenuItem value="todos">Todos los estados</MenuItem>
-                <MenuItem value="nuevo">Nuevos</MenuItem>
-                <MenuItem value="en-proceso">En Proceso</MenuItem>
-                <MenuItem value="resuelto">Resueltos</MenuItem>
-                <MenuItem value="cerrado">Cerrados</MenuItem>
-              </Select>
-            </FormControl>
+      {/* Filtros normalizados */}
+      <Paper
+        elevation={0}
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 2, mb: 2 }}
+      >
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
+          <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
+          <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>
+            Filtros
+          </Typography>
+        </Stack>
 
-            <FormControl size="small" sx={{ minWidth: 200 }}>
-              <InputLabel>Todas las prioridades</InputLabel>
-              <Select
-                value={prioridadFilter}
-                onChange={(e) => setPrioridadFilter(e.target.value)}
-                label="Todas las prioridades"
-              >
-                <MenuItem value="todas">Todas las prioridades</MenuItem>
-                <MenuItem value="baja">Baja</MenuItem>
-                <MenuItem value="media">Media</MenuItem>
-                <MenuItem value="alta">Alta</MenuItem>
-                <MenuItem value="urgente">Urgente</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
-        </Box>
+        <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Estado</InputLabel>
+            <Select
+              value={estadoFilter}
+              onChange={(e) => setEstadoFilter(e.target.value)}
+              label="Estado"
+            >
+              <MenuItem value="todos">Todos los estados</MenuItem>
+              <MenuItem value="nuevo">Nuevos</MenuItem>
+              <MenuItem value="en-proceso">En Proceso</MenuItem>
+              <MenuItem value="resuelto">Resueltos</MenuItem>
+              <MenuItem value="cerrado">Cerrados</MenuItem>
+            </Select>
+          </FormControl>
 
-        {/* Lista de Reclamos */}
-        <Box sx={{ p: 3 }}>
-          <Stack spacing={2}>
-            {reclamosFiltrados.map((reclamo) => (
-              <Card key={reclamo.id} sx={{ border: '1px solid #f0f0f0' }}>
-                <CardContent sx={{ p: 2.5 }}>
-                  {/* Header del reclamo */}
-                  <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
-                    <Box sx={{ flexGrow: 1 }}>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                        {getEstadoIcon(reclamo.estado)}
-                        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
-                          {reclamo.titulo}
-                        </Typography>
-                        <Chip
-                          label={reclamo.estado.replace('-', ' ').toUpperCase()}
-                          size="small"
-                          variant="filled"
-                          sx={{ 
-                            fontSize: '0.7rem', 
-                            height: 24,
-                            backgroundColor: reclamo.estado === 'nuevo' ? '#2196f3' : 
-                                           reclamo.estado === 'en-proceso' ? '#ff9800' : '#4caf50',
-                            color: 'white'
-                          }}
-                        />
-                        <Chip
-                          label={reclamo.prioridad.toUpperCase()}
-                          size="small"
-                          variant="outlined"
-                          sx={{ 
-                            fontSize: '0.7rem', 
-                            height: 24,
-                            borderColor: getPrioridadColor(reclamo.prioridad),
-                            color: getPrioridadColor(reclamo.prioridad)
-                          }}
-                        />
-                      </Box>
-                      
-                      <Typography variant="body2" sx={{ mb: 1, color: 'text.secondary' }}>
-                        {reclamo.descripcion}
-                      </Typography>
+          <FormControl size="small" sx={{ minWidth: 200 }}>
+            <InputLabel>Prioridad</InputLabel>
+            <Select
+              value={prioridadFilter}
+              onChange={(e) => setPrioridadFilter(e.target.value)}
+              label="Prioridad"
+            >
+              <MenuItem value="todas">Todas las prioridades</MenuItem>
+              <MenuItem value="baja">Baja</MenuItem>
+              <MenuItem value="media">Media</MenuItem>
+              <MenuItem value="alta">Alta</MenuItem>
+              <MenuItem value="urgente">Urgente</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
+      </Paper>
 
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                          <Avatar sx={{ width: 20, height: 20, fontSize: '0.65rem' }}>
-                            {reclamo.autor.charAt(0)}
-                          </Avatar>
-                          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                            {reclamo.autor}
-                          </Typography>
-                        </Box>
-                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
-                          📅 Creado: {reclamo.fechaCreacion}
-                        </Typography>
-                      </Box>
-
-                      {/* Archivos adjuntos */}
-                      {reclamo.archivos && reclamo.archivos.length > 0 && (
-                        <Box sx={{ mb: 2 }}>
-                          <Stack direction="row" spacing={2}>
-                            {reclamo.archivos.map((archivo, index) => (
-                              <Paper key={index} sx={{
-                                p: 1,
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                                cursor: 'pointer',
-                                '&:hover': { backgroundColor: 'action.hover' }
-                              }}>
-                                <AttachFileIcon fontSize="small" />
-                                <Typography variant="caption">{archivo.nombre}</Typography>
-                                <IconButton size="small">
-                                  <DownloadIcon fontSize="small" />
-                                </IconButton>
-                              </Paper>
-                            ))}
-                          </Stack>
-                        </Box>
-                      )}
-                    </Box>
-
-                    {/* Botones de acción */}
-                    {reclamo.estado === 'nuevo' && (
-                      <Stack direction="row" spacing={1}>
-                        <Button
-                          variant="contained"
-                          color="success"
-                          size="small"
-                          startIcon={<AcceptIcon />}
-                          onClick={() => handleAcceptReclaim(reclamo.id)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Aceptar
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          color="error"
-                          size="small"
-                          startIcon={<RejectIcon />}
-                          onClick={() => handleRejectReclaim(reclamo.id)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Rechazar
-                        </Button>
-                      </Stack>
-                    )}
+      {/* Lista de Reclamos normalizada */}
+      <Stack spacing={2}>
+        {reclamosFiltrados.map((reclamo) => (
+          <Card 
+            key={reclamo.id} 
+            variant="outlined" 
+            sx={{ 
+              borderRadius: 2,
+              '&:hover': {
+                boxShadow: 2,
+                transform: 'translateY(-1px)',
+                transition: 'all 0.2s ease-in-out'
+              }
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              {/* Header del reclamo */}
+              <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', mb: 2 }}>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    {getEstadoIcon(reclamo.estado)}
+                    <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.1rem' }}>
+                      {reclamo.titulo}
+                    </Typography>
                   </Box>
-                </CardContent>
-              </Card>
-            ))}
-          </Stack>
-        </Box>
-      </Box>
-    </AdminLayout>
+
+                  <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+                    <Chip
+                      label={reclamo.estado.replace('-', ' ').toUpperCase()}
+                      size="small"
+                      variant="filled"
+                      sx={{ 
+                        fontSize: '0.7rem', 
+                        height: 24,
+                        backgroundColor: reclamo.estado === 'nuevo' ? '#2196f3' : 
+                                       reclamo.estado === 'en-proceso' ? '#ff9800' : '#4caf50',
+                        color: 'white'
+                      }}
+                    />
+                    <Chip
+                      label={reclamo.prioridad.toUpperCase()}
+                      size="small"
+                      variant="outlined"
+                      sx={{ 
+                        fontSize: '0.7rem', 
+                        height: 24,
+                        borderColor: getPrioridadColor(reclamo.prioridad),
+                        color: getPrioridadColor(reclamo.prioridad)
+                      }}
+                    />
+                    <Chip
+                      label={reclamo.categoria}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: '0.7rem', height: 24 }}
+                    />
+                  </Stack>
+                  
+                  <Typography variant="body2" sx={{ mb: 1.5, color: 'text.secondary', lineHeight: 1.5 }}>
+                    {reclamo.descripcion}
+                  </Typography>
+
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1.5 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Avatar sx={{ width: 20, height: 20, fontSize: '0.65rem' }}>
+                        {reclamo.autor.charAt(0)}
+                      </Avatar>
+                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                        {reclamo.autor}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.8rem' }}>
+                      📅 {reclamo.fechaCreacion}
+                    </Typography>
+                  </Box>
+
+                  {/* Archivos adjuntos */}
+                  {reclamo.archivos && reclamo.archivos.length > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
+                        📎 Archivos adjuntos ({reclamo.archivos.length})
+                      </Typography>
+                      <Stack direction="row" spacing={1}>
+                        {reclamo.archivos.map((archivo, index) => (
+                          <Paper key={index} sx={{
+                            p: 1.5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            cursor: 'pointer',
+                            borderRadius: 1,
+                            '&:hover': { backgroundColor: 'action.hover' }
+                          }}>
+                            <AttachFileIcon fontSize="small" />
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 500, fontSize: '0.8rem' }}>
+                                {archivo.nombre}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary">
+                                {archivo.size}
+                              </Typography>
+                            </Box>
+                            <IconButton size="small">
+                              <DownloadIcon fontSize="small" />
+                            </IconButton>
+                          </Paper>
+                        ))}
+                      </Stack>
+                    </Box>
+                  )}
+
+                  {/* Respuesta admin si existe */}
+                  {reclamo.respuestaAdmin && (
+                    <Paper sx={{
+                      p: 2,
+                      backgroundColor: 'action.hover',
+                      borderLeft: 4,
+                      borderLeftColor: 'primary.main',
+                      borderRadius: 1
+                    }}>
+                      <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+                        💬 Respuesta de la Administración:
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        {reclamo.respuestaAdmin}
+                      </Typography>
+                    </Paper>
+                  )}
+                </Box>
+
+                {/* Botones de acción */}
+                {reclamo.estado === 'nuevo' && (
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1} sx={{ ml: 2 }}>
+                    <Button
+                      variant="contained"
+                      color="success"
+                      size="small"
+                      startIcon={<AcceptIcon />}
+                      onClick={() => handleAcceptReclaim(reclamo.id)}
+                      sx={{ textTransform: 'none', minWidth: 100 }}
+                    >
+                      Aceptar
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      startIcon={<RejectIcon />}
+                      onClick={() => handleRejectReclaim(reclamo.id)}
+                      sx={{ textTransform: 'none', minWidth: 100 }}
+                    >
+                      Rechazar
+                    </Button>
+                  </Stack>
+                )}
+              </Box>
+            </CardContent>
+          </Card>
+        ))}
+
+        {/* Mensaje si no hay resultados */}
+        {reclamosFiltrados.length === 0 && (
+          <Paper sx={{ p: 4, textAlign: 'center', borderRadius: 2 }}>
+            <Typography variant="h6" color="text.secondary">
+              No se encontraron reclamos con los filtros aplicados
+            </Typography>
+          </Paper>
+        )}
+      </Stack>
+    </div>
   );
 };
 
