@@ -149,21 +149,23 @@ export default function PageHeader({
           value={selectedTab}
           onChange={(_, v) => onTabChange?.(v)}
           sx={{
+            "& .MuiTabs-root": { mt: 0.5 },
             "& .MuiTab-root": {
               textTransform: "none",
-              fontWeight: 600,
-              borderRadius: 2,
-              minHeight: 36,
-              px: 2,
-              mr: 1,
+              fontWeight: 700,
+              borderRadius: 999,
+              minHeight: 40,
+              px: 2.5,
+              mr: 1.5,
               border: "1px solid",
               borderColor: "divider",
+              color: "text.secondary",
             },
-            "& .Mui-selected": {
+            "& .MuiTab-root.Mui-selected": {
               bgcolor: "primary.main",
-              color: "primary.contrastText !important",
+              color: "primary.contrastText",
               borderColor: "primary.main",
-              boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
+              boxShadow: "0 6px 14px rgba(8,61,119,0.25)",
             },
             "& .MuiTabs-indicator": { display: "none" },
           }}

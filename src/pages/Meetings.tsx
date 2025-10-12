@@ -47,28 +47,6 @@ export default function Meetings() {
           ]}
           selectedTab={tab}
           onTabChange={(v) => setTab(v as typeof tab)}
-          // Fuerza estilo píldoras rellenas
-          sx={{
-            "& .MuiTabs-root": { mt: 0.5 },
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 700,
-              borderRadius: 999,
-              minHeight: 40,
-              px: 2.5,
-              mr: 1.5,
-              border: "1px solid",
-              borderColor: "divider",
-              color: "text.secondary",
-            },
-            "& .MuiTab-root.Mui-selected": {
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              borderColor: "primary.main",
-              boxShadow: "0 6px 14px rgba(8,61,119,0.25)",
-            },
-            "& .MuiTabs-indicator": { display: "none" },
-          }}
         />
 
         <InfoCard

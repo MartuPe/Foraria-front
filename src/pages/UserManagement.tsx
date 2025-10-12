@@ -9,15 +9,26 @@ import HomeIcon from '@mui/icons-material/Home';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { Select, MenuItem } from "@mui/material";
 import { Sidebar } from "../components/layout";
+import { useGet } from "../hooks/useGet";
 
 
 export default function UserManagment() {
+
+type Claim = {claim: {id:number, title: string, description: string}}
+
+  const {data: claim, loading, error, refetch } = useGet<Claim[]>("/Claim")
+console.log(claim)
+  if (loading) return <div>cargando claim</div>
+  if (error) return <div> error al cargar {error}</div> 
+
 
   return (
 
 <Box className="foraria-layout">
         <Sidebar/>
      <Box className="foraria-page-container">
+
+<ul>{claim?.map((c)=>   <li key={c.claim.id}>{c.claim.title} — {c.claim.description}</li>)}</ul>
 
           <PageHeader
       title="Gestion de Usuarios"
