@@ -73,44 +73,46 @@ export default function PageHeader({
         {actions && <Box>{actions}</Box>}
       </Stack>
 
-      {/* Métricas */}
-      <Grid container spacing={2} sx={{ mb: 2 }}>
-  {stats.map((s, i) => (
-    <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
-      <Paper
-        elevation={0}
-        variant="outlined"
-        sx={{
-          p: 2,
-          borderRadius: 3,
-          display: "flex",
-          alignItems: "center",
-          gap: 2,
-        }}
-      >
-        <Box
-          sx={(t) => ({
-            width: 36,
-            height: 36,
-            display: "grid",
-            placeItems: "center",
-            borderRadius: 2,
-            bgcolor: alpha(t.palette[s.color || "primary"].main, 0.15),
-            color: t.palette[s.color || "primary"].main,
-          })}
-        >
-          {s.icon}
-        </Box>
-        <Box>
-          <Typography variant="body2" color="text.secondary">
-            {s.title}
-          </Typography>
-          <Typography variant="h6">{s.value}</Typography>
-        </Box>
-      </Paper>
-    </Grid>
-  ))}
-</Grid>
+      {/* Métricas (sólo si hay items) */}
+      {stats.length > 0 && (
+        <Grid container spacing={2} sx={{ mb: 2 }}>
+          {stats.map((s, i) => (
+            <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+              <Paper
+                elevation={0}
+                variant="outlined"
+                sx={{
+                  p: 2,
+                  borderRadius: 3,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
+                <Box
+                  sx={(t) => ({
+                    width: 36,
+                    height: 36,
+                    display: "grid",
+                    placeItems: "center",
+                    borderRadius: 2,
+                    bgcolor: alpha(t.palette[s.color || "primary"].main, 0.15),
+                    color: t.palette[s.color || "primary"].main,
+                  })}
+                >
+                  {s.icon}
+                </Box>
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    {s.title}
+                  </Typography>
+                  <Typography variant="h6">{s.value}</Typography>
+                </Box>
+              </Paper>
+            </Grid>
+          ))}
+        </Grid>
+      )}
 
       {/* Buscador + filtros opcionales */}
       {(showSearch || filters.length > 0) && (
@@ -119,7 +121,6 @@ export default function PageHeader({
           spacing={1.5}
           sx={{ mb: 2 }}
           alignItems={{ xs: "stretch", md: "center" }}
-          
         >
           {showSearch && (
             <TextField
@@ -133,7 +134,6 @@ export default function PageHeader({
                   borderRadius: 1,
                   "& fieldset": { borderColor: "divider" },
                 },
-                
               }}
             />
           )}
