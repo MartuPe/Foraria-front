@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import {
-  Box,
   Card,
   CardContent,
   Typography,
@@ -9,18 +8,21 @@ import {
   Button,
   TextField,
   MenuItem,
-  Divider,
   Rating,
+  Dialog,
+  DialogContent,
 } from "@mui/material";
+import { useLocation } from "react-router-dom";
 
-import { Link } from "react-router-dom";
+import { Layout } from "../components/layout";
+import PageHeader from "../components/SectionHeader";
+import NewSupplier from "../popups/NewSupplier";
 
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
-import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
 import AttachMoneyOutlinedIcon from "@mui/icons-material/AttachMoneyOutlined";
@@ -113,6 +115,12 @@ export default function Suppliers() {
   const [suppliers] = useState<Supplier[]>(DEFAULT_SUPPLIERS);
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState<"Todas" | Category>("Todas");
+  
+  // Estado para el popup
+  const [openNewSupplier, setOpenNewSupplier] = useState(false);
+  
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith('/admin');
 
   const categories = useMemo<("Todas" | Category)[]>(
     () => ["Todas", ...Array.from(new Set(suppliers.map(s => s.category))) as Category[]],
@@ -151,156 +159,170 @@ export default function Suppliers() {
     });
   }, [suppliers, query, category]);
 
-  return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "secondary.main", py: 3 }}>
-      <Box
-        sx={{
-          maxWidth: 1000,
-          mx: "auto",
-          bgcolor: "background.paper",
-          borderRadius: 3,
-          p: 3,
-          boxShadow: 2,
-        }}
-      >
-        {/* Header */}
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          justifyContent="space-between"
-          spacing={1}
-        >
-          <Typography variant="h5" color="primary">
-            Proveedores del Consorcio
-          </Typography>
+  const handleOpenNewSupplier = () => setOpenNewSupplier(true);
+  const handleCloseNewSupplier = () => setOpenNewSupplier(false);
 
+  const content = (
+    <>
+      <PageHeader
+        title="Proveedores del Consorcio"
+        actions={
           <Button
-            component={Link}
-            to="/nuevoProveedor"
             variant="contained"
+            color="secondary"
             startIcon={<AddCircleOutlineIcon />}
+            onClick={handleOpenNewSupplier}
             sx={{ borderRadius: 999, fontWeight: 600 }}
           >
             Nuevo proveedor
           </Button>
-        </Stack>
+        }
+      />
 
-        {/* KPIs */}
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mt: 2 }}>
-          <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+      {/* KPIs */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent>
+            <Typography variant="overline" color="text.secondary">Proveedores</Typography>
+            <Typography variant="h6">{kpis.total}</Typography>
+          </CardContent>
+        </Card>
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent>
+            <Typography variant="overline" color="text.secondary">Contratos Activos</Typography>
+            <Typography variant="h6" color="success.main">{kpis.activeContracts}</Typography>
+          </CardContent>
+        </Card>
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent>
+            <Typography variant="overline" color="text.secondary">Categorías</Typography>
+            <Typography variant="h6" color="secondary.main">{kpis.uniqueCats}</Typography>
+          </CardContent>
+        </Card>
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent>
+            <Typography variant="overline" color="text.secondary">Promedio</Typography>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Rating value={kpis.avg} precision={0.1} readOnly />
+              <Typography variant="h6">{kpis.avg}</Typography>
+            </Stack>
+          </CardContent>
+        </Card>
+      </Stack>
+
+      {/* Buscador + filtro */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        alignItems={{ xs: "stretch", sm: "center" }}
+        sx={{ mb: 2 }}
+      >
+        <TextField
+          fullWidth
+          placeholder="Buscar proveedores…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          size="small"
+        />
+        <TextField
+          select
+          size="small"
+          label="Categoría"
+          value={category}
+          onChange={(e) => setCategory(e.target.value as any)}
+          sx={{ width: { xs: "100%", sm: 220 } }}
+        >
+          {categories.map((c) => (
+            <MenuItem key={c} value={c}>
+              {c}
+            </MenuItem>
+          ))}
+        </TextField>
+      </Stack>
+
+      {/* Listado */}
+      <Stack spacing={2}>
+        {filtered.map((s) => (
+          <Card key={s.id} variant="outlined" sx={{ borderRadius: 2 }}>
             <CardContent>
-              <Typography variant="overline" color="text.secondary">Proveedores</Typography>
-              <Typography variant="h6"> {kpis.total} </Typography>
-            </CardContent>
-          </Card>
-          <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="overline" color="text.secondary">Contratos Activos</Typography>
-              <Typography variant="h6" color="success.main">{kpis.activeContracts}</Typography>
-            </CardContent>
-          </Card>
-          <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="overline" color="text.secondary">Categorías</Typography>
-              <Typography variant="h6" color="secondary.main">{kpis.uniqueCats}</Typography>
-            </CardContent>
-          </Card>
-          <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="overline" color="text.secondary">Promedio</Typography>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Rating value={kpis.avg} precision={0.1} readOnly />
-                <Typography variant="h6">{kpis.avg}</Typography>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                alignItems={{ xs: "flex-start", sm: "center" }}
+                justifyContent="space-between"
+                spacing={1}
+              >
+                <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="wrap">
+                  <Typography variant="h6" color="primary">{s.name}</Typography>
+                  <Chip label={s.category} size="small" />
+                  <Stack direction="row" alignItems="center" spacing={0.5}>
+                    <Rating value={s.rating} precision={0.1} readOnly size="small" />
+                    <Typography variant="body2" color="text.secondary">
+                      ({s.rating.toFixed(1)})
+                    </Typography>
+                  </Stack>
+                </Stack>
+
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<VisibilityOutlinedIcon />}
+                  sx={{ borderRadius: 999, px: 1.5, fontWeight: 600 }}
+                >
+                  Ver Detalle
+                </Button>
+              </Stack>
+
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                {s.businessName}
+              </Typography>
+
+              <Stack direction="row" spacing={3} sx={{ mt: 1.5 }} flexWrap="wrap">
+                <Typography variant="body2" color="text.secondary">
+                  <PhoneOutlinedIcon fontSize="small" /> {s.phone}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <EmailOutlinedIcon fontSize="small" /> {s.email}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <PlaceOutlinedIcon fontSize="small" /> {s.address}
+                </Typography>
+              </Stack>
+
+              <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap">
+                <Typography variant="body2" color="text.secondary">
+                  <PersonOutlineIcon fontSize="small" /> Contacto: {s.contactPerson}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <CalendarMonthOutlinedIcon fontSize="small" /> Desde: {s.since}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <AttachMoneyOutlinedIcon fontSize="small" /> {formatARS(s.monthlyCost)}/mes
+                </Typography>
               </Stack>
             </CardContent>
           </Card>
-        </Stack>
+        ))}
+      </Stack>
 
-        {/* Buscador + filtro */}
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          spacing={2}
-          alignItems={{ xs: "stretch", sm: "center" }}
-          sx={{ mt: 2 }}
-        >
-          <TextField
-            fullWidth
-            placeholder="Buscar proveedores…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            size="small"
-          />
-          <TextField
-            select
-            size="small"
-            label="Categoría"
-            value={category}
-            onChange={(e) => setCategory(e.target.value as any)}
-            sx={{ width: { xs: "100%", sm: 220 } }}
-          >
-            {categories.map((c) => (
-              <MenuItem key={c} value={c}>
-                {c}
-              </MenuItem>
-            ))}
-          </TextField>
-        </Stack>
-
-        {/* Listado */}
-        <Stack spacing={2.5} sx={{ mt: 2 }}>
-          {filtered.map((s) => (
-            <Card key={s.id} variant="outlined" sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  alignItems={{ xs: "flex-start", sm: "center" }}
-                  justifyContent="space-between"
-                  spacing={1}
-                >
-                  <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="wrap">
-                    <Typography variant="h6" color="primary">{s.name}</Typography>
-                    <Chip label={s.category} size="small" />
-                    <Stack direction="row" alignItems="center" spacing={0.5}>
-                      <Rating value={s.rating} precision={0.1} readOnly size="small" />
-                      <Typography variant="body2" color="text.secondary">
-                        ({s.rating.toFixed(1)})
-                      </Typography>
-                    </Stack>
-                  </Stack>
-
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<VisibilityOutlinedIcon />}
-                    sx={{ borderRadius: 999, px: 1.5, fontWeight: 600 }}
-                  >
-                    Ver Detalle
-                  </Button>
-                </Stack>
-
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  {s.businessName}
-                </Typography>
-
-                <Stack direction="row" spacing={3} sx={{ mt: 1.5 }} flexWrap="wrap">
-                  <Typography variant="body2" color="text.secondary"><PhoneOutlinedIcon fontSize="small" /> {s.phone}</Typography>
-                  <Typography variant="body2" color="text.secondary"><EmailOutlinedIcon fontSize="small" /> {s.email}</Typography>
-                  <Typography variant="body2" color="text.secondary"><PlaceOutlinedIcon fontSize="small" /> {s.address}</Typography>
-                  <Typography variant="body2" color="text.secondary"><DescriptionOutlinedIcon fontSize="small" /> {s.contractsCount} contrato{s.contractsCount !== 1 ? "s" : ""}</Typography>
-                </Stack>
-
-                <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap">
-                  <Typography variant="body2" color="text.secondary"><PersonOutlineIcon fontSize="small" /> Contacto: {s.contactPerson}</Typography>
-                  <Typography variant="body2" color="text.secondary"><CalendarMonthOutlinedIcon fontSize="small" /> Desde: {s.since}</Typography>
-                  <Typography variant="body2" color="text.secondary"><AttachMoneyOutlinedIcon fontSize="small" /> Contratos activos: {formatARS(s.monthlyCost)}/mes</Typography>
-                </Stack>
-
-                <Divider sx={{ mt: 2 }} />
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
-      </Box>
-    </Box>
+      {/* Dialog para NewSupplier */}
+      <Dialog 
+        open={openNewSupplier} 
+        onClose={handleCloseNewSupplier} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogContent>
+          <NewSupplier />
+        </DialogContent>
+      </Dialog>
+    </>
   );
+
+  // Si está en admin route, no usar Layout wrapper
+  if (isAdminRoute) {
+    return <div className="page">{content}</div>;
+  }
+
+  // Si no está en admin, usar Layout normal
+  return <Layout>{content}</Layout>;
 }
