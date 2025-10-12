@@ -20,6 +20,9 @@ export default function Meetings() {
   const [selected, setSelected] = useState<Meeting | null>(null);
   const [showTranscription, setShowTranscription] = useState(false);
 
+  // usa los mismos values que ya tenía tu app: "todas" | "actives" | "finalizada"
+  const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
+
   const handleDownloadTranscript = () => {
     alert("La descarga de PDF se habilitará cuando el backend exponga el archivo.");
   };
@@ -42,8 +45,30 @@ export default function Meetings() {
             { label: "Activas", value: "actives" },
             { label: "Finalizadas", value: "finalizada" },
           ]}
-          selectedTab="todas"
-          onTabChange={(v) => console.log("Tab:", v)}
+          selectedTab={tab}
+          onTabChange={(v) => setTab(v as typeof tab)}
+          // Fuerza estilo píldoras rellenas
+          sx={{
+            "& .MuiTabs-root": { mt: 0.5 },
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontWeight: 700,
+              borderRadius: 999,
+              minHeight: 40,
+              px: 2.5,
+              mr: 1.5,
+              border: "1px solid",
+              borderColor: "divider",
+              color: "text.secondary",
+            },
+            "& .MuiTab-root.Mui-selected": {
+              bgcolor: "primary.main",
+              color: "primary.contrastText",
+              borderColor: "primary.main",
+              boxShadow: "0 6px 14px rgba(8,61,119,0.25)",
+            },
+            "& .MuiTabs-indicator": { display: "none" },
+          }}
         />
 
         <InfoCard

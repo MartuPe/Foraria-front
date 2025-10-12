@@ -19,7 +19,6 @@ import DownloadIcon from "@mui/icons-material/Download";
 import ErrorIcon from "@mui/icons-material/Error";
 import { Layout } from "../components/layout";
 
-// Tipos
 interface Reclamo {
   id: string;
   titulo: string;
@@ -103,7 +102,7 @@ const reclamosMock: Reclamo[] = [
   },
 ];
 
-const ReclamosPage: React.FC = () => {
+const Claims: React.FC = () => {
   const [filtroEstado, setFiltroEstado] = useState<string>("todos");
   const [filtroPrioridad, setFiltroPrioridad] = useState<string>("todas");
   const [filtroCategoria, setFiltroCategoria] = useState<string>("todas");
@@ -187,10 +186,8 @@ const ReclamosPage: React.FC = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Filtros */}
         <Paper elevation={0} variant="outlined" sx={{ p: 2, borderRadius: 3, mb: 2 }}>
           <Stack spacing={3}>
-            {/* Estado */}
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                 Filtrar por Estado
@@ -221,7 +218,6 @@ const ReclamosPage: React.FC = () => {
               </Stack>
             </Box>
 
-            {/* Prioridad */}
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                 Filtrar por Prioridad
@@ -252,7 +248,6 @@ const ReclamosPage: React.FC = () => {
               </Stack>
             </Box>
 
-            {/* Categoría */}
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
                 Filtrar por Categoría
@@ -285,7 +280,6 @@ const ReclamosPage: React.FC = () => {
           </Stack>
         </Paper>
 
-        {/* Lista */}
         <Stack spacing={2}>
           {reclamosFiltrados.map((reclamo) => (
             <Card
@@ -301,7 +295,6 @@ const ReclamosPage: React.FC = () => {
               }}
             >
               <CardContent sx={{ p: 2.5 }}>
-                {/* Header */}
                 <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: 1.5 }}>
                   <Box sx={{ flexGrow: 1 }}>
                     <Typography variant="h6" sx={{ fontWeight: 600, fontSize: "1.1rem" }}>
@@ -332,12 +325,10 @@ const ReclamosPage: React.FC = () => {
                   </Box>
                 </Box>
 
-                {/* Descripción */}
                 <Typography variant="body2" sx={{ mb: 1.5, color: "text.secondary" }}>
                   {reclamo.descripcion}
                 </Typography>
 
-                {/* Metadatos */}
                 <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 1.5 }}>
                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: "0.8rem" }}>
                     {reclamo.autor}
@@ -347,7 +338,6 @@ const ReclamosPage: React.FC = () => {
                   </Typography>
                 </Box>
 
-                {/* Archivos */}
                 {reclamo.archivos?.length ? (
                   <Box sx={{ mb: 2 }}>
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 600 }}>
@@ -406,7 +396,6 @@ const ReclamosPage: React.FC = () => {
             </Card>
           ))}
 
-          {/* Sin resultados */}
           {reclamosFiltrados.length === 0 && (
             <Paper sx={{ p: 4, textAlign: "center", border: "1px solid #f0f0f0", borderRadius: 3 }}>
               <ErrorIcon sx={{ fontSize: 48, color: "text.secondary", mb: 2 }} />
@@ -421,4 +410,4 @@ const ReclamosPage: React.FC = () => {
   );
 };
 
-export default ReclamosPage;
+export default Claims;

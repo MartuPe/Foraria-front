@@ -74,8 +74,7 @@ export default function ExpensesPage() {
               value: statValues.proximo,
               color: "secondary",
             },
-          ]}
-        />
+          ]}/>
 
         <Box sx={{ display: "grid", gap: 2 }}>
           {items.map((exp) => (
