@@ -1,276 +1,184 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
+  Paper,
+  Stack,
   Typography,
   Switch,
   FormControlLabel,
-  Stack,
   Button,
   Divider,
-} from '@mui/material';
+} from "@mui/material";
 import {
-  Settings as SettingsIcon,
   Notifications as NotificationsIcon,
   Smartphone as SmartphoneIcon,
   Email as EmailIcon,
   Sms as SmsIcon,
-} from '@mui/icons-material';
-import { Layout } from '../components/layout';
+} from "@mui/icons-material";
+import { Layout } from "../components/layout";
+import PageHeader from "../components/SectionHeader";
 
 const Configuration: React.FC = () => {
-  // Estados para los switches de canales
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [smsNotifications, setSmsNotifications] = useState(false);
 
-  // Estados para los tipos de notificaciones
   const [reclamosNotifications, setReclamosNotifications] = useState(true);
   const [expensasNotifications, setExpensasNotifications] = useState(true);
   const [reunionesNotifications, setReunionesNotifications] = useState(true);
   const [votacionesNotifications, setVotacionesNotifications] = useState(false);
   const [forosNotifications, setForosNotifications] = useState(true);
-  const [mantenimientoNotifications, setMantenimientoNotifications] = useState(true);
+  const [mantenimientoNotifications, setMantenimientoNotifications] =
+    useState(true);
 
   const handleSaveConfiguration = () => {
-    console.log('Configuración guardada');
-    // Aquí iría la lógica para guardar la configuración
+    // TODO: persistencia
+    console.log("Configuración guardada");
   };
+
+  const tipos = [
+    {
+      key: "reclamos",
+      title: "Reclamos y Sugerencias",
+      desc: "Nuevos reclamos y actualizaciones",
+      checked: reclamosNotifications,
+      set: setReclamosNotifications,
+    },
+    {
+      key: "expensas",
+      title: "Expensas",
+      desc: "Vencimientos y recordatorios de pago",
+      checked: expensasNotifications,
+      set: setExpensasNotifications,
+    },
+    {
+      key: "reuniones",
+      title: "Reuniones",
+      desc: "Convocatorias y recordatorios",
+      checked: reunionesNotifications,
+      set: setReunionesNotifications,
+    },
+    {
+      key: "votaciones",
+      title: "Votaciones",
+      desc: "Nuevas votaciones disponibles",
+      checked: votacionesNotifications,
+      set: setVotacionesNotifications,
+    },
+    {
+      key: "foros",
+      title: "Actividad en Foros",
+      desc: "Nuevos posts y respuestas",
+      checked: forosNotifications,
+      set: setForosNotifications,
+    },
+    {
+      key: "mantenimiento",
+      title: "Mantenimiento",
+      desc: "Trabajos programados y avisos",
+      checked: mantenimientoNotifications,
+      set: setMantenimientoNotifications,
+    },
+  ];
 
   return (
     <Layout>
-      <Box 
-        sx={{ 
-          maxWidth: 1400, 
-          mx: 'auto',
-          backgroundColor: 'white',
-          borderRadius: 2,
-          boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-          overflow: 'hidden'
-        }}
-      >
-        {/* Header */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 2,
-          p: 3,
-          borderBottom: '1px solid #f0f0f0'
-        }}>
-          <SettingsIcon sx={{ color: '#1976d2', fontSize: 28 }} />
-          <Typography variant="h5" sx={{ fontWeight: 600, color: '#1976d2' }}>
-            Configuración Personal
-          </Typography>
-        </Box>
+      <Box className="foraria-page-container">
+        <PageHeader
+          title="Configuración Personal"
+          stats={[]}
+          /*actions={
+            <Button variant="contained" color="secondary" onClick={handleSaveConfiguration}>
+              Guardar Configuración
+            </Button>
+          }*/ />
 
-        {/* Contenido */}
-        <Box sx={{ p: 3 }}>
-          {/* Sección de Notificaciones */}
-          <Box sx={{ mb: 4 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 3 }}>
-              <NotificationsIcon sx={{ color: '#1976d2', fontSize: 24 }} />
-              <Typography variant="h6" sx={{ fontWeight: 600, color: '#1976d2' }}>
+        <Paper elevation={0} variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
+          <Stack spacing={2.5}>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <NotificationsIcon color="primary" />
+              <Typography variant="h6" fontWeight={600} color="primary">
                 Configuración de Notificaciones
               </Typography>
+            </Stack>
+
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 600 }}>
+                Canales de Notificación
+              </Typography>
+
+              <Stack
+                direction={{ xs: "column", md: "row" }}
+                spacing={2}
+                useFlexGap
+                flexWrap="wrap"
+              >
+                <ChannelItem
+                  icon={<SmartphoneIcon fontSize="small" />}
+                  label="Notificaciones Push"
+                  control={
+                    <Switch
+                      checked={pushNotifications}
+                      onChange={(e) => setPushNotifications(e.target.checked)}
+                      color="primary"
+                    />
+                  }
+                />
+                <ChannelItem
+                  icon={<EmailIcon fontSize="small" />}
+                  label="Email"
+                  control={
+                    <Switch
+                      checked={emailNotifications}
+                      onChange={(e) => setEmailNotifications(e.target.checked)}
+                      color="success"
+                    />
+                  }
+                />
+                <ChannelItem
+                  icon={<SmsIcon fontSize="small" />}
+                  label="SMS"
+                  control={
+                    <Switch
+                      checked={smsNotifications}
+                      onChange={(e) => setSmsNotifications(e.target.checked)}
+                      color="secondary"
+                    />
+                  }
+                />
+              </Stack>
             </Box>
 
-            <Stack spacing={3}>
-              {/* Canales de Notificación */}
-              <Box>
-                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#333' }}>
-                  Canales de Notificación
-                </Typography>
-                
-                <Stack direction="row" spacing={4} sx={{ mb: 2 }}>
-                  {/* Push Notifications */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <SmartphoneIcon sx={{ color: '#1976d2', fontSize: 20 }} />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={pushNotifications}
-                          onChange={(e) => setPushNotifications(e.target.checked)}
-                          color="primary"
-                        />
-                      }
-                      label="Notificaciones Push"
-                      sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.9rem' } }}
-                    />
-                  </Box>
+            <Divider />
 
-                  {/* Email */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <EmailIcon sx={{ color: '#4caf50', fontSize: 20 }} />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={emailNotifications}
-                          onChange={(e) => setEmailNotifications(e.target.checked)}
-                          color="success"
-                        />
-                      }
-                      label="Email"
-                      sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.9rem' } }}
-                    />
-                  </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 600 }}>
+                Tipos de Notificaciones
+              </Typography>
 
-                  {/* SMS */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <SmsIcon sx={{ color: '#9c27b0', fontSize: 20 }} />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={smsNotifications}
-                          onChange={(e) => setSmsNotifications(e.target.checked)}
-                          color="secondary"
-                        />
-                      }
-                      label="SMS"
-                      sx={{ '& .MuiFormControlLabel-label': { fontSize: '0.9rem' } }}
-                    />
-                  </Box>
-                </Stack>
-              </Box>
+              <Stack spacing={1.2}>
+                {tipos.map((t) => (
+                  <TypeRow
+                    key={t.key}
+                    title={t.title}
+                    description={t.desc}
+                    checked={t.checked}
+                    onChange={(val) => t.set(val)}
+                  />
+                ))}
+              </Stack>
+            </Box>
+          </Stack>
+        </Paper>
 
-              <Divider />
-
-              {/* Tipos de Notificaciones */}
-              <Box>
-                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 600, color: '#333' }}>
-                  Tipos de Notificaciones
-                </Typography>
-
-                <Stack spacing={2}>
-                  {/* Reclamos y Sugerencias */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Reclamos y Sugerencias
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Nuevos reclamos y actualizaciones
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={reclamosNotifications}
-                      onChange={(e) => setReclamosNotifications(e.target.checked)}
-                      color="primary"
-                    />
-                  </Box>
-
-                  {/* Expensas */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Expensas
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Vencimientos y recordatorios de pago
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={expensasNotifications}
-                      onChange={(e) => setExpensasNotifications(e.target.checked)}
-                      color="primary"
-                    />
-                  </Box>
-
-                  {/* Reuniones */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Reuniones
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Convocatorias y recordatorios
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={reunionesNotifications}
-                      onChange={(e) => setReunionesNotifications(e.target.checked)}
-                      color="primary"
-                    />
-                  </Box>
-
-                  {/* Votaciones */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Votaciones
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Nuevas votaciones disponibles
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={votacionesNotifications}
-                      onChange={(e) => setVotacionesNotifications(e.target.checked)}
-                      color="primary"
-                    />
-                  </Box>
-
-                  {/* Actividad en Foros */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Actividad en Foros
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Nuevos posts y respuestas
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={forosNotifications}
-                      onChange={(e) => setForosNotifications(e.target.checked)}
-                      color="primary"
-                    />
-                  </Box>
-
-                  {/* Mantenimiento */}
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', p: 2, backgroundColor: '#f9f9f9', borderRadius: 2 }}>
-                    <Box>
-                      <Typography variant="body1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        Mantenimiento
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Trabajos programados y avisos
-                      </Typography>
-                    </Box>
-                    <Switch
-                      checked={mantenimientoNotifications}
-                      onChange={(e) => setMantenimientoNotifications(e.target.checked)}
-                      color="primary"
-                    />
-                  </Box>
-                </Stack>
-              </Box>
-            </Stack>
-          </Box>
-        </Box>
-
-        {/* Botón Guardar */}
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          p: 3, 
-          borderTop: '1px solid #f0f0f0',
-          backgroundColor: '#fafafa'
-        }}>
-          <Button
-            variant="contained"
-            onClick={handleSaveConfiguration}
-            sx={{
-              px: 4,
-              py: 1.5,
-              borderRadius: 2,
-              textTransform: "none",
-              fontWeight: 600,
-              fontSize: "0.9rem",
-              backgroundColor: '#1976d2',
-              '&:hover': {
-                backgroundColor: '#1565c0'
-              }
-            }}
-          >
+        <Box
+          sx={{
+            display: { xs: "none", md: "flex" },
+            justifyContent: "flex-end",
+            mt: 2,
+          }}
+        >
+          <Button variant="contained" color="secondary" onClick={handleSaveConfiguration}>
             Guardar Configuración
           </Button>
         </Box>
@@ -281,4 +189,82 @@ const Configuration: React.FC = () => {
 
 export default Configuration;
 
+/* ---------- Subcomponentes locales para mantener consistencia ---------- */
 
+function ChannelItem({
+  icon,
+  label,
+  control,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  control: React.ReactNode;
+}) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: 1,
+        p: 1,
+        borderRadius: 2,
+      }}
+    >
+      <Box
+        sx={(t) => ({
+          width: 28,
+          height: 28,
+          display: "grid",
+          placeItems: "center",
+          borderRadius: 1,
+          bgcolor: t.palette.action.hover,
+          color: t.palette.primary.main,
+          flexShrink: 0,
+        })}
+      >
+        {icon}
+      </Box>
+      <FormControlLabel control={control as any} label={label} />
+    </Box>
+  );
+}
+
+function TypeRow({
+  title,
+  description,
+  checked,
+  onChange,
+}: {
+  title: string;
+  description: string;
+  checked: boolean;
+  onChange: (val: boolean) => void;
+}) {
+  return (
+    <Paper
+      variant="outlined"
+      sx={{
+        p: 1.5,
+        borderRadius: 2,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+      }}
+    >
+      <Box>
+        <Typography variant="body1" sx={{ fontWeight: 600 }}>
+          {title}
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          {description}
+        </Typography>
+      </Box>
+
+      <Switch
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        color="primary"
+      />
+    </Paper>
+  );
+}

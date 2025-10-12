@@ -55,7 +55,11 @@ export default function DashboardPage() {
             {
               icon: <ReceiptLongIcon />,
               title: "Expensas del Mes",
-              value: <span className="accent"><Money value={kpis.expensesThisMonth} /></span> as unknown as string,
+              value: (
+                <span className="accent">
+                  <Money value={kpis.expensesThisMonth} />
+                </span>
+              ) as unknown as string,
               color: "warning",
             },
             {
@@ -79,33 +83,42 @@ export default function DashboardPage() {
           ]}
         />
 
-        {/* Acciones rápidas */}
         <Paper elevation={0} sx={{ p: 2, borderRadius: 3, mb: 2 }} variant="outlined">
-          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 700 }}>Acciones Rápidas</Typography>
+          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 700 }}>
+            Acciones Rápidas
+          </Typography>
+
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 3}}>
+            <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
+                to="/calendario"
                 icon={<CalendarMonthIcon color="primary" />}
                 title="Reservar Espacios"
                 subtitle="Espacios comunes disponibles"
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3}}>
+
+            <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
+                to="/reclamos"
                 icon={<ReportProblemIcon color="warning" />}
                 title="Nuevo Reclamo"
                 subtitle="Reportar problemas o sugerencias"
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3}}>
+
+            <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
+                to="/forums/general"
                 icon={<ForumIcon color="action" />}
                 title="Foros"
                 subtitle="Participar en discusiones"
               />
             </Grid>
-            <Grid size={{ xs: 12, md: 3}}>
+
+            <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
+                to="/expensas"
                 icon={<PaymentsIcon color="error" />}
                 title="Mis Expensas"
                 subtitle="Consultar mis pagos"
@@ -114,10 +127,8 @@ export default function DashboardPage() {
           </Grid>
         </Paper>
 
-        {/* Paneles */}
         <Grid container spacing={2}>
-          {/* Mi estado de pagos */}
-          <Grid size={{ xs: 12, lg: 6}}>
+          <Grid size={{ xs: 12, lg: 6 }}>
             <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
               <Box className="panel__head">
                 <h4>Mi Estado de Pagos</h4>
@@ -201,8 +212,7 @@ export default function DashboardPage() {
             </Paper>
           </Grid>
 
-          {/* Desglose de gastos */}
-          <Grid size={{ xs: 12, lg: 6}}>
+          <Grid size={{ xs: 12, lg: 6 }}>
             <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
               <Box className="panel__head">
                 <h4>Desglose de Gastos del Consorcio</h4>
@@ -211,29 +221,17 @@ export default function DashboardPage() {
                 </span>
               </Box>
 
-              <Box className="panel__content two">
+              <div className="panel__content two">
                 <DonutChart data={expenseBreakdown} />
                 <ul className="legend">
                   {expenseBreakdown.map((s) => (
                     <li key={s.label}>
                       <span className="dot" style={{ background: s.color }} />
-                      {s.label}
+                      {s.label} <span className="muted">{s.value}%</span>
                     </li>
                   ))}
                 </ul>
-              </Box>
-
-              <Box className="category-list">
-                <h5>Categorías principales</h5>
-                <ul>
-                  {expenseBreakdown.map((s) => (
-                    <li key={s.label}>
-                      <span className="name">{s.label}</span>
-                      <span className="perc">{s.value}%</span>
-                    </li>
-                  ))}
-                </ul>
-              </Box>
+              </div>
             </Paper>
           </Grid>
         </Grid>

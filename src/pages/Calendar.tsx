@@ -94,12 +94,10 @@ export default function Calendar() {
               variant="contained"
               color="secondary"
               startIcon={<AddRounded />}
-              onClick={() => setOpenReserve(true)}
-            >
+              onClick={() => setOpenReserve(true)}>
               Reservar espacio común
             </Button>
           }
-          sx={{ mb: 2 }}
         />
 
         <Paper elevation={0} variant="outlined" sx={{ p: { xs: 1.5, md: 2 }, borderRadius: 3, borderColor: "divider" }}>
