@@ -1,9 +1,29 @@
-// src/pages/NewSupplier.tsx
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { TextField, Button, MenuItem } from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
+import { useGet } from "../hooks/useGet";
+import { useMutation } from "../hooks/useMutation";
 import "../styles/spent.css";
 
+type SupplierPayload = {
+  commercialName: string;
+  businessName: string;
+  cuit: string;
+  category: string;
+  phone: string;
+  email: string;
+  address: string;
+  contactPerson: string;
+  notes: string;
+  active?: boolean; // por si API lo usa
+};
+
 export default function NewSupplier() {
+  const navigate = useNavigate();
+  const { id } = useParams();                 // si existe => modo edición
+  const isEdit = Boolean(id);
+
+  // Estado del formulario
   const [commercialName, setCommercialName] = useState("");
   const [businessName, setBusinessName] = useState("");
   const [cuit, setCuit] = useState("");
@@ -14,10 +34,36 @@ export default function NewSupplier() {
   const [contactPerson, setContactPerson] = useState("");
   const [notes, setNotes] = useState("");
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  // Cargar datos si es edición
+  const { data: existing, loading: loadingDetail } = useGet<SupplierPayload>(
+    isEdit ? `/providers/${id}` : "",
+    { enabled: isEdit }
+  );
+
+  useEffect(() => {
+    if (!existing) return;
+    setCommercialName(existing.commercialName ?? "");
+    setBusinessName(existing.businessName ?? "");
+    setCuit(existing.cuit ?? "");
+    setCategory(existing.category ?? "");
+    setPhone(existing.phone ?? "");
+    setEmail(existing.email ?? "");
+    setAddress(existing.address ?? "");
+    setContactPerson(existing.contactPerson ?? "");
+    setNotes(existing.notes ?? "");
+  }, [existing]);
+
+  // Mutaciones
+  const { mutate: createSupplier, loading: creating, error: createErr } =
+    useMutation<any, SupplierPayload>("/providers", "post");
+
+  const { mutate: updateSupplier, loading: updating, error: updateErr } =
+    useMutation<any, Partial<SupplierPayload>>(`/providers/${id}`, "put");
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    // Acá iría el POST a tu API
-    console.log({
+
+    const payload: SupplierPayload = {
       commercialName,
       businessName,
       cuit,
@@ -27,12 +73,31 @@ export default function NewSupplier() {
       address,
       contactPerson,
       notes,
-    });
+      active: true,
+    };
+
+    try {
+      if (isEdit) {
+        await updateSupplier(payload);
+        alert("Proveedor actualizado ✅");
+      } else {
+        await createSupplier(payload);
+        alert("Proveedor creado ✅");
+      }
+      navigate("/proveedores"); // volvemos al listado
+    } catch (err) {
+      // el hook ya setea error; acá podés disparar toast si usás uno
+      console.error(err);
+    }
   };
+
+  const submitting = creating || updating || loadingDetail;
 
   return (
     <form className="foraria-form" onSubmit={handleSubmit}>
-      <h2 className="foraria-form-title">Nuevo Proveedor</h2>
+      <h2 className="foraria-form-title">
+        {isEdit ? "Editar Proveedor" : "Nuevo Proveedor"}
+      </h2>
 
       <div className="foraria-form-group container-items">
         <div className="foraria-form-group group-size">
@@ -44,6 +109,7 @@ export default function NewSupplier() {
             className="foraria-form-input"
             value={commercialName}
             onChange={(e) => setCommercialName(e.target.value)}
+            required
           />
         </div>
 
@@ -56,6 +122,7 @@ export default function NewSupplier() {
             className="foraria-form-input"
             value={businessName}
             onChange={(e) => setBusinessName(e.target.value)}
+            required
           />
         </div>
       </div>
@@ -70,6 +137,7 @@ export default function NewSupplier() {
             className="foraria-form-input"
             value={cuit}
             onChange={(e) => setCuit(e.target.value)}
+            required
           />
         </div>
 
@@ -81,6 +149,7 @@ export default function NewSupplier() {
             className="foraria-form-input"
             value={category}
             onChange={(e) => setCategory(e.target.value)}
+            required
           >
             <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
             <MenuItem value="Limpieza">Limpieza</MenuItem>
@@ -113,6 +182,7 @@ export default function NewSupplier() {
             className="foraria-form-input"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            required
           />
         </div>
       </div>
@@ -155,11 +225,27 @@ export default function NewSupplier() {
       </div>
 
       <div className="foraria-form-actions">
-        <Button type="submit" className="foraria-gradient-button boton-crear-reclamo">
-          Crear Proveedor
+        <Button
+          type="submit"
+          className="foraria-gradient-button boton-crear-reclamo"
+          disabled={submitting}
+        >
+          {isEdit ? "Guardar cambios" : "Crear Proveedor"}
         </Button>
-        <Button className="foraria-outlined-white-button">Cancelar</Button>
+        <Button
+          className="foraria-outlined-white-button"
+          onClick={() => navigate("/proveedores")}
+          disabled={submitting}
+        >
+          Cancelar
+        </Button>
       </div>
+
+      {(createErr || updateErr) && (
+        <p style={{ color: "crimson", marginTop: 8 }}>
+          Error: {(createErr || updateErr) as string}
+        </p>
+      )}
     </form>
   );
 }
