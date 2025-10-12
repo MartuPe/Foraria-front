@@ -1,41 +1,46 @@
+// src/App.tsx
+import React from "react";
+import "./App.css";
 
-import React from 'react';
-import './App.css';
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { ThemeProvider, CssBaseline } from '@mui/material';
-import theme from './styles/muiStyle';
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { ThemeProvider, CssBaseline } from "@mui/material";
+import theme from "./styles/muiStyle";
 
 // Rutas “main” (auth / perfil)
-import Login from './pages/Login';
-import RecoverPassword from './pages/RecoverPassword';
-import UpdateData from './pages/UpdateData';
-import Profile from './pages/Profile';
-import ChangeData from './pages/ChangeData';
+import Login from "./pages/Login";
+import RecoverPassword from "./pages/RecoverPassword";
+import UpdateData from "./pages/UpdateData";
+import Profile from "./pages/Profile";
+import ChangeData from "./pages/ChangeData";
 
-import Votes from './pages/Votes';
-import Meetings from './pages/Meetings';
-import Documents from './pages/Documents';
-import ExpensesPage from './pages/Expenses';
-import Claims from './pages/Claims';
-import Dashboard from './pages/Dashboard';
-import Calendar from './pages/Calendar';
-import NewReserve from './popups/NewEvent';
-import Suppliers from './pages/Suppliers';
-import NewSupplier from './popups/NewSupplier';
-import UserManagment from './pages/UserManagement';
+// Funcionalidades
+import Votes from "./pages/Votes";
+import Meetings from "./pages/Meetings";
+import Documents from "./pages/Documents";
+import ExpensesPage from "./pages/Expenses";
+import Claims from "./pages/Claims";
+import Dashboard from "./pages/Dashboard";
+import Calendar from "./pages/Calendar";
+import NewReserve from "./popups/NewEvent";
+
+// Proveedores (listado + alta + edición)
+import Suppliers from "./pages/Suppliers";          // listado
+import NewSupplier from "./popups/NewSupplier";     // alta/edición (mismo form, lee useParams internamente)
+
+// Usuarios
+import UserManagment from "./pages/UserManagement"; // (mantengo tu import tal cual)
 
 // Forums (usuario)
-import Forums from './pages/Forums';
+import Forums from "./pages/Forums";
 
 // Configuración
-import Configuration from './pages/Configuration';
+import Configuration from "./pages/Configuration";
 
 // Admin + layout
-import AdminLayout from './components/layout/AdminLayout';
-import AdminReclaims from './pages/admin/AdminReclaims';
-import AdminForums from './pages/admin/AdminForums';
-import AdminAudit from './pages/admin/AdminAudit'; 
+import AdminLayout from "./components/layout/AdminLayout";
+import AdminReclaims from "./pages/admin/AdminReclaims";
+import AdminForums from "./pages/admin/AdminForums";
+import AdminAudit from "./pages/admin/AdminAudit";
 
 function App() {
   return (
@@ -43,7 +48,7 @@ function App() {
       <CssBaseline />
       <Router>
         <Routes>
-          {/* Redirección inicial - CAMBIAR TEMPORALMENTE */}
+          {/* Redirección inicial */}
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
 
           {/* Auth */}
@@ -63,9 +68,14 @@ function App() {
           <Route path="/reclamos" element={<Claims />} />
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
-          <Route path="/proveedores" element={<Suppliers />} />
-          <Route path="/nuevoProveedor" element={<NewSupplier />} />
-           <Route path="/gestionUsuario" element={<UserManagment />} />
+
+          {/* Proveedores */}
+          <Route path="/proveedores" element={<Suppliers />} />                {/* listado */}
+          <Route path="/proveedores/nuevo" element={<NewSupplier />} />        {/* alta */}
+          <Route path="/proveedores/:id/editar" element={<NewSupplier />} />   {/* edición (usa useParams) */}
+
+          {/* Gestión de usuarios */}
+          <Route path="/gestionUsuario" element={<UserManagment />} />
 
           {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
@@ -78,13 +88,12 @@ function App() {
           {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
 
-          {/* Rutas del Admin con layout (sidebar + outlet) */}
+          {/* Admin (layout con sidebar + <Outlet/>) */}
           <Route path="/admin" element={<AdminLayout />}>
             <Route path="reclaims" element={<AdminReclaims />} />
             <Route path="forums" element={<AdminForums />} />
-            <Route path="audit" element={<AdminAudit />} />   
+            <Route path="audit" element={<AdminAudit />} />
           </Route>
-
 
           {/* Fallback */}
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
