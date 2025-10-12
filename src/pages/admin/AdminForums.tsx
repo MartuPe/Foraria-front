@@ -1,6 +1,6 @@
- import * as React from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
-  Container,
   Stack,
   TextField,
   MenuItem,
@@ -9,6 +9,11 @@ import {
   Box,
   Tabs,
   Tab,
+  Chip,
+  Card,
+  CardContent,
+  Typography,
+  IconButton,
 } from "@mui/material";
 import {
   AddOutlined,
@@ -21,11 +26,9 @@ import {
   PeopleAltOutlined,
   ChatBubbleOutlineOutlined,
   BookmarkAddedOutlined,
+  FilterList as FilterListIcon,
 } from "@mui/icons-material";
-
-import SectionHeader from "../../components/SectionHeader";
-import StatCard from "../../components/StatCard";
-import InfoCard from "../../components/InfoCard";
+import PageHeader from "../../components/SectionHeader";
 
 type ForoCategoria =
   | "General"
@@ -90,18 +93,25 @@ const categorias: ForoCategoria[] = [
 ];
 
 export default function AdminForums() {
-  const [query, setQuery] = React.useState("");
-  const [cat, setCat] = React.useState<"Todas" | ForoCategoria>("Todas");
-  const [posts, setPosts] = React.useState<Post[]>(mockPosts);
+  const [query, setQuery] = useState("");
+  const [posts, setPosts] = useState<Post[]>(mockPosts);
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const filtered = posts.filter((p) => {
-    const byCat = cat === "Todas" ? true : p.categoria === cat;
-    const byQuery =
-      !query ||
-      p.titulo.toLowerCase().includes(query.toLowerCase()) ||
-      p.cuerpo.toLowerCase().includes(query.toLowerCase());
-    return byCat && byQuery;
-  });
+  // Obtener categoría desde URL params
+  const [cat, setCat] = useState<"Todas" | ForoCategoria>("Todas");
+
+  useEffect(() => {
+    const categoryFromUrl = searchParams.get('category') as "Todas" | ForoCategoria;
+    if (categoryFromUrl && (categoryFromUrl === "Todas" || categorias.includes(categoryFromUrl as ForoCategoria))) {
+      setCat(categoryFromUrl);
+    }
+  }, [searchParams]);
+
+  // Actualizar URL cuando cambie la categoría
+  const handleCategoryChange = (newCategory: "Todas" | ForoCategoria) => {
+    setCat(newCategory);
+    setSearchParams({ category: newCategory });
+  };
 
   const togglePin = (id: string) =>
     setPosts((prev) =>
@@ -116,131 +126,385 @@ export default function AdminForums() {
   const totalRespuestas = posts.reduce((a, p) => a + p.respuestas, 0);
   const postsFijados = posts.filter((p) => p.fijado).length;
 
+  const filtered = posts.filter((p) => {
+    const byCat = cat === "Todas" ? true : p.categoria === cat;
+    const byQuery =
+      !query ||
+      p.titulo.toLowerCase().includes(query.toLowerCase()) ||
+      p.cuerpo.toLowerCase().includes(query.toLowerCase());
+    return byCat && byQuery;
+  });
+
+  // Configuración de colores para tabs (igual que Documents.tsx)
+  const tabColors: Record<string, string> = {
+    Todas: "#666666",
+    General: "#1e88e5",
+    Administración: "#42a5f5",
+    Seguridad: "#ef5350",
+    Mantenimiento: "#ff9800",
+    "Espacios Comunes": "#26a69a",
+    "Garage y Parking": "#7e57c2",
+  };
+
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <SectionHeader title="Gestión de Foros" />
+    <div className="page">
+      <PageHeader
+        title="Gestión de Foros"
+        actions={
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AddOutlined />}
+            onClick={handleNew}
+            size="small"
+          >
+            Nuevo Post
+          </Button>
+        }
+      />
 
-      {/* KPIs (Box + CSS grid) */}
-      <Box
-        sx={{
-          mt: 1,
-          mb: 2,
-          display: "grid",
-          gap: 2,
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            md: "repeat(4, 1fr)",
-          },
-        }}
+      {/* KPIs compactas */}
+      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent sx={{ p: 2, textAlign: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+              }}
+            >
+              <ForumOutlined sx={{ color: "primary.main", fontSize: 20 }} />
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "primary.main" }}
+              >
+                {posts.length}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Total Posts
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent sx={{ p: 2, textAlign: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+              }}
+            >
+              <PeopleAltOutlined sx={{ color: "success.main", fontSize: 20 }} />
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "success.main" }}
+              >
+                9
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Participantes
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent sx={{ p: 2, textAlign: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+              }}
+            >
+              <ChatBubbleOutlineOutlined sx={{ color: "secondary.main", fontSize: 20 }} />
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "secondary.main" }}
+              >
+                {totalRespuestas}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Respuestas
+            </Typography>
+          </CardContent>
+        </Card>
+
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent sx={{ p: 2, textAlign: "center" }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 1,
+              }}
+            >
+              <BookmarkAddedOutlined sx={{ color: "warning.main", fontSize: 20 }} />
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, color: "warning.main" }}
+              >
+                {postsFijados}
+              </Typography>
+            </Box>
+            <Typography variant="caption" color="text.secondary">
+              Fijados
+            </Typography>
+          </CardContent>
+        </Card>
+      </Stack>
+
+      {/* Filtros normalizados */}
+      <Paper
+        elevation={0}
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 2, mb: 2 }}
       >
-        <StatCard icon={<ForumOutlined />} label="Total de Posts" value={posts.length} />
-        <StatCard icon={<PeopleAltOutlined />} label="Participantes Activos" value={9} />
-        <StatCard icon={<ChatBubbleOutlineOutlined />} label="Total Respuestas" value={totalRespuestas} />
-        <StatCard icon={<BookmarkAddedOutlined />} label="Posts Fijados" value={postsFijados} />
-      </Box>
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
+          <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
+          <Typography
+            variant="subtitle1"
+            color="primary"
+            sx={{ fontWeight: 600 }}
+          >
+            Filtros
+          </Typography>
+        </Stack>
 
-      {/* Barra de acciones */}
-      <Paper sx={{ p: 2, borderRadius: 3, mb: 2 }}>
         <Stack
           direction={{ xs: "column", md: "row" }}
-          spacing={1.5}
+          spacing={2}
           alignItems={{ xs: "stretch", md: "center" }}
-          justifyContent="space-between"
         >
           <TextField
             fullWidth
             size="small"
             placeholder="Buscar posts…"
+            value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-          <Stack direction="row" spacing={1.5} alignItems="center">
-            <TextField
-              select
-              size="small"
-              label="Categoría"
-              value={cat}
-              onChange={(e) => setCat(e.target.value as any)}
-              sx={{ minWidth: 220 }}
-            >
-              <MenuItem value="Todas">Todas</MenuItem>
-              {categorias.map((c) => (
-                <MenuItem key={c} value={c}>
-                  {c}
-                </MenuItem>
-              ))}
-            </TextField>
-            <Button variant="contained" startIcon={<AddOutlined />} onClick={handleNew}>
-              Nuevo Post
-            </Button>
-          </Stack>
-        </Stack>
-
-        <Box sx={{ mt: 2 }}>
-          <Tabs
+          <TextField
+            select
+            size="small"
+            label="Categoría"
             value={cat}
-            onChange={(_, v) => setCat(v)}
-            sx={{
-              "& .MuiTab-root": {
-                textTransform: "none",
-                fontWeight: 600,
-                borderRadius: 2,
-                minHeight: 36,
-                px: 2,
-                mr: 1,
-                border: "1px solid",
-                borderColor: "divider",
-              },
-              "& .Mui-selected": {
-                bgcolor: "primary.main",
-                color: "primary.contrastText !important",
-                borderColor: "primary.main",
-                boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
-              },
-              "& .MuiTabs-indicator": { display: "none" },
-            }}
+            onChange={(e) => handleCategoryChange(e.target.value as any)}
+            sx={{ minWidth: { xs: "100%", md: 220 } }}
           >
-            <Tab label="Todas las Categorías" value="Todas" />
+            <MenuItem value="Todas">Todas</MenuItem>
             {categorias.map((c) => (
-              <Tab key={c} label={c} value={c} />
+              <MenuItem key={c} value={c}>
+                {c}
+              </MenuItem>
             ))}
-          </Tabs>
-        </Box>
+          </TextField>
+        </Stack>
       </Paper>
 
-      {/* Lista de posts (Box grid) */}
-      <Box
-        sx={{
-          display: "grid",
-          gap: 2,
-          gridTemplateColumns: { xs: "1fr" }, // a futuro podés hacer 2 col en xl si querés
-        }}
+      {/* Tabs normalizadas con colores (igual que Documents.tsx) */}
+      <Paper
+        elevation={0}
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 2, mb: 2 }}
       >
+        <Tabs
+          value={cat}
+          onChange={(_, v) => handleCategoryChange(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontWeight: 600,
+              minHeight: 36,
+              px: 2,
+              mr: 1,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+              color: "text.primary",
+              "&:hover": {
+                backgroundColor: "action.hover",
+              },
+            },
+            "& .Mui-selected": {
+              color: "white !important", // TEXTO BLANCO para contraste
+              backgroundColor:
+                (theme) => tabColors[cat] || theme.palette.primary.main,
+              borderColor:
+                (theme) => tabColors[cat] || theme.palette.primary.main,
+              boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
+            },
+            "& .MuiTabs-indicator": {
+              display: "none", // Sin indicador
+            },
+          }}
+        >
+          <Tab label="Todas" value="Todas" />
+          {categorias.map((c) => (
+            <Tab key={c} label={c} value={c} />
+          ))}
+        </Tabs>
+      </Paper>
+
+      {/* Lista de posts normalizada */}
+      <Stack spacing={2}>
         {filtered.map((p) => (
-          <InfoCard
+          <Card
             key={p.id}
-            title={p.titulo}
-            subtitle={`${p.autor} · Última actividad: ${p.ultimaActividad}`}
-            description={p.cuerpo}
-            chips={[
-              { label: p.categoria },
-              ...(p.fijado ? [{ label: "Fijado", color: "warning" as const }] : []),
-            ]}
-            fields={[
-              { label: "Likes:", value: p.likes },
-              { label: "Dislikes:", value: p.dislikes },
-              { label: "Respuestas:", value: p.respuestas },
-            ]}
-            actions={[
-              { label: "Ver", icon: <VisibilityOutlined />, color: "secondary", onClick: () => handleView(p.id) },
-              { label: p.fijado ? "Desfijar" : "Fijar", icon: p.fijado ? <PushPin /> : <PushPinOutlined />, variant: "outlined", onClick: () => togglePin(p.id) },
-              { label: "Editar", icon: <EditOutlined />, variant: "outlined", onClick: () => handleEdit(p.id) },
-              { label: "Eliminar", icon: <DeleteOutline />, color: "error", variant: "outlined", onClick: () => handleDelete(p.id) },
-            ]}
-            showDivider
-          />
+            variant="outlined"
+            sx={{
+              borderRadius: 2,
+              "&:hover": {
+                boxShadow: 2,
+                transform: "translateY(-1px)",
+                transition: "all 0.2s ease-in-out",
+              },
+            }}
+          >
+            <CardContent sx={{ p: 2.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
+                <Box sx={{ flexGrow: 1 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{ fontWeight: 600, fontSize: "1.1rem", mb: 1 }}
+                  >
+                    {p.titulo}
+                  </Typography>
+
+                  <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
+                    <Chip
+                      label={p.categoria}
+                      size="small"
+                      variant="outlined"
+                      sx={{ fontSize: "0.7rem", height: 24 }}
+                    />
+                    <Chip
+                      label={p.rolAutor}
+                      size="small"
+                      variant="filled"
+                      color="primary"
+                      sx={{ fontSize: "0.7rem", height: 24 }}
+                    />
+                    {p.fijado && (
+                      <Chip
+                        label="Fijado"
+                        size="small"
+                        variant="filled"
+                        color="warning"
+                        sx={{ fontSize: "0.7rem", height: 24 }}
+                      />
+                    )}
+                  </Stack>
+
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    sx={{ mb: 1.5, lineHeight: 1.5 }}
+                  >
+                    {p.cuerpo}
+                  </Typography>
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 2,
+                      mb: 1,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.8rem" }}
+                    >
+                      👤 {p.autor}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.8rem" }}
+                    >
+                      🕒 {p.ultimaActividad}
+                    </Typography>
+                  </Box>
+
+                  <Stack direction="row" spacing={3} sx={{ fontSize: "0.8rem" }}>
+                    <Typography variant="body2" color="text.secondary">
+                      👍 {p.likes} likes
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      👎 {p.dislikes} dislikes
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      💬 {p.respuestas} respuestas
+                    </Typography>
+                  </Stack>
+                </Box>
+
+                {/* Botones de acción */}
+                <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleView(p.id)}
+                    sx={{ color: "primary.main" }}
+                  >
+                    <VisibilityOutlined fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => togglePin(p.id)}
+                    sx={{ color: "warning.main" }}
+                  >
+                    {p.fijado ? (
+                      <PushPin fontSize="small" />
+                    ) : (
+                      <PushPinOutlined fontSize="small" />
+                    )}
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleEdit(p.id)}
+                    sx={{ color: "info.main" }}
+                  >
+                    <EditOutlined fontSize="small" />
+                  </IconButton>
+                  <IconButton
+                    size="small"
+                    onClick={() => handleDelete(p.id)}
+                    sx={{ color: "error.main" }}
+                  >
+                    <DeleteOutline fontSize="small" />
+                  </IconButton>
+                </Stack>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Box>
-    </Container>
+
+        {/* Mensaje si no hay resultados */}
+        {filtered.length === 0 && (
+          <Paper sx={{ p: 4, textAlign: "center", borderRadius: 2 }}>
+            <Typography variant="h6" color="text.secondary">
+              No se encontraron posts con los filtros aplicados
+            </Typography>
+          </Paper>
+        )}
+      </Stack>
+    </div>
   );
 }
