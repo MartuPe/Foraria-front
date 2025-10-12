@@ -59,5 +59,8 @@
     "transformIgnorePatterns": [
       "node_modules/(?!(@fullcalendar)/)"
     ]
+  },
+  "devDependencies": {
+    "@types/axios": "^0.9.36"
   }
 }

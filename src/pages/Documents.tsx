@@ -1,22 +1,6 @@
 import { useMemo, useState } from "react";
 import {
-  Box,
-  Paper,
-  Typography,
-  Stack,
-  TextField,
-  Chip,
-  Card,
-  CardContent,
-  Button,
-  Dialog,
-  DialogContent,
-  Divider,
-  Snackbar,
-  Alert,
-  Tabs,
-  Tab,
-  Grid
+  Box, Paper, Typography, Stack, TextField, Chip, Card, CardContent, Button, Dialog, DialogContent, Divider, Snackbar, Alert, Tabs, Tab,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import CloudDownloadIcon from "@mui/icons-material/CloudDownload";
@@ -27,18 +11,11 @@ import QueryBuilderIcon from "@mui/icons-material/QueryBuilder";
 import DownloadDoneIcon from "@mui/icons-material/DownloadDone";
 import PageHeader from "../components/SectionHeader";
 import {
-  GENERAL_DOCS,
-  MY_DOCS_SEED,
-  GeneralDoc,
-  MyDoc,
-  GeneralCategory,
-  MyCategory,
-  countByCategory,
-  formatDate,
-  formatSize,
+  GENERAL_DOCS, MY_DOCS_SEED, GeneralDoc, MyDoc, GeneralCategory, MyCategory,
+  countByCategory, formatDate, formatSize,
 } from "../services/documentService";
 import NewDocument from "../popups/NewDocument";
-import { Sidebar } from "../components/layout";
+import { Layout } from "../components/layout";
 import "../styles/documents.css";
 
 type TabKey = "general" | "mine";
@@ -53,11 +30,7 @@ export default function Documents() {
 
   const [preview, setPreview] = useState<GeneralDoc | MyDoc | null>(null);
   const [openUpload, setOpenUpload] = useState(false);
-
-  const [snack, setSnack] = useState<{ open: boolean; msg: string }>({
-    open: false,
-    msg: "",
-  });
+  const [snack, setSnack] = useState<{ open: boolean; msg: string }>({ open: false, msg: "" });
 
   // KPIs mock
   const totalGeneral = generalDocs.length;
@@ -70,10 +43,7 @@ export default function Documents() {
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
-        (d) =>
-          d.title.toLowerCase().includes(q) ||
-          d.description.toLowerCase().includes(q) ||
-          d.category.toLowerCase().includes(q)
+        (d) => d.title.toLowerCase().includes(q) || d.description.toLowerCase().includes(q) || d.category.toLowerCase().includes(q)
       );
     }
     return list;
@@ -85,10 +55,7 @@ export default function Documents() {
     if (search.trim()) {
       const q = search.toLowerCase();
       list = list.filter(
-        (d) =>
-          d.title.toLowerCase().includes(q) ||
-          d.description.toLowerCase().includes(q) ||
-          d.category.toLowerCase().includes(q)
+        (d) => d.title.toLowerCase().includes(q) || d.description.toLowerCase().includes(q) || d.category.toLowerCase().includes(q)
       );
     }
     return list;
@@ -102,40 +69,30 @@ export default function Documents() {
   };
 
   return (
-    <Box className="foraria-layout">
-      <Sidebar />
-
+    <Layout>
       <Box className="foraria-page-container">
-        <Paper elevation={0} className="doc-container">
-          <PageHeader title="Documentos" sx={{ mb: 2 }} />
+        <PageHeader
+          title="Documentos"
+          stats={[
+            { icon: <FolderIcon />, title: "Total Documentos", value: totalGeneral, color: "primary" },
+            { icon: <DownloadDoneIcon />, title: "Descargas Este Mes", value: downloadsThisMonth, color: "success" },
+            { icon: <QueryBuilderIcon />, title: "Última Actualización", value: lastUpdate, color: "secondary" },
+          ]}
+        />
 
-          <Tabs
-            className="doc-tabs"
-            value={activeTab}
-            onChange={(_, v) => setActiveTab(v as TabKey)}
-            variant="fullWidth">
+        <Paper elevation={0} className="doc-container">
+          <Tabs className="doc-tabs" value={activeTab} onChange={(_, v) => setActiveTab(v as TabKey)} variant="fullWidth">
             <Tab value="general" label="Documentos Generales" />
             <Tab value="mine" label="Mis Documentos" />
           </Tabs>
-
-          <Grid container spacing={2} sx={{ mb: 2 }}>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Kpi icon={<FolderIcon />} title="Total Documentos" value={totalGeneral} color="primary" />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Kpi icon={<DownloadDoneIcon />} title="Descargas Este Mes" value={downloadsThisMonth} color="success" />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-              <Kpi icon={<QueryBuilderIcon />} title="Última Actualización" value={lastUpdate} color="secondary" />
-            </Grid>
-          </Grid>
 
           <TextField
             size="small"
             placeholder="Buscar documentos..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="doc-search"/>
+            className="doc-search"
+          />
 
           {activeTab === "general" ? (
             <FilterBarGeneral filter={filterGeneral} onChange={setFilterGeneral} counts={countsGeneral} />
@@ -153,9 +110,7 @@ export default function Documents() {
               <Card key={d.id} elevation={0} variant="outlined" className="doc-card">
                 <CardContent>
                   <Stack direction="row" spacing={1} alignItems="center">
-                    <Typography variant="subtitle1" className="card-title">
-                      {d.title}
-                    </Typography>
+                    <Typography variant="subtitle1" className="card-title">{d.title}</Typography>
                     <Chip
                       size="small"
                       label={d.category}
@@ -163,7 +118,8 @@ export default function Documents() {
                         bgcolor: (t) => alpha(t.palette.primary.main, 0.08),
                         color: "primary.main",
                         fontWeight: 600,
-                      }}/>
+                      }}
+                    />
                   </Stack>
 
                   <Typography variant="body2" color="text.secondary" className="card-desc">
@@ -179,19 +135,10 @@ export default function Documents() {
                   <Divider className="card-divider" />
 
                   <Stack direction="row" spacing={2}>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      startIcon={<VisibilityIcon />}
-                      onClick={() => setPreview(d)}>
+                    <Button variant="contained" color="secondary" startIcon={<VisibilityIcon />} onClick={() => setPreview(d)}>
                       Ver Detalle
                     </Button>
-
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      startIcon={<CloudDownloadIcon />}
-                      onClick={() => handleDownload(d)}>
+                    <Button variant="outlined" color="primary" startIcon={<CloudDownloadIcon />} onClick={() => handleDownload(d)}>
                       Descargar
                     </Button>
                   </Stack>
@@ -204,28 +151,18 @@ export default function Documents() {
         <Dialog open={!!preview} onClose={() => setPreview(null)} maxWidth="sm" fullWidth>
           <DialogContent>
             <Typography variant="h6">{preview?.title}</Typography>
-            <Typography variant="body2" sx={{ mt: 1 }}>
-              {preview?.description}
-            </Typography>
+            <Typography variant="body2" sx={{ mt: 1 }}>{preview?.description}</Typography>
             <Divider sx={{ my: 2 }} />
             <Stack direction="row" spacing={2}>
-              <Typography variant="body2">
-                <b>Categoría:</b> {preview?.category}
-              </Typography>
-              <Typography variant="body2">
-                <b>Tamaño:</b> {preview && formatSize(preview.sizeKB)}
-              </Typography>
-              <Typography variant="body2">
-                <b>Fecha:</b> {preview && formatDate(preview.date)}
-              </Typography>
+              <Typography variant="body2"><b>Categoría:</b> {preview?.category}</Typography>
+              <Typography variant="body2"><b>Tamaño:</b> {preview && formatSize(preview.sizeKB)}</Typography>
+              <Typography variant="body2"><b>Fecha:</b> {preview && formatDate(preview.date)}</Typography>
             </Stack>
           </DialogContent>
         </Dialog>
 
         <Dialog open={openUpload} onClose={() => setOpenUpload(false)} maxWidth="md" fullWidth>
-          <DialogContent>
-            <NewDocument />
-          </DialogContent>
+          <DialogContent><NewDocument /></DialogContent>
         </Dialog>
 
         <Snackbar
@@ -239,61 +176,18 @@ export default function Documents() {
           </Alert>
         </Snackbar>
       </Box>
-    </Box>
+    </Layout>
   );
 }
 
-/* ===== Subcomponentes con clases ===== */
-function Kpi({
-  icon,
-  title,
-  value,
-  color = "primary",
-}: {
-  icon: React.ReactNode;
-  title: string;
-  value: string | number;
-  color?: "primary" | "success" | "secondary";
-}) {
-  return (
-    <Paper variant="outlined" className="kpi-card">
-      <Box className={`kpi-icon ${color}`}>{icon}</Box>
-      <Box>
-        <Typography variant="body2" color="text.secondary">
-          {title}
-        </Typography>
-        <Typography variant="h6">{value}</Typography>
-      </Box>
-    </Paper>
-  );
-}
-
+/* ===== Filtros ===== */
 function FilterBarGeneral({
-  filter,
-  onChange,
-  counts,
-}: {
-  filter: GeneralCategory | "Todas";
-  onChange: (c: GeneralCategory | "Todas") => void;
-  counts: Record<string, number>;
-}) {
-  const cats: (GeneralCategory | "Todas")[] = [
-    "Todas",
-    "Reglamentos",
-    "Actas",
-    "Presupuestos",
-    "Planos",
-    "Seguros",
-    "Manuales",
-    "Emergencias",
-    "Mantenimiento",
-  ];
+  filter, onChange, counts,
+}: { filter: GeneralCategory | "Todas"; onChange: (c: GeneralCategory | "Todas") => void; counts: Record<string, number>; }) {
+  const cats: (GeneralCategory | "Todas")[] = ["Todas","Reglamentos","Actas","Presupuestos","Planos","Seguros","Manuales","Emergencias","Mantenimiento"];
   return (
     <ChipsRow
-      items={cats.map((c) => ({
-        label: c === "Todas" ? `Todas (${Object.values(counts).reduce((a, b) => a + b, 0) || 8})` : `${c} (${counts[c] || 0})`,
-        value: c,
-      }))}
+      items={cats.map((c) => ({ label: c === "Todas" ? `Todas (${Object.values(counts).reduce((a, b) => a + b, 0) || 8})` : `${c} (${counts[c] || 0})`, value: c }))}
       selected={filter}
       onSelect={(v) => onChange(v as GeneralCategory | "Todas")}
     />
@@ -301,30 +195,13 @@ function FilterBarGeneral({
 }
 
 function FilterBarMine({
-  filter,
-  onChange,
-  counts,
-}: {
-  filter: MyCategory | "Todas";
-  onChange: (c: MyCategory | "Todas") => void;
-  counts: Record<string, number>;
-}) {
-  const cats: (MyCategory | "Todas")[] = [
-    "Todas",
-    "Escrituras",
-    "Comprobantes",
-    "Autorizaciones",
-    "Certificados",
-    "Reclamos",
-    "Contratos",
-  ];
+  filter, onChange, counts,
+}: { filter: MyCategory | "Todas"; onChange: (c: MyCategory | "Todas") => void; counts: Record<string, number>; }) {
+  const cats: (MyCategory | "Todas")[] = ["Todas","Escrituras","Comprobantes","Autorizaciones","Certificados","Reclamos","Contratos"];
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
   return (
     <ChipsRow
-      items={cats.map((c) => ({
-        label: c === "Todas" ? `Todas (${total})` : `${c} (${counts[c] || 0})`,
-        value: c,
-      }))}
+      items={cats.map((c) => ({ label: c === "Todas" ? `Todas (${total})` : `${c} (${counts[c] || 0})`, value: c }))}
       selected={filter}
       onSelect={(v) => onChange(v as MyCategory | "Todas")}
     />
@@ -332,23 +209,12 @@ function FilterBarMine({
 }
 
 function ChipsRow({
-  items,
-  selected,
-  onSelect,
-}: {
-  items: { label: string; value: string }[];
-  selected: string;
-  onSelect: (v: string) => void;
-}) {
+  items, selected, onSelect,
+}: { items: { label: string; value: string }[]; selected: string; onSelect: (v: string) => void; }) {
   return (
     <Stack direction="row" spacing={1} flexWrap="wrap" className="chips-row">
       {items.map((it) => (
-        <Chip
-          key={it.value}
-          label={it.label}
-          onClick={() => onSelect(it.value)}
-          className={`chip${it.value === selected ? " chip--active" : ""}`}
-        />
+        <Chip key={it.value} label={it.label} onClick={() => onSelect(it.value)} className={`chip${it.value === selected ? " chip--active" : ""}`} />
       ))}
     </Stack>
   );

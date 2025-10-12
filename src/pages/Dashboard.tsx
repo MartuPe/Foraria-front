@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import "../styles/dashboard.css";
-import { Paper, Button } from "@mui/material";
+import { Paper, Button, Box, Typography, Grid } from "@mui/material";
 import PageHeader from "../components/SectionHeader";
 import Money from "../components/Money";
 import DonutChart from "../components/charts/Donut";
 import BarsChart from "../components/charts/Bar";
 import QuickAction from "../components/QuickAction";
 import { fetchDashboardMock } from "../services/dashboard.mock";
-import { Sidebar } from "../components/layout";
+import { Layout } from "../components/layout";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import EventIcon from "@mui/icons-material/Event";
@@ -28,12 +28,11 @@ export default function DashboardPage() {
 
   if (!data) {
     return (
-      <div className="foraria-layout">
-        <Sidebar />
-        <div className="foraria-page-container">
+      <Layout>
+        <Box className="foraria-page-container">
           <div className="page-loading">Cargando dashboard…</div>
-        </div>
-      </div>
+        </Box>
+      </Layout>
     );
   }
 
@@ -48,77 +47,86 @@ export default function DashboardPage() {
   } = data;
 
   return (
-    <div className="foraria-layout">
-      <Sidebar />
+    <Layout>
+      <Box className="foraria-page-container">
+        <PageHeader
+          title={header.welcomeTitle}
+          stats={[
+            {
+              icon: <ReceiptLongIcon />,
+              title: "Expensas del Mes",
+              value: <span className="accent"><Money value={kpis.expensesThisMonth} /></span> as unknown as string,
+              color: "warning",
+            },
+            {
+              icon: <HowToVoteIcon />,
+              title: "Votaciones Activas",
+              value: String(kpis.activePolls),
+              color: "primary",
+            },
+            {
+              icon: <EventIcon />,
+              title: "Reservas Activas",
+              value: String(kpis.activeBookings),
+              color: "secondary",
+            },
+            {
+              icon: <NotificationsActiveIcon />,
+              title: "Noticias / Informes",
+              value: String(kpis.notifications),
+              color: "info",
+            },
+          ]}
+        />
 
-      <div className="foraria-page-container">
-        <div className="page">
-          <PageHeader
-            title={header.welcomeTitle}
-            stats={[
-              {
-                icon: <ReceiptLongIcon />,
-                title: "Expensas del Mes",
-                value: <span className="accent"><Money value={kpis.expensesThisMonth} /></span> as unknown as string,
-                color: "warning",
-              },
-              {
-                icon: <HowToVoteIcon />,
-                title: "Votaciones Activas",
-                value: String(kpis.activePolls),
-                color: "primary",
-              },
-              {
-                icon: <EventIcon />,
-                title: "Reservas Activas",
-                value: String(kpis.activeBookings),
-                color: "secondary",
-              },
-              {
-                icon: <NotificationsActiveIcon />,
-                title: "Noticias / Informes",
-                value: String(kpis.notifications),
-                color: "info",
-              },
-            ]}
-          />
-
-          <section className="section">
-            <h3>Acciones Rápidas</h3>
-            <div className="quick">
+        {/* Acciones rápidas */}
+        <Paper elevation={0} sx={{ p: 2, borderRadius: 3, mb: 2 }} variant="outlined">
+          <Typography variant="h6" sx={{ mb: 1.5, fontWeight: 700 }}>Acciones Rápidas</Typography>
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 3}}>
               <QuickAction
                 icon={<CalendarMonthIcon color="primary" />}
                 title="Reservar Espacios"
                 subtitle="Espacios comunes disponibles"
               />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3}}>
               <QuickAction
                 icon={<ReportProblemIcon color="warning" />}
                 title="Nuevo Reclamo"
                 subtitle="Reportar problemas o sugerencias"
               />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3}}>
               <QuickAction
                 icon={<ForumIcon color="action" />}
                 title="Foros"
                 subtitle="Participar en discusiones"
               />
+            </Grid>
+            <Grid size={{ xs: 12, md: 3}}>
               <QuickAction
                 icon={<PaymentsIcon color="error" />}
                 title="Mis Expensas"
                 subtitle="Consultar mis pagos"
               />
-            </div>
-          </section>
+            </Grid>
+          </Grid>
+        </Paper>
 
-          <section className="twocol">
-            <Paper className="panel">
-              <div className="panel__head">
+        {/* Paneles */}
+        <Grid container spacing={2}>
+          {/* Mi estado de pagos */}
+          <Grid size={{ xs: 12, lg: 6}}>
+            <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
+              <Box className="panel__head">
                 <h4>Mi Estado de Pagos</h4>
                 <span className="eye">
                   <VisibilityOutlinedIcon fontSize="small" />
                 </span>
-              </div>
+              </Box>
 
-              <div className="panel__content two">
+              <Box className="panel__content two">
                 <DonutChart data={paymentStatus} />
                 <ul className="legend">
                   {paymentStatus.map((s) => (
@@ -128,11 +136,11 @@ export default function DashboardPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Box>
 
               <hr className="divider" />
 
-              <div className="pending">
+              <Box className="pending">
                 <h5>Facturas Pendientes ({pendingBills.length})</h5>
                 <div className="bills">
                   {pendingBills.map((b) => (
@@ -153,7 +161,8 @@ export default function DashboardPage() {
                         </div>
                         <Button
                           variant="contained"
-                          color={b.status === "overdue" ? "error" : "secondary"}>
+                          color={b.status === "overdue" ? "error" : "secondary"}
+                        >
                           Pagar
                         </Button>
                       </div>
@@ -188,18 +197,21 @@ export default function DashboardPage() {
                   <h5>Historial de Pagos – Últimos 5 Meses</h5>
                   <BarsChart data={paymentsHistory} />
                 </div>
-              </div>
+              </Box>
             </Paper>
+          </Grid>
 
-            <Paper className="panel">
-              <div className="panel__head">
+          {/* Desglose de gastos */}
+          <Grid size={{ xs: 12, lg: 6}}>
+            <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
+              <Box className="panel__head">
                 <h4>Desglose de Gastos del Consorcio</h4>
                 <span className="eye">
                   <VisibilityOutlinedIcon fontSize="small" />
                 </span>
-              </div>
+              </Box>
 
-              <div className="panel__content two">
+              <Box className="panel__content two">
                 <DonutChart data={expenseBreakdown} />
                 <ul className="legend">
                   {expenseBreakdown.map((s) => (
@@ -209,9 +221,9 @@ export default function DashboardPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Box>
 
-              <div className="category-list">
+              <Box className="category-list">
                 <h5>Categorías principales</h5>
                 <ul>
                   {expenseBreakdown.map((s) => (
@@ -221,11 +233,11 @@ export default function DashboardPage() {
                     </li>
                   ))}
                 </ul>
-              </div>
+              </Box>
             </Paper>
-          </section>
-        </div>
-      </div>
-    </div>
+          </Grid>
+        </Grid>
+      </Box>
+    </Layout>
   );
 }
