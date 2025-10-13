@@ -1,14 +1,14 @@
-import InfoCard from "../components/InfoCard";
+import InfoCard from "../../components/InfoCard";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import { Box } from "@mui/material";
-import PageHeader from "../components/SectionHeader";
+import PageHeader from "../../components/SectionHeader";
 import PersonIcon from '@mui/icons-material/Person';
 import ShieldIcon from '@mui/icons-material/Shield';
 import HomeIcon from '@mui/icons-material/Home';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import { Select, MenuItem } from "@mui/material";
-import { Sidebar } from "../components/layout";
+import { Sidebar } from "../../components/layout";
 
 
 
