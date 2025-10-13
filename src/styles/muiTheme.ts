@@ -24,7 +24,7 @@ export const forariaTheme = createTheme({
     },
     text: {
       primary: '#083d77',
-      secondary: '#666666',
+      secondary: '#ffffff',
     },
   },
   typography: {
