@@ -42,7 +42,7 @@ export function useSignalR({ url, onConnected, onDisconnected }: UseSignalROptio
     return () => {
       connection.stop().catch((err) => console.error("Error al detener conexión:", err));
     };
-  }, [url]);
+ }, [url, onConnected, onDisconnected]);
 
   const send = async (method: string, ...args: any[]) => {
     if (connectionRef.current) {
