@@ -113,7 +113,7 @@ export default function Documents() {
           ]}
         />
 
-        <Paper elevation={0} className="doc-container">
+        
           <Tabs
             className="doc-tabs"
             value={activeTab}
@@ -230,7 +230,7 @@ export default function Documents() {
               )
             )}
           </Stack>
-        </Paper>
+        
 
         <Dialog
           open={!!preview}
