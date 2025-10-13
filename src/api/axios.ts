@@ -1,7 +1,7 @@
 import axios from "axios";
 
 // Usa process.env porque CRA no soporta import.meta.env
-const baseURL = process.env.REACT_APP_API_URL || "http://localhost:5000";
+const baseURL = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
 export const api = axios.create({
   baseURL,
