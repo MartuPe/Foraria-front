@@ -51,7 +51,7 @@ const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
   { id: 'users', label: 'Gestión de Usuarios', icon: <UsersIcon />, path: '/admin/users' },
   { id: 'expenses', label: 'Gastos y Facturas', icon: <ExpensesIcon />, path: '/admin/expenses' },
-  { id: 'suppliers', label: 'Proveedores', icon: <SuppliersIcon />, path: '/admin/suppliers' },
+  { id: 'suppliers', label: 'Proveedores', icon: <SuppliersIcon />, path: '/admin/suppliers' }, // CAMBIAR ruta
   { id: 'votes', label: 'Crear Votaciones', icon: <CreateVotesIcon />, path: '/admin/votes' },
   { id: 'meetings', label: 'Crear Reuniones', icon: <CreateMeetingsIcon />, path: '/admin/meetings' },
   { id: 'events', label: 'Crear Eventos', icon: <CreateEventsIcon />, path: '/admin/events' },
@@ -60,14 +60,15 @@ const menuItems: MenuItem[] = [
   { id: 'audit', label: 'Auditoría', icon: <AuditIcon />, path: '/admin/audit' },
 ];
 
-// Submenu de Foros (igual que en el Sidebar normal)
+// Cambiar las rutas del submenu para incluir parámetros de categoría
 const forosSubMenu = [
-  { id: 'foros-general', label: 'General', icon: <ForumsIcon />, path: '/admin/forums/general' },
-  { id: 'foros-administracion', label: 'Administración', icon: <AdminPanelSettings />, path: '/admin/forums/administracion' },
-  { id: 'foros-seguridad', label: 'Seguridad', icon: <Security />, path: '/admin/forums/seguridad' },
-  { id: 'foros-mantenimiento', label: 'Mantenimiento', icon: <Build />, path: '/admin/forums/mantenimiento' },
-  { id: 'foros-espacios-comunes', label: 'Espacios Comunes', icon: <Park />, path: '/admin/forums/espacios-comunes' },
-  { id: 'foros-garage-parking', label: 'Garage y Parking', icon: <DirectionsCar />, path: '/admin/forums/garage-parking' },
+  { id: 'foros-todas', label: 'Todas', icon: <ForumsIcon />, path: '/admin/forums?category=Todas' },
+  { id: 'foros-general', label: 'General', icon: <ForumsIcon />, path: '/admin/forums?category=General' },
+  { id: 'foros-administracion', label: 'Administración', icon: <AdminPanelSettings />, path: '/admin/forums?category=Administración' },
+  { id: 'foros-seguridad', label: 'Seguridad', icon: <Security />, path: '/admin/forums?category=Seguridad' },
+  { id: 'foros-mantenimiento', label: 'Mantenimiento', icon: <Build />, path: '/admin/forums?category=Mantenimiento' },
+  { id: 'foros-espacios-comunes', label: 'Espacios Comunes', icon: <Park />, path: '/admin/forums?category=Espacios Comunes' },
+  { id: 'foros-garage-parking', label: 'Garage y Parking', icon: <DirectionsCar />, path: '/admin/forums?category=Garage y Parking' },
 ];
 
 interface AdminSidebarProps {
@@ -87,6 +88,18 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
 
   const isActiveRoute = (path: string) => {
     return location.pathname === path;
+  };
+
+  // Nueva función para verificar si una categoría específica de foros está activa
+  const isForosCategoryActive = (path: string) => {
+    if (!location.pathname.includes('/admin/forums')) return false;
+    
+    const urlParams = new URLSearchParams(location.search);
+    const currentCategory = urlParams.get('category');
+    const pathParams = new URLSearchParams(path.split('?')[1]);
+    const targetCategory = pathParams.get('category');
+    
+    return currentCategory === targetCategory;
   };
 
   const isForosActive = () => {
@@ -251,7 +264,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
           </ListItemButton>
         </ListItem>
 
-        {/* Submenu de Foros - EXACTAMENTE IGUAL */}
+        {/* Submenu de Foros - ACTUALIZAR */}
         <Collapse in={forosOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding sx={{ pl: 2 }}>
             {forosSubMenu.map((subItem) => (
@@ -263,9 +276,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
                     minHeight: 36,
                     px: 1.5,
                     py: 0.5,
-                    backgroundColor: isActiveRoute(subItem.path) ? '#F59E0B' : 'transparent', // AMARILLO para submenu
+                    backgroundColor: isForosCategoryActive(subItem.path) ? '#F59E0B' : 'transparent',
                     '&:hover': {
-                      backgroundColor: isActiveRoute(subItem.path) ? '#F59E0B' : 'rgba(255,255,255,0.08)', // AMARILLO
+                      backgroundColor: isForosCategoryActive(subItem.path) ? '#F59E0B' : 'rgba(255,255,255,0.08)',
                     },
                     color: 'white',
                   }}
@@ -285,7 +298,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
                     primary={subItem.label}
                     primaryTypographyProps={{
                       fontSize: '0.8rem',
-                      fontWeight: isActiveRoute(subItem.path) ? 600 : 500,
+                      fontWeight: isForosCategoryActive(subItem.path) ? 600 : 500,
                       lineHeight: 1.2,
                     }}
                   />
