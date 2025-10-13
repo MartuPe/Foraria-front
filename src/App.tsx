@@ -27,8 +27,6 @@ import NewReserve from "./popups/NewEvent";
 import Suppliers from "./pages/Suppliers";          // listado
 import NewSupplier from "./popups/NewSupplier";     // alta/edición (mismo form, lee useParams internamente)
 
-// Usuarios
-import UserManagment from "./pages/UserManagement"; // (mantengo tu import tal cual)
 
 // Forums (usuario)
 import Forums from "./pages/Forums";
@@ -41,7 +39,8 @@ import AdminLayout from "./components/layout/AdminLayout";
 import AdminReclaims from "./pages/admin/AdminReclaims";
 import AdminForums from "./pages/admin/AdminForums";
 import AdminAudit from "./pages/admin/AdminAudit";
-
+import UserManagment from "./pages/admin/UserManagement";
+import AdminVotes from "./pages/admin/AdminVotes";
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -75,7 +74,7 @@ function App() {
           <Route path="/proveedores/:id/editar" element={<NewSupplier />} />
 
           {/* Gestión de usuarios */}
-          <Route path="/gestionUsuario" element={<UserManagment />} />
+          
 
           {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
@@ -93,6 +92,8 @@ function App() {
             <Route path="reclaims" element={<AdminReclaims />} />
             <Route path="forums" element={<AdminForums />} />
             <Route path="audit" element={<AdminAudit />} />
+            <Route path="gestionUsuario" element={<UserManagment />} />
+            <Route path="votaciones" element={<AdminVotes/>} />
             {/* AGREGAR rutas de proveedores para admin */}
             <Route path="suppliers" element={<Suppliers />} />
             <Route path="suppliers/nuevo" element={<NewSupplier />} />
