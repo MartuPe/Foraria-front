@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Button, Dialog, DialogContent } from "@mui/material";
+import { Box } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import PageHeader from "../components/SectionHeader";
@@ -8,7 +8,7 @@ import { Layout } from "../components/layout";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
-import NewVote from "../popups/NewVote"
+import ErrorModal from "../popups/ErrorModal";
 
 // --- Tipos ---
 export interface PollOption {
@@ -49,7 +49,7 @@ interface PollVoteResult {
 export default function Votes() {
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
-
+  const [showErrorModal, setShowErrorModal] = useState(false);
 
   const { data: pollsData, loading, error } = useGet<Poll[]>(
     "https://localhost:7245/api/polls/with-results"
@@ -74,7 +74,13 @@ export default function Votes() {
       setPolls((prevPolls) =>
         prevPolls.map((poll) =>
           poll.id === voteData.pollId
-            ? { ...poll, pollResults: voteData.results.map((r) => ({ pollOptionId: r.pollOptionId, votesCount: r.votesCount })) }
+            ? {
+                ...poll,
+                pollResults: voteData.results.map((r) => ({
+                  pollOptionId: r.pollOptionId,
+                  votesCount: r.votesCount,
+                })),
+              }
             : poll
         )
       );
@@ -91,30 +97,26 @@ export default function Votes() {
       await sendVote(vote);
     } catch (err) {
       console.error("Error al enviar voto:", err);
+      setShowErrorModal(true); // mostramos modal si hay error
     }
   };
 
   if (loading) return <p>Cargando votaciones...</p>;
   if (error) return <p>Error al cargar: {error}</p>;
 
-
-
   return (
     <Layout>
       <Box className="foraria-page-container">
         <PageHeader
           title="Votaciones del Consorcio"
-         tabs={[
+          tabs={[
             { label: "Todas", value: "todas" },
             { label: "Activas", value: "actives" },
             { label: "Finalizadas", value: "finalizada" },
           ]}
           selectedTab={tab}
           onTabChange={(v) => setTab(v as typeof tab)}
-         
-          
         />
-
 
         {polls.length === 0 ? (
           <p>No hay votaciones disponibles.</p>
@@ -124,8 +126,13 @@ export default function Votes() {
             const optionsValid = options.length >= 2 && options.length <= 8;
 
             const resultsMap = new Map<number, number>();
-            (poll.pollResults || []).forEach((r) => resultsMap.set(r.pollOptionId, r.votesCount));
-            const totalVotes = Array.from(resultsMap.values()).reduce((s, v) => s + v, 0);
+            (poll.pollResults || []).forEach((r) =>
+              resultsMap.set(r.pollOptionId, r.votesCount)
+            );
+            const totalVotes = Array.from(resultsMap.values()).reduce(
+              (s, v) => s + v,
+              0
+            );
 
             let progressPercent = 0;
             if (optionsValid && totalVotes > 0) {
@@ -136,17 +143,17 @@ export default function Votes() {
 
             const optionFields = options.map((o) => {
               const count = resultsMap.get(o.id) ?? 0;
-              const percent = totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+              const percent =
+                totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
               return { label: `${o.text}: ${count} votos (${percent}%)` };
             });
 
-            
-            const invalidOptionsField = !optionsValid ? [{ label: "La votación debe tener entre 2 y 8 opciones" }] : [];
-            
+            const invalidOptionsField = !optionsValid
+              ? [{ label: "La votación debe tener entre 2 y 8 opciones" }]
+              : [];
             const normalizedState = poll.state?.toLowerCase().trim();
-
             const canVote = normalizedState === "activa" && optionsValid;
-            
+
             return (
               <InfoCard
                 key={poll.id}
@@ -161,13 +168,18 @@ export default function Votes() {
                 ]}
                 chips={[
                   {
-                    label: normalizedState === "activa" ? "Activa" : "Finalizada",
+                    label:
+                      normalizedState === "activa" ? "Activa" : "Finalizada",
                     color: normalizedState === "activa" ? "success" : "default",
                   },
                 ]}
                 progress={progressPercent}
                 progressLabel="Votos registrados"
-                optionalFields={[...invalidOptionsField, ...optionFields, { label: `Total votos: ${totalVotes}` }]}
+                optionalFields={[
+                  ...invalidOptionsField,
+                  ...optionFields,
+                  { label: `Total votos: ${totalVotes}` },
+                ]}
                 extraActions={options.map((opt) => ({
                   label: `Votar "${opt.text}"`,
                   color: "secondary",
@@ -182,7 +194,12 @@ export default function Votes() {
           })
         )}
 
-        {voteError && <p style={{ color: "red" }}>Error al enviar el voto: {voteError}</p>}
+        {/* Modal de error usando voteError y showErrorModal */}
+        <ErrorModal
+          open={showErrorModal && !!voteError}
+          onClose={() => setShowErrorModal(false)}
+          errorMessage={voteError as string}
+        />
       </Box>
     </Layout>
   );
