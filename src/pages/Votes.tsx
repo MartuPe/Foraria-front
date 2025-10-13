@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box } from "@mui/material";
+import { Box, Button, Dialog, DialogContent } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import PageHeader from "../components/SectionHeader";
@@ -8,6 +8,7 @@ import { Layout } from "../components/layout";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
+import NewVote from "../popups/NewVote"
 
 // --- Tipos ---
 export interface PollOption {
@@ -96,6 +97,8 @@ export default function Votes() {
   if (loading) return <p>Cargando votaciones...</p>;
   if (error) return <p>Error al cargar: {error}</p>;
 
+
+
   return (
     <Layout>
       <Box className="foraria-page-container">
@@ -111,6 +114,7 @@ export default function Votes() {
          
           
         />
+
 
         {polls.length === 0 ? (
           <p>No hay votaciones disponibles.</p>
@@ -136,10 +140,13 @@ export default function Votes() {
               return { label: `${o.text}: ${count} votos (${percent}%)` };
             });
 
+            
             const invalidOptionsField = !optionsValid ? [{ label: "La votación debe tener entre 2 y 8 opciones" }] : [];
+            
+            const normalizedState = poll.state?.toLowerCase().trim();
 
-            const canVote = poll.state === "activa" && optionsValid;
-
+            const canVote = normalizedState === "activa" && optionsValid;
+            
             return (
               <InfoCard
                 key={poll.id}
@@ -154,8 +161,8 @@ export default function Votes() {
                 ]}
                 chips={[
                   {
-                    label: poll.state === "activa" ? "Activa" : "Finalizada",
-                    color: poll.state === "activa" ? "success" : "default",
+                    label: normalizedState === "activa" ? "Activa" : "Finalizada",
+                    color: normalizedState === "activa" ? "success" : "default",
                   },
                 ]}
                 progress={progressPercent}
