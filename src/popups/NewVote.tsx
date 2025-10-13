@@ -174,13 +174,14 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
       <Button
         size="small"
         color="error"
-        onClick={() => setOptions(options.filter((_, idx) => idx !== i))}
+        onClick={() => handleRemoveOption(i)}
         style={{ minWidth: "auto", padding: "2px 6px" }}
       >
         ✖
       </Button>
     </li>
   ))}
+  {formError && <p style={{ color: "red", marginTop: "10px" }}>{formError}</p>}
 </ul>
       </div>
 
