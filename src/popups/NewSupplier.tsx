@@ -6,11 +6,13 @@ import {
   Typography,
   MenuItem,
   Box,
+  Snackbar,
+  Alert,
 } from "@mui/material";
 import { supplierService, Supplier } from "../services/supplierService";
 
 interface Props {
-  onSuccess?: () => void;
+  onSuccess?: () => void; // el padre muestra el toast de éxito
 }
 
 export default function NewSupplier({ onSuccess }: Props) {
@@ -28,7 +30,7 @@ export default function NewSupplier({ onSuccess }: Props) {
   });
 
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorOpen, setErrorOpen] = useState(false);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -39,14 +41,12 @@ export default function NewSupplier({ onSuccess }: Props) {
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    setError(null);
     setLoading(true);
-
     try {
       await supplierService.create(form);
-      onSuccess?.();
+      onSuccess?.(); // cierra modal + refresca + toast en el padre
     } catch {
-      setError("Error al guardar proveedor ❌");
+      setErrorOpen(true);
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,6 @@ export default function NewSupplier({ onSuccess }: Props) {
         Nuevo Proveedor
       </Typography>
 
-      {/* Layout con Box (CSS Grid): 1 col en mobile, 2 cols en md+ */}
       <Box
         sx={{
           display: "grid",
@@ -128,7 +127,6 @@ export default function NewSupplier({ onSuccess }: Props) {
           required
         />
 
-        {/* Campos que ocupan toda la fila */}
         <Box sx={{ gridColumn: "1 / -1" }}>
           <TextField
             label="Dirección"
@@ -162,17 +160,22 @@ export default function NewSupplier({ onSuccess }: Props) {
         </Box>
       </Box>
 
-      {error && (
-        <Typography color="error" mt={2}>
-          {error}
-        </Typography>
-      )}
-
       <DialogActions sx={{ mt: 3, justifyContent: "center" }}>
         <Button variant="contained" color="primary" type="submit" disabled={loading}>
           {loading ? "Guardando..." : "Guardar"}
         </Button>
       </DialogActions>
+
+      <Snackbar
+        open={errorOpen}
+        autoHideDuration={3500}
+        onClose={() => setErrorOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity="error" onClose={() => setErrorOpen(false)} variant="filled">
+          Error al guardar proveedor ❌
+        </Alert>
+      </Snackbar>
     </form>
   );
 }
