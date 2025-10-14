@@ -97,7 +97,7 @@ export default function Votes() {
       await sendVote(vote);
     } catch (err) {
       console.error("Error al enviar voto:", err);
-      setShowErrorModal(true); // mostramos modal si hay error
+      setShowErrorModal(true); 
     }
   };
 
@@ -180,18 +180,22 @@ export default function Votes() {
                   ...optionFields,
                   { label: `Total votos: ${totalVotes}` },
                 ]}
-                extraActions={options.map((opt) => ({
-                  label: `Votar "${opt.text}"`,
-                  color: "secondary",
-                  variant: "contained",
-                  onClick: () => canVote && handleVote(poll.id, opt.id),
-                  icon: <CheckCircleOutlineIcon />,
-                  disabled: !canVote,
-                }))}
+               extraActions={
+  canVote
+    ? options.map((opt) => ({
+        label: `Votar "${opt.text}"`,
+        color: "secondary",
+        variant: "contained",
+        onClick: () => handleVote(poll.id, opt.id),
+        icon: <CheckCircleOutlineIcon />,
+      }))
+    : [] 
+}
                 sx={{ mt: 2 }}
               />
             );
-          })
+          }
+        )
         )}
 
         {/* Modal de error usando voteError y showErrorModal */}
