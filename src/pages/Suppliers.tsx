@@ -45,7 +45,6 @@ export default function Suppliers() {
   const [openForm, setOpenForm] = useState(false);
   const [formId, setFormId] = useState<number | null>(null);
   const openCreate = () => { setFormId(null); setOpenForm(true); };
-  const openEdit = (id: number) => { setFormId(id); setOpenForm(true); };
   const closeForm = () => setOpenForm(false);
 
   // Popup: Detalle
