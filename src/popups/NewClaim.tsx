@@ -62,8 +62,9 @@ export default function ClaimForm({ onSuccess, onCancel }: ClaimFormProps) {
       description,
       priority,
       category,
-      archive: files.length > 0 ? files[0].name : null, // Adaptable según tu API
+      archive: files.length > 0 ? files[0].name : null, 
       user_id: 2, // Podés reemplazar con usuario actual
+      residenceId: 3
     };
 
     try {

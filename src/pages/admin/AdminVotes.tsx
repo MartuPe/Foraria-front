@@ -162,7 +162,7 @@ export default function Votes() {
             });
 
             
-            const invalidOptionsField = !optionsValid ? [{ label: "La votación debe tener entre 2 y 8 opciones" }] : [];
+            
             
             const normalizedState = poll.state?.toLowerCase().trim();
 
@@ -188,7 +188,7 @@ export default function Votes() {
                 ]}
                 progress={progressPercent}
                 progressLabel="Votos registrados"
-                optionalFields={[...invalidOptionsField, ...optionFields, { label: `Total votos: ${totalVotes}` }]}
+                optionalFields={[...optionFields, { label: `Total votos: ${totalVotes}` }]}
                 extraActions={options.map((opt) => ({
                   label: `Votar "${opt.text}"`,
                   color: "secondary",
