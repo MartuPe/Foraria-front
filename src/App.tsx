@@ -44,7 +44,12 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Routes>
           {/* Redirección inicial */}
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
@@ -87,13 +92,8 @@ function App() {
             <Route path="forums" element={<AdminForums />} />
             <Route path="audit" element={<AdminAudit />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
-            <Route path="votaciones" element={<AdminVotes/>} />
-            {/* AGREGAR rutas de proveedores para admin */}
-
+            <Route path="votaciones" element={<AdminVotes />} />
             <Route path="suppliers" element={<Suppliers />} />
-            {/* No usamos rutas full-page para alta/edición */}
-            {/* <Route path="suppliers/nuevo" element={<Suppliers />} />
-                <Route path="suppliers/:id/editar" element={<Suppliers />} /> */}
           </Route>
 
           {/* Fallback */}

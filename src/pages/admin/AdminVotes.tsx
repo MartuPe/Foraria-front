@@ -4,7 +4,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import PageHeader from "../../components/SectionHeader";
 import InfoCard from "../../components/InfoCard";
-import { Layout } from "../../components/layout";
+// REMOVER: import { Layout } from "../../components/layout";
 import { useGet } from "../../hooks/useGet";
 import { useMutation } from "../../hooks/useMutation";
 import { useSignalR } from "../../hooks/useSignalR";
@@ -46,13 +46,13 @@ interface PollVoteResult {
 }
 
 // --- Componente principal ---
-export default function Votes() {
+export default function AdminVotes() {
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
   
-      const [open, setOpen] = useState(false);
-    const handleOpen = () => setOpen(true);
-    const handleClose = () => setOpen(false);
+  const [open, setOpen] = useState(false);
+  const handleOpen = () => setOpen(true);
+  const handleClose = () => setOpen(false);
 
 
   const { data: pollsData, loading, error } = useGet<Poll[]>(
@@ -101,46 +101,40 @@ export default function Votes() {
   if (loading) return <p>Cargando votaciones...</p>;
   if (error) return <p>Error al cargar: {error}</p>;
 
-
-
   return (
-    <Layout>
-      <Box className="foraria-page-container">
-        <PageHeader
-          title="Votaciones del Consorcio"
-             actions={
-            <Button variant="contained" color="secondary" onClick={handleOpen} >
-              + Nueva Votacion
-            </Button>
-          }
-         tabs={[
-            { label: "Todas", value: "todas" },
-            { label: "Activas", value: "actives" },
-            { label: "Finalizadas", value: "finalizada" },
-          ]}
-          selectedTab={tab}
-          onTabChange={(v) => setTab(v as typeof tab)}
-         
-          
-        />
-        
+    // CAMBIAR: Usar div.page en lugar de Layout
+    <div className="page">
+      <PageHeader
+        title="Gestión de Votaciones"
+        actions={
+          <Button variant="contained" color="secondary" onClick={handleOpen}>
+            + Nueva Votación
+          </Button>
+        }
+        tabs={[
+          { label: "Todas", value: "todas" },
+          { label: "Activas", value: "actives" },
+          { label: "Finalizadas", value: "finalizada" },
+        ]}
+        selectedTab={tab}
+        onTabChange={(v) => setTab(v as typeof tab)}
+      />
 
-        <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-  <DialogContent>
-    <NewVote
-      onSuccess={() => {
-        window.location.reload();
-      }}
-      onCancel={handleClose}
-    />
-  </DialogContent>
-</Dialog>
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogContent>
+          <NewVote
+            onSuccess={() => {
+              window.location.reload();
+            }}
+            onCancel={handleClose}
+          />
+        </DialogContent>
+      </Dialog>
 
-
-        {polls.length === 0 ? (
-          <p>No hay votaciones disponibles.</p>
-        ) : (
-          polls.map((poll) => {
+      {polls.length === 0 ? (
+        <p>No hay votaciones disponibles.</p>
+      ) : (
+        polls.map((poll) => {
             const options = (poll.pollOptions || []).slice(0, 8);
             const optionsValid = options.length >= 2 && options.length <= 8;
 
@@ -162,7 +156,7 @@ export default function Votes() {
             });
 
             
-            
+            const invalidOptionsField = !optionsValid ? [{ label: "La votación debe tener entre 2 y 8 opciones" }] : [];
             
             const normalizedState = poll.state?.toLowerCase().trim();
 
@@ -188,7 +182,7 @@ export default function Votes() {
                 ]}
                 progress={progressPercent}
                 progressLabel="Votos registrados"
-                optionalFields={[...optionFields, { label: `Total votos: ${totalVotes}` }]}
+                optionalFields={[...invalidOptionsField, ...optionFields, { label: `Total votos: ${totalVotes}` }]}
                 extraActions={options.map((opt) => ({
                   label: `Votar "${opt.text}"`,
                   color: "secondary",
@@ -204,7 +198,6 @@ export default function Votes() {
         )}
 
         {voteError && <p style={{ color: "red" }}>Error al enviar el voto: {voteError}</p>}
-      </Box>
-    </Layout>
+      </div>
   );
 }
