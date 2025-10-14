@@ -49,7 +49,7 @@ interface PollVoteResult {
 export default function Votes() {
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
-  const [showErrorModal, setShowErrorModal] = useState(false);
+  
       const [open, setOpen] = useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);

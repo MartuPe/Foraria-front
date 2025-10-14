@@ -1,7 +1,7 @@
 import React from "react";
-import { Modal, Box, Typography, Button, Stack, IconButton } from "@mui/material";
+import { Modal, Box, Typography, Button, Stack } from "@mui/material";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import CloseIcon from "@mui/icons-material/Close";
+
 
 interface ErrorModalProps {
   open: boolean;
