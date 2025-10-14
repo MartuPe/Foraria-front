@@ -1,22 +1,13 @@
-import { useMemo, useState } from "react";
+// src/pages/Suppliers.tsx
+import { useEffect, useMemo, useState } from "react";
 import {
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Stack,
-  Button,
-  TextField,
-  MenuItem,
-  Rating,
-  Dialog,
-  DialogContent,
+  Card, CardContent, Typography, Chip, Stack, Button,
+  TextField, MenuItem, Rating, Dialog, DialogContent
 } from "@mui/material";
-import { useLocation } from "react-router-dom";
-
 import { Layout } from "../components/layout";
 import PageHeader from "../components/SectionHeader";
 import NewSupplier from "../popups/NewSupplier";
+import { api } from "../api/axios";
 
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
@@ -25,145 +16,75 @@ import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
-import AttachMoneyOutlinedIcon from "@mui/icons-material/AttachMoneyOutlined";
-
-type Category = "Mantenimiento" | "Limpieza" | "Seguridad" | "Jardinería";
 
 type Supplier = {
-  id: string;
-  name: string;
+  id: number;
+  commercialName: string;
   businessName: string;
-  category: Category;
-  phone: string;
-  email: string;
-  address: string;
-  contactPerson: string;
-  since: string;
-  contractsCount: number;
-  monthlyCost: number;
-  rating: number;
+  cuit: string;
+  supplierCategory: string;
+  email?: string;
+  phone?: string;
+  address?: string;
+  contactPerson?: string;
+  observations?: string;
+  registrationDate: string;
+  active: boolean;
+  rating?: number;
 };
 
-const DEFAULT_SUPPLIERS: Supplier[] = [
-  {
-    id: "sup-1",
-    name: "Mantenimiento Integral SA",
-    businessName: "Mantenimiento Integral Sociedad Anónima",
-    category: "Mantenimiento",
-    phone: "+54 11 4567-8901",
-    email: "contacto@mantenimientointegral.com",
-    address: "Av. Corrientes 1234, CABA",
-    contactPerson: "Juan Pérez",
-    since: "14/12/2023",
-    contractsCount: 2,
-    monthlyCost: 73000,
-    rating: 4.5,
-  },
-  {
-    id: "sup-2",
-    name: "Limpieza Profesional",
-    businessName: "Limpieza Profesional SRL",
-    category: "Limpieza",
-    phone: "+54 11 2345-6789",
-    email: "admin@limpiezaprofesional.com",
-    address: "San Martín 567, CABA",
-    contactPerson: "María González",
-    since: "19/5/2023",
-    contractsCount: 1,
-    monthlyCost: 35000,
-    rating: 5.0,
-  },
-  {
-    id: "sup-3",
-    name: "Seguridad Total",
-    businessName: "Seguridad Total y Asociados SA",
-    category: "Seguridad",
-    phone: "+54 11 3456-7890",
-    email: "info@seguridadtotal.com",
-    address: "Rivadavia 890, CABA",
-    contactPerson: "Carlos Rodríguez",
-    since: "9/2/2023",
-    contractsCount: 1,
-    monthlyCost: 60000,
-    rating: 4.2,
-  },
-  {
-    id: "sup-4",
-    name: "Jardinería Verde",
-    businessName: "Jardinería Verde SRL",
-    category: "Jardinería",
-    phone: "+54 11 5678-9012",
-    email: "contacto@jardineriaverde.com",
-    address: "Florida 456, CABA",
-    contactPerson: "Ana López",
-    since: "9/4/2023",
-    contractsCount: 1,
-    monthlyCost: 15000,
-    rating: 4.3,
-  },
-];
-
-function formatARS(value: number) {
-  return new Intl.NumberFormat("es-AR", {
-    style: "currency",
-    currency: "ARS",
-    maximumFractionDigits: 0,
-  }).format(value);
-}
-
 export default function Suppliers() {
-  const [suppliers] = useState<Supplier[]>(DEFAULT_SUPPLIERS);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<"Todas" | Category>("Todas");
-  
-  // Estado para el popup
+  const [category, setCategory] = useState<"Todas" | string>("Todas");
+
+  // 🔹 Estado local para el popup (como antes)
   const [openNewSupplier, setOpenNewSupplier] = useState(false);
-  
-  const location = useLocation();
-  const isAdminRoute = location.pathname.startsWith('/admin');
+  const handleOpenNewSupplier = () => setOpenNewSupplier(true);
+  const handleCloseNewSupplier = () => setOpenNewSupplier(false);
 
-  const categories = useMemo<("Todas" | Category)[]>(
-    () => ["Todas", ...Array.from(new Set(suppliers.map(s => s.category))) as Category[]],
-    [suppliers]
-  );
+  const loadSuppliers = async () => {
+    try {
+      setLoading(true);
+      const { data } = await api.get<Supplier[]>("/Supplier"); // GET /api/Supplier
+      setSuppliers(data);
+    } catch (e) {
+      console.error("Error cargando proveedores:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const kpis = useMemo(() => {
-    const total = suppliers.length;
-    const activeContracts = suppliers.reduce((acc, s) => acc + (s.contractsCount > 0 ? 1 : 0), 0);
-    const uniqueCats = new Set(suppliers.map(s => s.category)).size;
-    const avg =
-      suppliers.length
-        ? (suppliers.reduce((acc, s) => acc + s.rating, 0) / suppliers.length)
-        : 0;
-    return {
-      total,
-      activeContracts,
-      uniqueCats,
-      avg: Math.round(avg * 10) / 10,
-    };
+  useEffect(() => { loadSuppliers(); }, []);
+
+  const categories = useMemo(() => {
+    const set = new Set(suppliers.map(s => s.supplierCategory));
+    return ["Todas", ...Array.from(set)];
   }, [suppliers]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return suppliers.filter(s => {
-      const matchCat = category === "Todas" ? true : s.category === category;
+      const matchCat = category === "Todas" ? true : s.supplierCategory === category;
       const matchTxt =
         !q ||
-        s.name.toLowerCase().includes(q) ||
-        s.businessName.toLowerCase().includes(q) ||
-        s.address.toLowerCase().includes(q) ||
-        s.email.toLowerCase().includes(q) ||
-        s.phone.toLowerCase().includes(q) ||
-        s.contactPerson.toLowerCase().includes(q);
+        s.commercialName.toLowerCase().includes(q) ||
+        (s.businessName ?? "").toLowerCase().includes(q) ||
+        (s.email ?? "").toLowerCase().includes(q) ||
+        (s.address ?? "").toLowerCase().includes(q) ||
+        (s.contactPerson ?? "").toLowerCase().includes(q);
       return matchCat && matchTxt;
     });
   }, [suppliers, query, category]);
 
-  const handleOpenNewSupplier = () => setOpenNewSupplier(true);
-  const handleCloseNewSupplier = () => setOpenNewSupplier(false);
+  const handleCreated = async () => {
+    await loadSuppliers();       // refrescamos la lista
+    handleCloseNewSupplier();    // cerramos el modal
+  };
 
-  const content = (
-    <>
+  return (
+    <Layout>
       <PageHeader
         title="Proveedores del Consorcio"
         actions={
@@ -179,44 +100,8 @@ export default function Suppliers() {
         }
       />
 
-      {/* KPIs */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
-        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">Proveedores</Typography>
-            <Typography variant="h6">{kpis.total}</Typography>
-          </CardContent>
-        </Card>
-        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">Contratos Activos</Typography>
-            <Typography variant="h6" color="success.main">{kpis.activeContracts}</Typography>
-          </CardContent>
-        </Card>
-        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">Categorías</Typography>
-            <Typography variant="h6" color="secondary.main">{kpis.uniqueCats}</Typography>
-          </CardContent>
-        </Card>
-        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent>
-            <Typography variant="overline" color="text.secondary">Promedio</Typography>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Rating value={kpis.avg} precision={0.1} readOnly />
-              <Typography variant="h6">{kpis.avg}</Typography>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Stack>
-
       {/* Buscador + filtro */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        alignItems={{ xs: "stretch", sm: "center" }}
-        sx={{ mb: 2 }}
-      >
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
         <TextField
           fullWidth
           placeholder="Buscar proveedores…"
@@ -229,100 +114,101 @@ export default function Suppliers() {
           size="small"
           label="Categoría"
           value={category}
-          onChange={(e) => setCategory(e.target.value as any)}
+          onChange={(e) => setCategory(e.target.value)}
           sx={{ width: { xs: "100%", sm: 220 } }}
         >
           {categories.map((c) => (
-            <MenuItem key={c} value={c}>
-              {c}
-            </MenuItem>
+            <MenuItem key={c} value={c}>{c}</MenuItem>
           ))}
         </TextField>
       </Stack>
 
       {/* Listado */}
-      <Stack spacing={2}>
-        {filtered.map((s) => (
-          <Card key={s.id} variant="outlined" sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                alignItems={{ xs: "flex-start", sm: "center" }}
-                justifyContent="space-between"
-                spacing={1}
-              >
-                <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="wrap">
-                  <Typography variant="h6" color="primary">{s.name}</Typography>
-                  <Chip label={s.category} size="small" />
-                  <Stack direction="row" alignItems="center" spacing={0.5}>
-                    <Rating value={s.rating} precision={0.1} readOnly size="small" />
-                    <Typography variant="body2" color="text.secondary">
-                      ({s.rating.toFixed(1)})
+      {loading ? (
+        <Typography variant="body1">Cargando proveedores…</Typography>
+      ) : filtered.length === 0 ? (
+        <Typography variant="body1">No se encontraron proveedores.</Typography>
+      ) : (
+        <Stack spacing={2}>
+          {filtered.map((s) => (
+            <Card key={s.id} variant="outlined" sx={{ borderRadius: 2 }}>
+              <CardContent>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  alignItems={{ xs: "flex-start", sm: "center" }}
+                  justifyContent="space-between"
+                  spacing={1}
+                >
+                  <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="wrap">
+                    <Typography variant="h6" color="primary">
+                      {s.commercialName}
                     </Typography>
+                    <Chip label={s.supplierCategory} size="small" />
+                    {s.rating != null && (
+                      <Stack direction="row" alignItems="center" spacing={0.5}>
+                        <Rating value={s.rating} precision={0.1} readOnly size="small" />
+                        <Typography variant="body2" color="text.secondary">
+                          ({s.rating.toFixed(1)})
+                        </Typography>
+                      </Stack>
+                    )}
                   </Stack>
+
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    startIcon={<VisibilityOutlinedIcon />}
+                    sx={{ borderRadius: 999, px: 1.5, fontWeight: 600 }}
+                  >
+                    Ver Detalle
+                  </Button>
                 </Stack>
 
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<VisibilityOutlinedIcon />}
-                  sx={{ borderRadius: 999, px: 1.5, fontWeight: 600 }}
-                >
-                  Ver Detalle
-                </Button>
-              </Stack>
+                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                  {s.businessName}
+                </Typography>
 
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                {s.businessName}
-              </Typography>
+                <Stack direction="row" spacing={3} sx={{ mt: 1.5 }} flexWrap="wrap">
+                  {s.phone && (
+                    <Typography variant="body2" color="text.secondary">
+                      <PhoneOutlinedIcon fontSize="small" /> {s.phone}
+                    </Typography>
+                  )}
+                  {s.email && (
+                    <Typography variant="body2" color="text.secondary">
+                      <EmailOutlinedIcon fontSize="small" /> {s.email}
+                    </Typography>
+                  )}
+                  {s.address && (
+                    <Typography variant="body2" color="text.secondary">
+                      <PlaceOutlinedIcon fontSize="small" /> {s.address}
+                    </Typography>
+                  )}
+                </Stack>
 
-              <Stack direction="row" spacing={3} sx={{ mt: 1.5 }} flexWrap="wrap">
-                <Typography variant="body2" color="text.secondary">
-                  <PhoneOutlinedIcon fontSize="small" /> {s.phone}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  <EmailOutlinedIcon fontSize="small" /> {s.email}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  <PlaceOutlinedIcon fontSize="small" /> {s.address}
-                </Typography>
-              </Stack>
+                <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap">
+                  {s.contactPerson && (
+                    <Typography variant="body2" color="text.secondary">
+                      <PersonOutlineIcon fontSize="small" /> Contacto: {s.contactPerson}
+                    </Typography>
+                  )}
+                  <Typography variant="body2" color="text.secondary">
+                    <CalendarMonthOutlinedIcon fontSize="small" />{" "}
+                    {new Date(s.registrationDate).toLocaleDateString("es-AR")}
+                  </Typography>
+                </Stack>
+              </CardContent>
+            </Card>
+          ))}
+        </Stack>
+      )}
 
-              <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap">
-                <Typography variant="body2" color="text.secondary">
-                  <PersonOutlineIcon fontSize="small" /> Contacto: {s.contactPerson}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  <CalendarMonthOutlinedIcon fontSize="small" /> Desde: {s.since}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  <AttachMoneyOutlinedIcon fontSize="small" /> {formatARS(s.monthlyCost)}/mes
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        ))}
-      </Stack>
-
-      {/* Dialog para NewSupplier */}
-      <Dialog 
-        open={openNewSupplier} 
-        onClose={handleCloseNewSupplier} 
-        maxWidth="md" 
-        fullWidth
-      >
+      {/* Popup (estado local, como antes) */}
+      <Dialog open={openNewSupplier} onClose={handleCloseNewSupplier} maxWidth="md" fullWidth>
         <DialogContent>
-          <NewSupplier />
+          <NewSupplier onSuccess={handleCreated} />
         </DialogContent>
       </Dialog>
-    </>
+    </Layout>
   );
-
-  // Si está en admin route, no usar Layout wrapper
-  if (isAdminRoute) {
-    return <div className="page">{content}</div>;
-  }
-
-  // Si no está en admin, usar Layout normal
-  return <Layout>{content}</Layout>;
 }

@@ -1,4 +1,5 @@
-import { useEffect, useState, type FormEvent } from "react";
+// src/popups/NewSupplier.tsx
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import { TextField, Button, MenuItem } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
 import { useGet } from "../hooks/useGet";
@@ -8,71 +9,121 @@ import "../styles/spent.css";
 type SupplierPayload = {
   commercialName: string;
   businessName: string;
-  cuit: string;
-  category: string;
-  phone: string;
-  email: string;
-  address: string;
-  contactPerson: string;
-  notes: string;
-  active?: boolean; // por si API lo usa
+  cuit: string;                // lo vamos a normalizar (solo dígitos)
+  supplierCategory: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  contactPerson?: string;
+  observations?: string;
+  active?: boolean;
 };
 
-export default function NewSupplier() {
+type Props = { onSuccess?: () => void | Promise<void> };
+
+type Errors = Partial<Record<keyof SupplierPayload, string>>;
+
+export default function NewSupplier({ onSuccess }: Props) {
   const navigate = useNavigate();
-  const { id } = useParams();                 // si existe => modo edición
+  const { id } = useParams();
   const isEdit = Boolean(id);
 
-  // Estado del formulario
-  const [commercialName, setCommercialName] = useState("");
-  const [businessName, setBusinessName] = useState("");
-  const [cuit, setCuit] = useState("");
-  const [category, setCategory] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [address, setAddress] = useState("");
-  const [contactPerson, setContactPerson] = useState("");
-  const [notes, setNotes] = useState("");
+  const [form, setForm] = useState<SupplierPayload>({
+    commercialName: "",
+    businessName: "",
+    cuit: "",
+    supplierCategory: "",
+    phone: "",
+    email: "",
+    address: "",
+    contactPerson: "",
+    observations: "",
+  });
+
+  const [errors, setErrors] = useState<Errors>({});
 
   // Cargar datos si es edición
-  const { data: existing, loading: loadingDetail } = useGet<SupplierPayload>(
-    isEdit ? `/providers/${id}` : "",
+  const { data: existing } = useGet<SupplierPayload>(
+    isEdit ? `/Supplier/${id}` : "",
     { enabled: isEdit }
   );
 
   useEffect(() => {
-    if (!existing) return;
-    setCommercialName(existing.commercialName ?? "");
-    setBusinessName(existing.businessName ?? "");
-    setCuit(existing.cuit ?? "");
-    setCategory(existing.category ?? "");
-    setPhone(existing.phone ?? "");
-    setEmail(existing.email ?? "");
-    setAddress(existing.address ?? "");
-    setContactPerson(existing.contactPerson ?? "");
-    setNotes(existing.notes ?? "");
+    if (existing) setForm(existing);
   }, [existing]);
 
-  // Mutaciones
-  const { mutate: createSupplier, loading: creating, error: createErr } =
-    useMutation<any, SupplierPayload>("/providers", "post");
+  const { mutate: createSupplier, loading: creating } =
+    useMutation<any, SupplierPayload>("/Supplier", "post");
+  const { mutate: updateSupplier, loading: updating } =
+    useMutation<any, Partial<SupplierPayload>>(`/Supplier/${id}`, "put");
 
-  const { mutate: updateSupplier, loading: updating, error: updateErr } =
-    useMutation<any, Partial<SupplierPayload>>(`/providers/${id}`, "put");
+  // Utils
+  const digitsCUIT = useMemo(() => form.cuit.replace(/\D/g, ""), [form.cuit]);
+  const emailRegex = useMemo(
+    () => /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
+    []
+  );
+
+  // Validaciones por campo (live)
+  const validateField = (name: keyof SupplierPayload, value: string) => {
+    let msg = "";
+
+    if (name === "commercialName" && !value.trim()) msg = "Requerido";
+    if (name === "businessName" && !value.trim()) msg = "Requerido";
+    if (name === "supplierCategory" && !value.trim()) msg = "Elegí una categoría";
+
+    if (name === "cuit") {
+      const onlyDigits = value.replace(/\D/g, "");
+      if (!onlyDigits) msg = "Requerido";
+      else if (onlyDigits.length !== 11) msg = "Debe tener 11 dígitos";
+    }
+
+    if (name === "email" && value) {
+      if (!emailRegex.test(value)) msg = "Formato de email inválido";
+    }
+
+    setErrors((prev) => ({ ...prev, [name]: msg }));
+  };
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target as { name: keyof SupplierPayload; value: string };
+    setForm((prev) => ({ ...prev, [name]: value }));
+    validateField(name, value);
+  };
+
+  const formHasErrors = useMemo(() => {
+    // forzamos validaciones mínimas
+    const requiredOk =
+      form.commercialName.trim() &&
+      form.businessName.trim() &&
+      form.supplierCategory.trim() &&
+      digitsCUIT.length === 11;
+
+    const anyError = Object.values(errors).some(Boolean);
+    return !requiredOk || anyError;
+  }, [form, errors, digitsCUIT]);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    // Validación final
+    validateField("commercialName", form.commercialName);
+    validateField("businessName", form.businessName);
+    validateField("supplierCategory", form.supplierCategory);
+    validateField("cuit", form.cuit);
+    if (form.email) validateField("email", form.email);
+
+    // si hay errores, no mando
+    const anyError = Object.values(errors).some(Boolean);
+    if (anyError || digitsCUIT.length !== 11 || !form.commercialName || !form.businessName || !form.supplierCategory) {
+      return;
+    }
+
     const payload: SupplierPayload = {
-      commercialName,
-      businessName,
-      cuit,
-      category,
-      phone,
-      email,
-      address,
-      contactPerson,
-      notes,
+      ...form,
+      cuit: digitsCUIT,  // normalizamos para el backend
       active: true,
     };
 
@@ -84,14 +135,15 @@ export default function NewSupplier() {
         await createSupplier(payload);
         alert("Proveedor creado ✅");
       }
-      navigate("/proveedores"); // volvemos al listado
-    } catch (err) {
-      // el hook ya setea error; acá podés disparar toast si usás uno
-      console.error(err);
+      if (onSuccess) await onSuccess();
+      else navigate("/proveedores");
+    } catch (err: any) {
+      console.error("Server error:", err?.response?.status, err?.response?.data);
+      alert(err?.response?.data?.message || "Error al guardar el proveedor");
     }
   };
 
-  const submitting = creating || updating || loadingDetail;
+  const submitting = creating || updating;
 
   return (
     <form className="foraria-form" onSubmit={handleSubmit}>
@@ -100,152 +152,128 @@ export default function NewSupplier() {
       </h2>
 
       <div className="foraria-form-group container-items">
-        <div className="foraria-form-group group-size">
-          <label className="foraria-form-label">Nombre Comercial</label>
-          <TextField
-            fullWidth
-            placeholder="Ej: Ferretería El Tornillo"
-            variant="outlined"
-            className="foraria-form-input"
-            value={commercialName}
-            onChange={(e) => setCommercialName(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="foraria-form-group group-size">
-          <label className="foraria-form-label">Razón Social</label>
-          <TextField
-            fullWidth
-            placeholder="Ej: Juan Perez SRL"
-            variant="outlined"
-            className="foraria-form-input"
-            value={businessName}
-            onChange={(e) => setBusinessName(e.target.value)}
-            required
-          />
-        </div>
+        <TextField
+          fullWidth
+          name="commercialName"
+          label="Nombre Comercial"
+          value={form.commercialName}
+          onChange={handleChange}
+          onBlur={(e) => validateField("commercialName", e.target.value)}
+          error={!!errors.commercialName}
+          helperText={errors.commercialName}
+          required
+        />
+        <TextField
+          fullWidth
+          name="businessName"
+          label="Razón Social"
+          value={form.businessName}
+          onChange={handleChange}
+          onBlur={(e) => validateField("businessName", e.target.value)}
+          error={!!errors.businessName}
+          helperText={errors.businessName}
+          required
+        />
       </div>
 
       <div className="foraria-form-group container-items">
-        <div className="foraria-form-group group-size">
-          <label className="foraria-form-label">CUIT</label>
-          <TextField
-            fullWidth
-            placeholder="20-12345678-9"
-            variant="outlined"
-            className="foraria-form-input"
-            value={cuit}
-            onChange={(e) => setCuit(e.target.value)}
-            required
-          />
-        </div>
-
-        <div className="foraria-form-group group-size">
-          <label className="foraria-form-label">Categoría</label>
-          <TextField
-            select
-            fullWidth
-            className="foraria-form-input"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            required
-          >
-            <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
-            <MenuItem value="Limpieza">Limpieza</MenuItem>
-            <MenuItem value="Seguridad">Seguridad</MenuItem>
-            <MenuItem value="Jardinería">Jardinería</MenuItem>
-          </TextField>
-        </div>
+        <TextField
+          fullWidth
+          name="cuit"
+          label="CUIT (11 dígitos, sin guiones)"
+          value={form.cuit}
+          onChange={handleChange}
+          onBlur={(e) => validateField("cuit", e.target.value)}
+          error={!!errors.cuit}
+          helperText={errors.cuit || `${digitsCUIT.length}/11 dígitos`}
+          inputProps={{ inputMode: "numeric", pattern: "[0-9]*", maxLength: 14 }}
+          required
+        />
+        <TextField
+          select
+          fullWidth
+          name="supplierCategory"
+          label="Categoría"
+          value={form.supplierCategory}
+          onChange={handleChange}
+          onBlur={(e) => validateField("supplierCategory", e.target.value)}
+          error={!!errors.supplierCategory}
+          helperText={errors.supplierCategory}
+          required
+        >
+          <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
+          <MenuItem value="Limpieza">Limpieza</MenuItem>
+          <MenuItem value="Seguridad">Seguridad</MenuItem>
+          <MenuItem value="Jardinería">Jardinería</MenuItem>
+        </TextField>
       </div>
 
       <div className="foraria-form-group container-items">
-        <div className="foraria-form-group group-size">
-          <label className="foraria-form-label">Teléfono</label>
-          <TextField
-            fullWidth
-            placeholder="+54 11 3412-3456"
-            variant="outlined"
-            className="foraria-form-input"
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-          />
-        </div>
-
-        <div className="foraria-form-group group-size">
-          <label className="foraria-form-label">Mail</label>
-          <TextField
-            fullWidth
-            type="email"
-            placeholder="contacto@proveedor.com"
-            variant="outlined"
-            className="foraria-form-input"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-        </div>
-      </div>
-
-      <div className="foraria-form-group">
-        <label className="foraria-form-label">Dirección</label>
         <TextField
           fullWidth
-          placeholder="Av. Siempre Viva 1234"
-          variant="outlined"
-          className="foraria-form-input"
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
+          name="phone"
+          label="Teléfono"
+          value={form.phone}
+          onChange={handleChange}
+          inputProps={{ inputMode: "tel" }}
+        />
+        <TextField
+          fullWidth
+          name="email"
+          label="Email"
+          type="email"
+          value={form.email}
+          onChange={handleChange}
+          onBlur={(e) => validateField("email", e.target.value)}
+          error={!!errors.email}
+          helperText={errors.email}
         />
       </div>
 
-      <div className="foraria-form-group">
-        <label className="foraria-form-label">Persona de Contacto</label>
-        <TextField
-          fullWidth
-          placeholder="Juan Pérez"
-          variant="outlined"
-          className="foraria-form-input"
-          value={contactPerson}
-          onChange={(e) => setContactPerson(e.target.value)}
-        />
-      </div>
+      <TextField
+        fullWidth
+        name="address"
+        label="Dirección"
+        value={form.address}
+        onChange={handleChange}
+      />
 
-      <div className="foraria-form-group">
-        <label className="foraria-form-label">Observación</label>
-        <TextField
-          fullWidth
-          multiline
-          minRows={4}
-          placeholder="Notas adicionales"
-          className="foraria-form-textarea"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-        />
-      </div>
+      <TextField
+        fullWidth
+        name="contactPerson"
+        label="Persona de Contacto"
+        value={form.contactPerson}
+        onChange={handleChange}
+      />
+
+      <TextField
+        fullWidth
+        multiline
+        minRows={3}
+        name="observations"
+        label="Observaciones"
+        value={form.observations}
+        onChange={handleChange}
+      />
 
       <div className="foraria-form-actions">
         <Button
           type="submit"
-          className="foraria-gradient-button boton-crear-reclamo"
-          disabled={submitting}
+          variant="contained"
+          color="secondary"
+          disabled={submitting || formHasErrors}
         >
-          {isEdit ? "Guardar cambios" : "Crear Proveedor"}
+          {isEdit ? "Guardar cambios" : "Crear proveedor"}
         </Button>
         <Button
-          className="foraria-outlined-white-button"
-          onClick={() => navigate("/proveedores")}
+          variant="outlined"
+          color="inherit"
+          onClick={() => (onSuccess ? onSuccess() : navigate("/proveedores"))}
           disabled={submitting}
         >
           Cancelar
         </Button>
       </div>
-
-      {(createErr || updateErr) && (
-        <p style={{ color: "crimson", marginTop: 8 }}>
-          Error: {(createErr || updateErr) as string}
-        </p>
-      )}
     </form>
   );
 }
