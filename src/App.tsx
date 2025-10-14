@@ -23,10 +23,8 @@ import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import NewReserve from "./popups/NewEvent";
 
-// Proveedores (listado + alta + edición)
-import Suppliers from "./pages/Suppliers";          // listado
-import NewSupplier from "./popups/NewSupplier";     // alta/edición (mismo form, lee useParams internamente)
-
+// Proveedores (listado con popup interno)
+import Suppliers from "./pages/Suppliers";
 
 // Forums (usuario)
 import Forums from "./pages/Forums";
@@ -41,6 +39,7 @@ import AdminForums from "./pages/admin/AdminForums";
 import AdminAudit from "./pages/admin/AdminAudit";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminVotes from "./pages/admin/AdminVotes";
+
 function App() {
   return (
     <ThemeProvider theme={theme}>
@@ -68,13 +67,8 @@ function App() {
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
 
-          {/* Proveedores (SOLO para usuario normal) */}
+          {/* Proveedores (solo listado; el alta/edición es popup dentro de esta vista) */}
           <Route path="/proveedores" element={<Suppliers />} />
-          <Route path="/proveedores/nuevo" element={<NewSupplier />} />
-          <Route path="/proveedores/:id/editar" element={<NewSupplier />} />
-
-          {/* Gestión de usuarios */}
-          
 
           {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
@@ -95,9 +89,11 @@ function App() {
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes/>} />
             {/* AGREGAR rutas de proveedores para admin */}
+
             <Route path="suppliers" element={<Suppliers />} />
-            <Route path="suppliers/nuevo" element={<NewSupplier />} />
-            <Route path="suppliers/:id/editar" element={<NewSupplier />} />
+            {/* No usamos rutas full-page para alta/edición */}
+            {/* <Route path="suppliers/nuevo" element={<Suppliers />} />
+                <Route path="suppliers/:id/editar" element={<Suppliers />} /> */}
           </Route>
 
           {/* Fallback */}
