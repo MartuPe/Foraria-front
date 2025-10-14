@@ -32,12 +32,21 @@ export default function NewSupplier({ onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
 
-  const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
-    const { name, value } = e.target;
-    setForm((prev) => ({ ...prev, [name]: value }));
-  };
+  
+const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+) => {
+  const { name, value } = e.target;
+  let v = value;
+
+  if (name === "cuit") {
+    // solo dígitos y máx 11
+    v = value.replace(/\D+/g, "").slice(0, 11);
+  }
+
+  setForm((prev) => ({ ...prev, [name]: v }));
+};
+
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
