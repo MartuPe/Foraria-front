@@ -1,15 +1,22 @@
-
 import { useState } from "react";
-import { TextField, Button, MenuItem, Box, Typography } from "@mui/material";
+import { TextField, Button, MenuItem, Box, Typography, CircularProgress } from "@mui/material";
 import { useDropzone } from "react-dropzone";
-import "../styles/claim.css";
+import { useMutation } from "../hooks/useMutation";
 
-export default function ClaimForm() {
+interface ClaimFormProps {
+  onSuccess?: () => void;
+  onCancel?: () => void;
+}
+
+export default function ClaimForm({ onSuccess, onCancel }: ClaimFormProps) {
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("Mantenimiento");
   const [priority, setPriority] = useState("Media");
   const [description, setDescription] = useState("");
   const [files, setFiles] = useState<File[]>([]);
+  const [formError, setFormError] = useState<string | null>(null);
+
+  const { mutate, loading, error } = useMutation("https://localhost:7245/api/Claim", "post");
 
   const onDrop = (acceptedFiles: File[]) => {
     setFiles([...files, ...acceptedFiles]);
@@ -19,21 +26,68 @@ export default function ClaimForm() {
     onDrop,
     accept: {
       "image/*": [],
-      "video/*": [],  
+      "video/*": [],
     },
     multiple: true,
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const validateBeforeSubmit = (): boolean => {
+    if (!title.trim()) {
+      setFormError("El título es obligatorio.");
+      return false;
+    }
+    if (!description.trim()) {
+      setFormError("La descripción es obligatoria.");
+      return false;
+    }
+    if (!category) {
+      setFormError("Debe seleccionar una categoría.");
+      return false;
+    }
+    if (!priority) {
+      setFormError("Debe seleccionar una prioridad.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log({ title, category, priority, description, files });
+    setFormError(null);
+
+    if (!validateBeforeSubmit()) return;
+
+    const payload = {
+      title,
+      description,
+      priority,
+      category,
+      archive: files.length > 0 ? files[0].name : null, // Adaptable según tu API
+      user_id: 2, // Podés reemplazar con usuario actual
+    };
+
+    try {
+      await mutate(payload);
+      alert("✅ Reclamo creado correctamente");
+
+      // Reset
+      setTitle("");
+      setDescription("");
+      setCategory("Mantenimiento");
+      setPriority("Media");
+      setFiles([]);
+
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      console.error("Error al crear reclamo:", err);
+      alert("Error al crear reclamo");
+    }
   };
 
   return (
     <form className="foraria-form" onSubmit={handleSubmit}>
       <h2 className="foraria-form-title">Crear Nuevo Reclamo</h2>
 
-    
       <div className="foraria-form-group">
         <label className="foraria-form-label">Título del Reclamo</label>
         <TextField
@@ -42,11 +96,10 @@ export default function ClaimForm() {
           onChange={(e) => setTitle(e.target.value)}
           placeholder="Describe brevemente el problema..."
           variant="outlined"
-          className="foraria-form-input"
+          required
         />
       </div>
 
-    
       <div className="foraria-form-row categoria-prioridad-contenedor">
         <div className="foraria-form-group categoria-prioridad-select">
           <label className="foraria-form-label">Categoría</label>
@@ -55,7 +108,8 @@ export default function ClaimForm() {
             fullWidth
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="foraria-form-input"
+            variant="outlined"
+            required
           >
             <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
             <MenuItem value="Servicios">Servicios</MenuItem>
@@ -70,7 +124,8 @@ export default function ClaimForm() {
             fullWidth
             value={priority}
             onChange={(e) => setPriority(e.target.value)}
-            className="foraria-form-input"
+            variant="outlined"
+            required
           >
             <MenuItem value="Alta">Alta</MenuItem>
             <MenuItem value="Media">Media</MenuItem>
@@ -78,7 +133,6 @@ export default function ClaimForm() {
           </TextField>
         </div>
       </div>
-
 
       <div className="foraria-form-group">
         <label className="foraria-form-label">Descripción Detallada</label>
@@ -89,11 +143,11 @@ export default function ClaimForm() {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Proporciona todos los detalles relevantes del problema..."
-          className="foraria-form-textarea"
+          variant="outlined"
+          required
         />
       </div>
 
-     
       <div className="foraria-form-group">
         <label className="foraria-form-label">Adjuntar Archivo</label>
         <Box
@@ -110,13 +164,10 @@ export default function ClaimForm() {
         >
           <input {...getInputProps()} />
           <Typography>
-            {isDragActive
-              ? "Suelta los archivos aquí..."
-              : "Haz clic o arrastra archivos aquí"}
+            {isDragActive ? "Suelta los archivos aquí..." : "Haz clic o arrastra archivos aquí"}
           </Typography>
         </Box>
 
-       
         {files.length > 0 && (
           <Box mt={2}>
             <Typography variant="subtitle2">Archivos seleccionados:</Typography>
@@ -129,12 +180,28 @@ export default function ClaimForm() {
         )}
       </div>
 
-    
+      {formError && <p style={{ color: "red", marginTop: "10px" }}>{formError}</p>}
+      {error && <p style={{ color: "red", marginTop: "10px" }}>Error: {error}</p>}
+
       <div className="foraria-form-actions">
-        <Button type="submit" className="foraria-gradient-button boton-crear-reclamo">
-          Enviar Reclamo
+        <Button
+          type="submit"
+          variant="contained"
+          color="secondary"
+          disabled={loading}
+          className="foraria-gradient-button"
+        >
+          {loading ? <CircularProgress size={20} /> : "Enviar Reclamo"}
         </Button>
-        <Button className="foraria-outlined-white-button">Cancelar</Button>
+        <Button
+          variant="outlined"
+          color="inherit"
+          onClick={onCancel}
+          disabled={loading}
+          className="foraria-outlined-white-button"
+        >
+          Cancelar
+        </Button>
       </div>
     </form>
   );
