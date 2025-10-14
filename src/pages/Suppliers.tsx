@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Card,
   CardContent,
@@ -7,7 +7,6 @@ import {
   Button,
   Dialog,
   DialogContent,
-  CircularProgress,
   Snackbar,
   Alert,
   TextField,
@@ -48,14 +47,21 @@ export default function Suppliers() {
   const [toDeleteId, setToDeleteId] = useState<number | null>(null);
 
   // Toast
-  const [snack, setSnack] = useState<{ open: boolean; msg: string; sev: "success" | "error" | "info" }>(
-    { open: false, msg: "", sev: "success" }
+  const [snack, setSnack] = useState<{
+    open: boolean;
+    msg: string;
+    sev: "success" | "error" | "info";
+  }>({ open: false, msg: "", sev: "success" });
+
+  const openSnack = useCallback(
+    (msg: string, sev: "success" | "error" | "info" = "success") => {
+      setSnack({ open: true, msg, sev });
+    },
+    []
   );
-  const openSnack = (msg: string, sev: "success" | "error" | "info" = "success") =>
-    setSnack({ open: true, msg, sev });
 
   // Controles de lista
-  const [q, setQ] = useState("");                 // búsqueda
+  const [q, setQ] = useState(""); // búsqueda
   const [category, setCategory] = useState<string>(""); // filtro
   const [sort, setSort] = useState<SortKey>("nameAsc");
   const [page, setPage] = useState(1);
@@ -68,18 +74,22 @@ export default function Suppliers() {
     return () => clearTimeout(t);
   }, [q]);
 
-  const fetchSuppliers = async () => {
+  const fetchSuppliers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await supplierService.getAll();
       setSuppliers(data);
     } catch (err) {
-      console.error(" Error al obtener proveedores:", err);
-      openSnack("Error al cargar proveedores", "error");
+      console.error("❌ Error al obtener proveedores:", err);
+      openSnack("Error al cargar proveedores ❌", "error");
     } finally {
       setLoading(false);
     }
-  };
+  }, [openSnack]);
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
 
   const askDelete = (id: number) => {
     setToDeleteId(id);
@@ -91,7 +101,7 @@ export default function Suppliers() {
     try {
       await supplierService.remove(toDeleteId);
       setSuppliers((prev) => prev.filter((s) => s.id !== toDeleteId));
-      openSnack("Proveedor eliminado", "success");
+      openSnack("Proveedor eliminado ✅", "success");
       // Ajuste de paginación si quedó página “vacía”
       setPage((p) => {
         const total = filtered.length - 1; // uno menos tras borrar
@@ -99,7 +109,7 @@ export default function Suppliers() {
         return Math.min(p, maxPage);
       });
     } catch {
-      openSnack("Error al eliminar proveedor", "error");
+      openSnack("Error al eliminar proveedor ❌", "error");
     } finally {
       setConfirmOpen(false);
       setToDeleteId(null);
@@ -111,10 +121,6 @@ export default function Suppliers() {
     setOpenDetail(true);
   };
 
-  useEffect(() => {
-    fetchSuppliers();
-  }, []);
-
   // Filtro + búsqueda + orden
   const filtered = useMemo(() => {
     let list = suppliers;
@@ -123,7 +129,9 @@ export default function Suppliers() {
 
     if (qDebounced) {
       list = list.filter((s) => {
-        const txt = `${s.commercialName ?? ""} ${s.businessName ?? ""} ${s.email ?? ""} ${s.phone ?? ""} ${s.supplierCategory ?? ""}`.toLowerCase();
+        const txt = `${s.commercialName ?? ""} ${s.businessName ?? ""} ${s.email ?? ""} ${
+          s.phone ?? ""
+        } ${s.supplierCategory ?? ""}`.toLowerCase();
         return txt.includes(qDebounced);
       });
     }
@@ -162,7 +170,7 @@ export default function Suppliers() {
     return filtered.slice(start, start + pageSize);
   }, [filtered, page]);
 
-  // Loading skeletons (se ven pro)
+  // Loading skeletons
   const SkeletonCard = () => (
     <Card variant="outlined" sx={{ borderRadius: 2 }}>
       <CardContent>
@@ -184,20 +192,19 @@ export default function Suppliers() {
   const content = (
     <>
       <PageHeader
-  title="Proveedores del Consorcio"
-  actions={
-    <Button
-      variant="contained"
-      color="secondary"
-      startIcon={<AddCircleOutlineIcon />}
-      onClick={() => setOpenNew(true)}
-      sx={{ borderRadius: 999, fontWeight: 600 }}
-    >
-      Nuevo proveedor
-    </Button>
-  }
-/>
-
+        title="Proveedores del Consorcio"
+        actions={
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AddCircleOutlineIcon />}
+            onClick={() => setOpenNew(true)}
+            sx={{ borderRadius: 999, fontWeight: 600 }}
+          >
+            Nuevo proveedor
+          </Button>
+        }
+      />
 
       {/* Controles */}
       <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} mb={2}>
@@ -223,7 +230,9 @@ export default function Suppliers() {
         >
           <MenuItem value="">Todas</MenuItem>
           {CATEGORIES.map((c) => (
-            <MenuItem key={c} value={c}>{c}</MenuItem>
+            <MenuItem key={c} value={c}>
+              {c}
+            </MenuItem>
           ))}
         </TextField>
         <TextField
@@ -365,7 +374,7 @@ export default function Suppliers() {
             onSuccess={() => {
               setOpenNew(false);
               fetchSuppliers();
-              openSnack("Proveedor creado ✅", "success");
+              openSnack("Proveedor creado ", "success");
             }}
           />
         </DialogContent>
@@ -381,7 +390,7 @@ export default function Suppliers() {
                 setOpenDetail(false);
                 setSelectedId(null);
                 fetchSuppliers();
-                openSnack("Proveedor eliminado ✅", "success");
+                openSnack("Proveedor eliminado ", "success");
               }}
             />
           )}
