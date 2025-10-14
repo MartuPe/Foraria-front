@@ -21,11 +21,12 @@ export function useMutation<TResp = unknown, TBody = any>(
       const r = await api[method]<TResp>(url, body, { params: opts?.params });
       return r.data;
     } catch (e: any) {
-      setError(e?.message ?? "Error");
-      throw e;
-    } finally {
-      setLoading(false);
-    }
+  const backendMessage = e?.response?.data?.error;
+  setError(backendMessage ?? e?.message ?? "Error");
+  throw e;
+} finally {
+  setLoading(false);
+}
   };
 
   return { mutate, loading, error };
