@@ -13,7 +13,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Box className="foraria-login-page">  {}
+    <Box className="foraria-login-page foraria-wrapper">  {}
       <Box 
         className="foraria-form-container"  
         component="form" 
