@@ -4,9 +4,11 @@ import { Box, Typography, Avatar, Button, Chip, Grid, Link } from '@mui/material
 import { Link as RouterLink } from 'react-router-dom';
 import EditIcon from '@mui/icons-material/Edit';  
 import profilePhoto from '../assets/profile-photo.jpg';  
+import { Layout  } from "../components/layout";
 
 const Profile: React.FC = () => {
   return (
+    <Layout>
     <Box className="foraria-page-container">  {}
       
       <Box className="foraria-profile-section" position="relative">  {}
@@ -77,7 +79,16 @@ const Profile: React.FC = () => {
           <Grid size={6} className="foraria-profile-value-status">Al dia</Grid>
         </Grid>
       </Box>
-    </Box>
+      <Link component={RouterLink} to="/IniciarSesion" underline="hover" className="foraria-form-link">
+        <Button
+                        variant="contained"
+                        color="secondary"
+                      >
+                        Cerrar Sesion
+                      </Button>
+                      </Link>
+    </Box>   
+    </Layout>
   );
 };
 
