@@ -1,30 +1,22 @@
-import { useEffect, useState, FormEvent } from "react";
-import { TextField, Button, MenuItem } from "@mui/material";
-import { useGet } from "../hooks/useGet";
-import { useMutation } from "../hooks/useMutation";
+import { FormEvent, useState } from "react";
+import {
+  TextField,
+  Button,
+  DialogActions,
+  Typography,
+  MenuItem,
+  Box,
+  Snackbar,
+  Alert,
+} from "@mui/material";
+import { supplierService, Supplier } from "../services/supplierService";
 
-type SupplierPayload = {
-  commercialName: string;
-  businessName: string;
-  cuit: string;
-  supplierCategory: string;
-  phone: string;
-  email: string;
-  address: string;
-  contactPerson: string;
-  observations: string;
-  active?: boolean;
-};
+interface Props {
+  onSuccess?: () => void; // el padre muestra el toast de éxito
+}
 
-type Props = {
-  id?: number;
-  onSuccess?: () => void | Promise<void>;
-};
-
-export default function NewSupplier({ id, onSuccess }: Props) {
-  const isEdit = Boolean(id);
-
-  const [form, setForm] = useState<SupplierPayload>({
+export default function NewSupplier({ onSuccess }: Props) {
+  const [form, setForm] = useState<Supplier>({
     commercialName: "",
     businessName: "",
     cuit: "",
@@ -34,73 +26,165 @@ export default function NewSupplier({ id, onSuccess }: Props) {
     address: "",
     contactPerson: "",
     observations: "",
+    active: true,
   });
 
-  const { data: existing } = useGet<SupplierPayload>(
-    isEdit ? `/Supplier/${id}` : "",
-    { enabled: isEdit }
-  );
+  const [loading, setLoading] = useState(false);
+  const [errorOpen, setErrorOpen] = useState(false);
 
-  useEffect(() => {
-    if (existing) setForm(existing);
-  }, [existing]);
+  
+const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+) => {
+  const { name, value } = e.target;
+  let v = value;
 
-  const { mutate: create, loading: creating } =
-    useMutation("/Supplier", "post");
-  const { mutate: update, loading: updating } =
-    useMutation(`/Supplier/${id}`, "put");
+  if (name === "cuit") {
+    // solo dígitos y máx 11
+    v = value.replace(/\D+/g, "").slice(0, 11);
+  }
 
-  const handleChange = (field: keyof SupplierPayload) =>
-    (e: React.ChangeEvent<HTMLInputElement>) =>
-      setForm({ ...form, [field]: e.target.value });
+  setForm((prev) => ({ ...prev, [name]: v }));
+};
+
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     try {
-      if (isEdit) await update(form);
-      else await create({ ...form, active: true });
-      if (onSuccess) await onSuccess();
-    } catch (err) {
-      console.error("Error al guardar proveedor", err);
+      await supplierService.create(form);
+      onSuccess?.(); // cierra modal + refresca + toast en el padre
+    } catch {
+      setErrorOpen(true);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const submitting = creating || updating;
-
   return (
-    <form className="foraria-form" onSubmit={handleSubmit}>
-      <h2>{isEdit ? "Editar Proveedor" : "Nuevo Proveedor"}</h2>
+    <form onSubmit={handleSubmit}>
+      <Typography variant="h5" textAlign="center" mb={2}>
+        Nuevo Proveedor
+      </Typography>
 
-      <div className="foraria-form-group container-items">
-        <TextField fullWidth label="Nombre Comercial" value={form.commercialName} onChange={handleChange("commercialName")} required />
-        <TextField fullWidth label="Razón Social" value={form.businessName} onChange={handleChange("businessName")} required />
-      </div>
+      <Box
+        sx={{
+          display: "grid",
+          gap: 2,
+          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+        }}
+      >
+        <TextField
+          label="Nombre Comercial"
+          name="commercialName"
+          value={form.commercialName}
+          onChange={handleChange}
+          fullWidth
+          required
+        />
 
-      <div className="foraria-form-group container-items">
-        <TextField fullWidth label="CUIT (11 dígitos, sin guiones)" value={form.cuit} onChange={handleChange("cuit")} required inputProps={{ pattern: "\\d{11}" }} />
-        <TextField select fullWidth label="Categoría" value={form.supplierCategory} onChange={handleChange("supplierCategory")} required>
+        <TextField
+          label="Razón Social"
+          name="businessName"
+          value={form.businessName}
+          onChange={handleChange}
+          fullWidth
+          required
+        />
+
+        <TextField
+          label="CUIT"
+          name="cuit"
+          value={form.cuit}
+          onChange={handleChange}
+          fullWidth
+          required
+          inputProps={{ maxLength: 11, inputMode: "numeric", pattern: "\\d{11}" }}
+          helperText="11 dígitos sin guiones"
+        />
+
+        <TextField
+          label="Categoría"
+          name="supplierCategory"
+          value={form.supplierCategory}
+          onChange={handleChange}
+          fullWidth
+          select
+          required
+        >
           <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
           <MenuItem value="Limpieza">Limpieza</MenuItem>
           <MenuItem value="Seguridad">Seguridad</MenuItem>
           <MenuItem value="Jardinería">Jardinería</MenuItem>
         </TextField>
-      </div>
 
-      <div className="foraria-form-group container-items">
-        <TextField fullWidth label="Teléfono" value={form.phone} onChange={handleChange("phone")} />
-        <TextField fullWidth label="Email" type="email" value={form.email} onChange={handleChange("email")} />
-      </div>
+        <TextField
+          label="Teléfono"
+          name="phone"
+          value={form.phone}
+          onChange={handleChange}
+          fullWidth
+        />
 
-      <TextField fullWidth label="Dirección" value={form.address} onChange={handleChange("address")} sx={{ my: 1 }} />
-      <TextField fullWidth label="Persona de Contacto" value={form.contactPerson} onChange={handleChange("contactPerson")} sx={{ my: 1 }} />
-      <TextField fullWidth label="Observaciones" multiline minRows={3} value={form.observations} onChange={handleChange("observations")} />
+        <TextField
+          label="Email"
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          fullWidth
+          type="email"
+          required
+        />
 
-      <div className="foraria-form-actions">
-        <Button type="submit" variant="contained" color="secondary" disabled={submitting}>
-          {isEdit ? "Guardar cambios" : "Crear proveedor"}
+        <Box sx={{ gridColumn: "1 / -1" }}>
+          <TextField
+            label="Dirección"
+            name="address"
+            value={form.address}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Box>
+
+        <Box sx={{ gridColumn: "1 / -1" }}>
+          <TextField
+            label="Persona de Contacto"
+            name="contactPerson"
+            value={form.contactPerson}
+            onChange={handleChange}
+            fullWidth
+          />
+        </Box>
+
+        <Box sx={{ gridColumn: "1 / -1" }}>
+          <TextField
+            label="Observaciones"
+            name="observations"
+            value={form.observations}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            rows={3}
+          />
+        </Box>
+      </Box>
+
+      <DialogActions sx={{ mt: 3, justifyContent: "center" }}>
+        <Button variant="contained" color="primary" type="submit" disabled={loading}>
+          {loading ? "Guardando..." : "Guardar"}
         </Button>
-        <Button variant="outlined" onClick={onSuccess as any}>Cancelar</Button>
-      </div>
+      </DialogActions>
+
+      <Snackbar
+        open={errorOpen}
+        autoHideDuration={3500}
+        onClose={() => setErrorOpen(false)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert severity="error" onClose={() => setErrorOpen(false)} variant="filled">
+          Error al guardar proveedor ❌
+        </Alert>
+      </Snackbar>
     </form>
   );
 }

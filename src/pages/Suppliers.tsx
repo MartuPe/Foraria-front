@@ -1,101 +1,196 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useCallback } from "react";
 import {
-  Card, CardContent, Typography, Chip, Stack, Button,
-  TextField, MenuItem, Rating, Dialog, DialogContent,
-  DialogTitle, IconButton
+  Card,
+  CardContent,
+  Typography,
+  Stack,
+  Button,
+  Dialog,
+  DialogContent,
+  Snackbar,
+  Alert,
+  TextField,
+  MenuItem,
+  InputAdornment,
+  Skeleton,
+  Pagination,
+  Box,
 } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
-import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
-import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
-import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import CalendarMonthOutlinedIcon from "@mui/icons-material/CalendarMonthOutlined";
+import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import SearchIcon from "@mui/icons-material/Search";
+import SortIcon from "@mui/icons-material/Sort";
 
-import { Layout } from "../components/layout";
-import PageHeader from "../components/SectionHeader";
+import { supplierService, Supplier } from "../services/supplierService";
 import NewSupplier from "../popups/NewSupplier";
 import SupplierDetail from "../popups/SupplierDetail";
-import { api } from "../api/axios";
+import PageHeader from "../components/SectionHeader";
+import { Layout } from "../components/layout";
+import ConfirmDialog from "../components/ui/ConfirmDialog";
 
-type Supplier = {
-  id: number;
-  commercialName: string;
-  businessName: string;
-  cuit: string;
-  supplierCategory: string;
-  email?: string;
-  phone?: string;
-  address?: string;
-  contactPerson?: string;
-  observations?: string;
-  registrationDate: string;
-  active: boolean;
-  rating?: number;
-};
+// Helpers
+const CATEGORIES = ["Mantenimiento", "Limpieza", "Seguridad", "Jardinería"] as const;
+type SortKey = "nameAsc" | "nameDesc" | "dateNew" | "dateOld" | "category";
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<"Todas" | string>("Todas");
 
-  // Popup: Form (alta / edición)
-  const [openForm, setOpenForm] = useState(false);
-  const [formId, setFormId] = useState<number | null>(null);
-  const openCreate = () => { setFormId(null); setOpenForm(true); };
-  const closeForm = () => setOpenForm(false);
-
-  // Popup: Detalle
+  // Modales
+  const [openNew, setOpenNew] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
-  const [detailId, setDetailId] = useState<number | null>(null);
-  const openDetailFor = (id: number) => { setDetailId(id); setOpenDetail(true); };
-  const closeDetail = () => { setOpenDetail(false); setDetailId(null); };
+  const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  // Cargar lista desde backend
-  const loadSuppliers = async () => {
+  // Confirmación de borrado desde la grilla
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [toDeleteId, setToDeleteId] = useState<number | null>(null);
+
+  // Toast
+  const [snack, setSnack] = useState<{
+    open: boolean;
+    msg: string;
+    sev: "success" | "error" | "info";
+  }>({ open: false, msg: "", sev: "success" });
+
+  const openSnack = useCallback(
+    (msg: string, sev: "success" | "error" | "info" = "success") => {
+      setSnack({ open: true, msg, sev });
+    },
+    []
+  );
+
+  // Controles de lista
+  const [q, setQ] = useState(""); // búsqueda
+  const [category, setCategory] = useState<string>(""); // filtro
+  const [sort, setSort] = useState<SortKey>("nameAsc");
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
+
+  // Debounce básico para q (mejor UX)
+  const [qDebounced, setQDebounced] = useState(q);
+  useEffect(() => {
+    const t = setTimeout(() => setQDebounced(q.trim().toLowerCase()), 250);
+    return () => clearTimeout(t);
+  }, [q]);
+
+  const fetchSuppliers = useCallback(async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const { data } = await api.get<Supplier[]>("/Supplier");
+      const data = await supplierService.getAll();
       setSuppliers(data);
-    } catch (e) {
-      console.error("Error cargando proveedores:", e);
+    } catch (err) {
+      console.error("❌ Error al obtener proveedores:", err);
+      openSnack("Error al cargar proveedores ❌", "error");
     } finally {
       setLoading(false);
     }
+  }, [openSnack]);
+
+  useEffect(() => {
+    fetchSuppliers();
+  }, [fetchSuppliers]);
+
+  const askDelete = (id: number) => {
+    setToDeleteId(id);
+    setConfirmOpen(true);
   };
 
-  useEffect(() => { loadSuppliers(); }, []);
+  const handleDelete = async () => {
+    if (toDeleteId == null) return;
+    try {
+      await supplierService.remove(toDeleteId);
+      setSuppliers((prev) => prev.filter((s) => s.id !== toDeleteId));
+      openSnack("Proveedor eliminado ✅", "success");
+      // Ajuste de paginación si quedó página “vacía”
+      setPage((p) => {
+        const total = filtered.length - 1; // uno menos tras borrar
+        const maxPage = Math.max(1, Math.ceil(total / pageSize));
+        return Math.min(p, maxPage);
+      });
+    } catch {
+      openSnack("Error al eliminar proveedor ❌", "error");
+    } finally {
+      setConfirmOpen(false);
+      setToDeleteId(null);
+    }
+  };
 
-  const categories = useMemo(() => {
-    const set = new Set(suppliers.map(s => s.supplierCategory));
-    return ["Todas", ...Array.from(set)];
-  }, [suppliers]);
+  const openDetailFor = (id: number) => {
+    setSelectedId(id);
+    setOpenDetail(true);
+  };
 
+  // Filtro + búsqueda + orden
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return suppliers.filter(s => {
-      const matchCat = category === "Todas" ? true : s.supplierCategory === category;
-      const matchTxt =
-        !q ||
-        s.commercialName.toLowerCase().includes(q) ||
-        (s.businessName ?? "").toLowerCase().includes(q) ||
-        (s.email ?? "").toLowerCase().includes(q) ||
-        (s.address ?? "").toLowerCase().includes(q) ||
-        (s.contactPerson ?? "").toLowerCase().includes(q) ||
-        s.cuit.toLowerCase().includes(q);
-      return matchCat && matchTxt;
+    let list = suppliers;
+
+    if (category) list = list.filter((s) => s.supplierCategory === category);
+
+    if (qDebounced) {
+      list = list.filter((s) => {
+        const txt = `${s.commercialName ?? ""} ${s.businessName ?? ""} ${s.email ?? ""} ${
+          s.phone ?? ""
+        } ${s.supplierCategory ?? ""}`.toLowerCase();
+        return txt.includes(qDebounced);
+      });
+    }
+
+    const byDate = (d?: string) => (d ? new Date(d).getTime() : 0);
+
+    list = [...list].sort((a, b) => {
+      switch (sort) {
+        case "nameAsc":
+          return (a.commercialName ?? "").localeCompare(b.commercialName ?? "");
+        case "nameDesc":
+          return (b.commercialName ?? "").localeCompare(a.commercialName ?? "");
+        case "dateNew":
+          return byDate(b.registrationDate) - byDate(a.registrationDate);
+        case "dateOld":
+          return byDate(a.registrationDate) - byDate(b.registrationDate);
+        case "category":
+          return (a.supplierCategory ?? "").localeCompare(b.supplierCategory ?? "");
+        default:
+          return 0;
+      }
     });
-  }, [suppliers, query, category]);
 
-  const handleCreatedOrUpdated = async () => {
-    await loadSuppliers();
-    closeForm();
-  };
+    return list;
+  }, [suppliers, qDebounced, category, sort]);
 
-  return (
-    <Layout>
+  // Paginación
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  useEffect(() => {
+    // reset page cuando cambian filtros/búsqueda/orden
+    setPage(1);
+  }, [qDebounced, category, sort]);
+
+  const paged = useMemo(() => {
+    const start = (page - 1) * pageSize;
+    return filtered.slice(start, start + pageSize);
+  }, [filtered, page]);
+
+  // Loading skeletons
+  const SkeletonCard = () => (
+    <Card variant="outlined" sx={{ borderRadius: 2 }}>
+      <CardContent>
+        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1}>
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width={220} height={28} />
+            <Skeleton variant="text" width={280} />
+            <Skeleton variant="text" width={200} />
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Skeleton variant="rounded" width={130} height={36} />
+            <Skeleton variant="rounded" width={120} height={36} />
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+
+  const content = (
+    <>
       <PageHeader
         title="Proveedores del Consorcio"
         actions={
@@ -103,7 +198,7 @@ export default function Suppliers() {
             variant="contained"
             color="secondary"
             startIcon={<AddCircleOutlineIcon />}
-            onClick={openCreate}
+            onClick={() => setOpenNew(true)}
             sx={{ borderRadius: 999, fontWeight: 600 }}
           >
             Nuevo proveedor
@@ -111,110 +206,226 @@ export default function Suppliers() {
         }
       />
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
+      {/* Controles */}
+      <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} mb={2}>
         <TextField
+          placeholder="Buscar por nombre, razón social, email, teléfono…"
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
           fullWidth
-          placeholder="Buscar por nombre, CUIT, email…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          size="small"
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
         />
         <TextField
           select
-          size="small"
           label="Categoría"
           value={category}
           onChange={(e) => setCategory(e.target.value)}
-          sx={{ width: { xs: "100%", sm: 220 } }}
+          sx={{ minWidth: 200 }}
         >
-          {categories.map((c) => (
-            <MenuItem key={c} value={c}>{c}</MenuItem>
+          <MenuItem value="">Todas</MenuItem>
+          {CATEGORIES.map((c) => (
+            <MenuItem key={c} value={c}>
+              {c}
+            </MenuItem>
           ))}
+        </TextField>
+        <TextField
+          select
+          label="Ordenar"
+          value={sort}
+          onChange={(e) => setSort(e.target.value as SortKey)}
+          sx={{ minWidth: 220 }}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SortIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+        >
+          <MenuItem value="nameAsc">Nombre (A→Z)</MenuItem>
+          <MenuItem value="nameDesc">Nombre (Z→A)</MenuItem>
+          <MenuItem value="dateNew">Alta (más nuevo)</MenuItem>
+          <MenuItem value="dateOld">Alta (más viejo)</MenuItem>
+          <MenuItem value="category">Categoría</MenuItem>
         </TextField>
       </Stack>
 
-      {loading ? (
-        <Typography>Cargando proveedores…</Typography>
-      ) : filtered.length === 0 ? (
-        <Typography>No se encontraron proveedores.</Typography>
-      ) : (
-        <Stack spacing={2}>
-          {filtered.map((s) => (
+      {/* Lista */}
+      <Stack spacing={2}>
+        {loading ? (
+          <>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </>
+        ) : filtered.length === 0 ? (
+          <Card variant="outlined" sx={{ borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="h6" gutterBottom>
+                No encontramos proveedores
+              </Typography>
+              <Typography color="text.secondary" paragraph>
+                Probá limpiar filtros o crear un nuevo proveedor.
+              </Typography>
+              <Button
+                variant="contained"
+                onClick={() => {
+                  setQ("");
+                  setCategory("");
+                  setSort("nameAsc");
+                }}
+                sx={{ mr: 1 }}
+              >
+                Limpiar filtros
+              </Button>
+              <Button variant="outlined" onClick={() => setOpenNew(true)}>
+                Crear proveedor
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          paged.map((s) => (
             <Card key={s.id} variant="outlined" sx={{ borderRadius: 2 }}>
               <CardContent>
                 <Stack
                   direction={{ xs: "column", sm: "row" }}
-                  alignItems={{ xs: "flex-start", sm: "center" }}
                   justifyContent="space-between"
+                  alignItems={{ xs: "flex-start", sm: "center" }}
                   spacing={1}
                 >
-                  <Stack direction="row" alignItems="center" spacing={1.25} flexWrap="wrap">
-                    <Typography variant="h6" color="primary">{s.commercialName}</Typography>
-                    <Chip label={s.supplierCategory} size="small" />
-                    {s.rating && (
-                      <Stack direction="row" alignItems="center" spacing={0.5}>
-                        <Rating value={s.rating} precision={0.1} readOnly size="small" />
-                        <Typography variant="body2" color="text.secondary">({s.rating.toFixed(1)})</Typography>
-                      </Stack>
-                    )}
+                  <div>
+                    {/* TÍTULO CLICKEABLE -> abre detalle */}
+                    <Typography
+                      variant="h6"
+                      color="primary"
+                      sx={{
+                        cursor: "pointer",
+                        textDecoration: "none",
+                        "&:hover": { textDecoration: "underline" },
+                        wordBreak: "break-word",
+                      }}
+                      onClick={() => openDetailFor(s.id!)}
+                      title="Ver detalle"
+                    >
+                      {s.commercialName}
+                    </Typography>
+
+                    <Typography color="text.secondary">
+                      {s.businessName} – {s.supplierCategory}
+                    </Typography>
+
+                    <Typography variant="body2" color="text.secondary">
+                      {s.email && <>📧 {s.email} </>}
+                      {s.phone && <>| ☎️ {s.phone}</>}
+                    </Typography>
+                  </div>
+
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => openDetailFor(s.id!)}
+                    >
+                      Ver detalle
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<DeleteOutlineIcon />}
+                      onClick={() => askDelete(s.id!)}
+                    >
+                      Eliminar
+                    </Button>
                   </Stack>
-                  <Button
-                    variant="outlined"
-                    size="small"
-                    startIcon={<VisibilityOutlinedIcon />}
-                    onClick={() => openDetailFor(s.id)}
-                  >
-                    Ver Detalle
-                  </Button>
-                </Stack>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
-                  {s.businessName}
-                </Typography>
-                <Stack direction="row" spacing={3} sx={{ mt: 1.5 }} flexWrap="wrap">
-                  {s.phone && <Typography><PhoneOutlinedIcon fontSize="small" /> {s.phone}</Typography>}
-                  {s.email && <Typography><EmailOutlinedIcon fontSize="small" /> {s.email}</Typography>}
-                  {s.address && <Typography><PlaceOutlinedIcon fontSize="small" /> {s.address}</Typography>}
-                </Stack>
-                <Stack direction="row" spacing={3} sx={{ mt: 1 }} flexWrap="wrap">
-                  {s.contactPerson && <Typography><PersonOutlineIcon fontSize="small" /> {s.contactPerson}</Typography>}
-                  <Typography><CalendarMonthOutlinedIcon fontSize="small" /> {new Date(s.registrationDate).toLocaleDateString("es-AR")}</Typography>
                 </Stack>
               </CardContent>
             </Card>
-          ))}
+          ))
+        )}
+      </Stack>
+
+      {/* Paginación */}
+      {!loading && filtered.length > pageSize && (
+        <Stack alignItems="center" mt={2}>
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, p) => setPage(p)}
+            color="primary"
+            shape="rounded"
+            showFirstButton
+            showLastButton
+          />
         </Stack>
       )}
 
-      <Dialog open={openForm} onClose={closeForm} maxWidth="md" fullWidth>
+      {/* Crear */}
+      <Dialog open={openNew} onClose={() => setOpenNew(false)} maxWidth="md" fullWidth>
         <DialogContent>
-          <NewSupplier id={formId ?? undefined} onSuccess={handleCreatedOrUpdated} />
+          <NewSupplier
+            onSuccess={() => {
+              setOpenNew(false);
+              fetchSuppliers();
+              openSnack("Proveedor creado ", "success");
+            }}
+          />
         </DialogContent>
       </Dialog>
 
-      <Dialog open={openDetail} onClose={closeDetail} maxWidth="sm" fullWidth>
-  <DialogTitle>
-    Detalle del proveedor
-    <IconButton
-      aria-label="close"
-      onClick={closeDetail}
-      sx={{ position: "absolute", right: 8, top: 8 }}
-    >
-      <CloseIcon />
-    </IconButton>
-  </DialogTitle>
-  <DialogContent dividers>
-    {detailId && (
-      <SupplierDetail
-        id={detailId}
-        onDeleted={async () => {
-          await loadSuppliers(); // refresca lista
-          closeDetail();          // cierra popup
-        }}
-      />
-    )}
-  </DialogContent>
-</Dialog>
+      {/* Detalle */}
+      <Dialog open={openDetail} onClose={() => setOpenDetail(false)} maxWidth="sm" fullWidth>
+        <DialogContent>
+          {selectedId != null && (
+            <SupplierDetail
+              id={selectedId}
+              onDeleted={() => {
+                setOpenDetail(false);
+                setSelectedId(null);
+                fetchSuppliers();
+                openSnack("Proveedor eliminado ", "success");
+              }}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
 
-    </Layout>
+      {/* Confirmación de borrado desde la grilla */}
+      <ConfirmDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        onConfirm={handleDelete}
+        title="¿Eliminar proveedor?"
+        message="Esta acción no se puede deshacer."
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+      />
+
+      {/* Snackbar global */}
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3000}
+        onClose={() => setSnack((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnack((s) => ({ ...s, open: false }))}
+          severity={snack.sev}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snack.msg}
+        </Alert>
+      </Snackbar>
+    </>
   );
+
+  return <Layout>{content}</Layout>;
 }
