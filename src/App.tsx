@@ -24,7 +24,7 @@ import Calendar from "./pages/Calendar";
 import NewReserve from "./popups/NewEvent";
 
 // Proveedores (listado con popup interno)
-import Suppliers from "./pages/Suppliers";
+import AdminSuppliers from "./pages/admin/AdminSuppliers";
 
 // Forums (usuario)
 import Forums from "./pages/Forums";
@@ -72,8 +72,6 @@ function App() {
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
 
-          {/* Proveedores (solo listado; el alta/edición es popup dentro de esta vista) */}
-          <Route path="/proveedores" element={<Suppliers />} />
 
           {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
@@ -93,7 +91,7 @@ function App() {
             <Route path="audit" element={<AdminAudit />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
-            <Route path="suppliers" element={<Suppliers />} />
+            <Route path="suppliers" element={<AdminSuppliers />} />
           </Route>
 
           {/* Fallback */}
