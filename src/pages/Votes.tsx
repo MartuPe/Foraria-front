@@ -9,6 +9,7 @@ import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
 import ErrorModal from "../popups/ErrorModal";
+import SuccessModal from "../popups/SuccessModal";
 
 // --- Tipos ---
 export interface PollOption {
@@ -45,11 +46,17 @@ interface PollVoteResult {
   results: { pollOptionId: number; votesCount: number }[];
 }
 
+interface UserCountResponse {
+  totalUsers: number;
+}
+
 // --- Componente principal ---
 export default function Votes() {
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
   const [showErrorModal, setShowErrorModal] = useState(false);
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [totalUsers, setTotalUsers] = useState<number>(0);
 
   const { data: pollsData, loading, error } = useGet<Poll[]>(
     "https://localhost:7245/api/polls/with-results"
@@ -63,6 +70,20 @@ export default function Votes() {
   const { on, connected } = useSignalR({
     url: "https://localhost:7245/pollHub",
   });
+
+  // ✅ Traemos el total de usuarios una sola vez
+  useEffect(() => {
+    const fetchUserCount = async () => {
+      try {
+        const res = await fetch("https://localhost:7245/api/User/count");
+        const data: UserCountResponse = await res.json();
+        setTotalUsers(data.totalUsers);
+      } catch (err) {
+        console.error("Error al obtener total de usuarios:", err);
+      }
+    };
+    fetchUserCount();
+  }, []);
 
   useEffect(() => {
     if (pollsData) setPolls(pollsData);
@@ -95,9 +116,10 @@ export default function Votes() {
     };
     try {
       await sendVote(vote);
+      setShowSuccessModal(true);
     } catch (err) {
       console.error("Error al enviar voto:", err);
-      setShowErrorModal(true); 
+      setShowErrorModal(true);
     }
   };
 
@@ -129,22 +151,25 @@ export default function Votes() {
             (poll.pollResults || []).forEach((r) =>
               resultsMap.set(r.pollOptionId, r.votesCount)
             );
+
             const totalVotes = Array.from(resultsMap.values()).reduce(
               (s, v) => s + v,
               0
             );
 
+         
             let progressPercent = 0;
-            if (optionsValid && totalVotes > 0) {
-              const counts = options.map((o) => resultsMap.get(o.id) ?? 0);
-              const max = Math.max(...counts, 0);
-              progressPercent = Math.round((max / totalVotes) * 100);
+            if (optionsValid && totalUsers > 0) {
+              progressPercent = Math.min(
+                Math.round((totalVotes / totalUsers) * 100),
+                100
+              );
             }
 
             const optionFields = options.map((o) => {
               const count = resultsMap.get(o.id) ?? 0;
               const percent =
-                totalVotes > 0 ? Math.round((count / totalVotes) * 100) : 0;
+                totalUsers > 0 ? Math.round((count / totalUsers) * 100) : 0;
               return { label: `${o.text}: ${count} votos (${percent}%)` };
             });
 
@@ -174,35 +199,39 @@ export default function Votes() {
                   },
                 ]}
                 progress={progressPercent}
-                progressLabel="Votos registrados"
+                progressLabel={`Participación: ${progressPercent}% de usuarios`}
                 optionalFields={[
                   ...invalidOptionsField,
                   ...optionFields,
-                  { label: `Total votos: ${totalVotes}` },
+                  { label: `Total votos emitidos: ${totalVotes}` },
+                  { label: `Total usuarios: ${totalUsers}` },
                 ]}
-               extraActions={
-  canVote
-    ? options.map((opt) => ({
-        label: `Votar "${opt.text}"`,
-        color: "secondary",
-        variant: "contained",
-        onClick: () => handleVote(poll.id, opt.id),
-        icon: <CheckCircleOutlineIcon />,
-      }))
-    : [] 
-}
+                extraActions={
+                  canVote
+                    ? options.map((opt) => ({
+                        label: `Votar "${opt.text}"`,
+                        color: "secondary",
+                        variant: "contained",
+                        onClick: () => handleVote(poll.id, opt.id),
+                        icon: <CheckCircleOutlineIcon />,
+                      }))
+                    : []
+                }
                 sx={{ mt: 2 }}
               />
             );
-          }
-        )
+          })
         )}
 
-        {/* Modal de error usando voteError y showErrorModal */}
         <ErrorModal
           open={showErrorModal && !!voteError}
           onClose={() => setShowErrorModal(false)}
           errorMessage={voteError as string}
+        />
+
+        <SuccessModal
+          open={showSuccessModal}
+          onClose={() => setShowSuccessModal(false)}
         />
       </Box>
     </Layout>

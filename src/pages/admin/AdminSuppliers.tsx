@@ -16,18 +16,16 @@ import {
   Pagination,
   Box,
 } from "@mui/material";
-import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
 
-import { supplierService, Supplier } from "../services/supplierService";
-import NewSupplier from "../popups/NewSupplier";
-import SupplierDetail from "../popups/SupplierDetail";
-import PageHeader from "../components/SectionHeader";
-import { Layout } from "../components/layout";
-import ConfirmDialog from "../components/ui/ConfirmDialog";
+import { supplierService, Supplier } from "../../services/supplierService";
+import NewSupplier from "../../popups/NewSupplier";
+import SupplierDetail from "../../popups/SupplierDetail";
+import PageHeader from "../../components/SectionHeader";
+import ConfirmDialog from "../../components/ui/ConfirmDialog";
 
 // Helpers
 const CATEGORIES = ["Mantenimiento", "Limpieza", "Seguridad", "Jardinería"] as const;
@@ -189,21 +187,19 @@ export default function Suppliers() {
     </Card>
   );
 
-  const content = (
-    <>
+  return(
+    <div className="page">
       <PageHeader
         title="Proveedores del Consorcio"
         actions={
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<AddCircleOutlineIcon />}
-            onClick={() => setOpenNew(true)}
-            sx={{ borderRadius: 999, fontWeight: 600 }}
-          >
-            Nuevo proveedor
+          <Button variant="contained" color="secondary" onClick={() => setOpenNew(true)}>
+            + Nuevo Provedor
           </Button>
+
+
         }
+
+        
       />
 
       {/* Controles */}
@@ -424,8 +420,7 @@ export default function Suppliers() {
           {snack.msg}
         </Alert>
       </Snackbar>
-    </>
+    </div>
   );
 
-  return <Layout>{content}</Layout>;
 }

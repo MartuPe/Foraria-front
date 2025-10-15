@@ -1,7 +1,6 @@
 .foraria-page-container {
   background: var(--foraria-background);  /* #ebebd3 */
   padding: 24px;
-  min-height: 100vh;
 }
 
 /* Header con título y botón new */

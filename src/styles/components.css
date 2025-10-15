@@ -124,7 +124,6 @@
   background-color: #ffffff;
   box-shadow: 0 8px 28px rgba(8, 61, 119, 0.08);
   border: 1px solid var(--divider);
-  min-height: calc(100vh - 64px);
   width: 100%;
   box-sizing: border-box; 
   padding: 16px; 

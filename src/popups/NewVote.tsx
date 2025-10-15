@@ -83,7 +83,7 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
 
     try {
       await mutate(payload);
-      alert("✅ Votación creada correctamente");
+    
 
       setTitle("");
       setDescription("");
@@ -93,7 +93,7 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error("Error al crear votación:", err);
-      alert("Error al crear votación");
+
     }
   };
 

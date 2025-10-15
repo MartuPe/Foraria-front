@@ -24,7 +24,7 @@ import Calendar from "./pages/Calendar";
 import NewReserve from "./popups/NewEvent";
 
 // Proveedores (listado con popup interno)
-import Suppliers from "./pages/Suppliers";
+import AdminSuppliers from "./pages/admin/AdminSuppliers";
 
 // Forums (usuario)
 import Forums from "./pages/Forums";
@@ -44,7 +44,12 @@ function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Routes>
           {/* Redirección inicial */}
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
@@ -67,8 +72,6 @@ function App() {
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
 
-          {/* Proveedores (solo listado; el alta/edición es popup dentro de esta vista) */}
-          <Route path="/proveedores" element={<Suppliers />} />
 
           {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
@@ -87,13 +90,8 @@ function App() {
             <Route path="forums" element={<AdminForums />} />
             <Route path="audit" element={<AdminAudit />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
-            <Route path="votaciones" element={<AdminVotes/>} />
-            {/* AGREGAR rutas de proveedores para admin */}
-
-            <Route path="suppliers" element={<Suppliers />} />
-            {/* No usamos rutas full-page para alta/edición */}
-            {/* <Route path="suppliers/nuevo" element={<Suppliers />} />
-                <Route path="suppliers/:id/editar" element={<Suppliers />} /> */}
+            <Route path="votaciones" element={<AdminVotes />} />
+            <Route path="suppliers" element={<AdminSuppliers />} />
           </Route>
 
           {/* Fallback */}
