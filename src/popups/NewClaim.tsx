@@ -50,40 +50,50 @@ export default function ClaimForm({ onSuccess, onCancel }: ClaimFormProps) {
     }
     return true;
   };
+const toBase64 = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError(null);
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setFormError(null);
 
-    if (!validateBeforeSubmit()) return;
+      if (!validateBeforeSubmit()) return;
+
+  try {
+    let base64File: string | null = null;
+    if (files.length > 0) {
+      base64File = await toBase64(files[0]);
+    }
 
     const payload = {
       title,
       description,
       priority,
       category,
-      archive: files.length > 0 ? files[0].name : null, 
-      user_id: 2, // Podés reemplazar con usuario actual
-      residenceId: 3
+      archive: base64File,
+      user_id: 1, //remplazar por usuario real
+      residenceId: 1,
     };
 
-    try {
-      await mutate(payload);
-      alert("✅ Reclamo creado correctamente");
+    await mutate(payload);
+    alert("✅ Reclamo creado correctamente");
 
-      // Reset
-      setTitle("");
-      setDescription("");
-      setCategory("Mantenimiento");
-      setPriority("Media");
-      setFiles([]);
-
-      if (onSuccess) onSuccess();
-    } catch (err) {
-      console.error("Error al crear reclamo:", err);
-      alert("Error al crear reclamo");
-    }
-  };
+    setTitle("");
+    setDescription("");
+    setCategory("Mantenimiento");
+    setPriority("Media");
+    setFiles([]);
+    if (onSuccess) onSuccess();
+  } catch (err) {
+    console.error("Error al crear reclamo:", err);
+    alert("Error al crear reclamo");
+  }
+};
 
   return (
     <form className="foraria-form" onSubmit={handleSubmit}>

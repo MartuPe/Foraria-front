@@ -25,6 +25,7 @@ const Claims: React.FC = () => {
     const [open, setOpen] = useState(false);
     const handleOpen = () => setOpen(true);
     const handleClose = () => setOpen(false);
+  const API_BASE = process.env.REACT_APP_API_URL || 'https://localhost:7245';
 
 
   if (loading) return <div>Cargando reclamos...</div>;
@@ -65,10 +66,12 @@ const Claims: React.FC = () => {
         <Stack spacing={2}>
           {claim && claim.length > 0 ? (
             claim.map((c) => (
+              <Box>
               <InfoCard
                 key={c.claim.id}
                 title={c.claim.title}
                 description={c.claim.description}
+                image= {API_BASE + c.claim.archive}
                 chips={[
                   c.claim.priority
                     ? { label: c.claim.priority.toUpperCase(), color: "warning" }
@@ -77,7 +80,11 @@ const Claims: React.FC = () => {
                     ? { label: c.claim.category, color: "info" }
                     : { label: "Sin categoría" },
                 ]}
+                files={[
+    { name: "lampara.jpg", size: 120345,  url: `${API_BASE}${c.claim.archive}`, type: "jpg" },
+  ]}
               />
+              </Box>
             ))
           ) : (
             <Paper sx={{ p: 4, textAlign: "center", border: "1px solid #f0f0f0", borderRadius: 3 }}>
@@ -88,6 +95,7 @@ const Claims: React.FC = () => {
           )}
         </Stack>
       </Box>
+      
     </Layout>
   );
 };
