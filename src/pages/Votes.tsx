@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { Box } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
@@ -123,6 +123,26 @@ export default function Votes() {
     }
   };
 
+  // ✅ NUEVO: Filtro + ordenamiento
+  const filteredPolls = useMemo(() => {
+    let filtered = [...polls];
+
+    if (tab === "actives") {
+      filtered = filtered.filter(
+        (p) => p.state.toLowerCase().trim() === "activa"
+      );
+    } else if (tab === "finalizada") {
+      filtered = filtered.filter(
+        (p) => p.state.toLowerCase().trim() === "finalizada"
+      );
+    }
+
+    // 🔽 Ordenar por fecha descendente (más recientes arriba)
+    return filtered.sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+  }, [polls, tab]);
+
   if (loading) return <p>Cargando votaciones...</p>;
   if (error) return <p>Error al cargar: {error}</p>;
 
@@ -140,10 +160,10 @@ export default function Votes() {
           onTabChange={(v) => setTab(v as typeof tab)}
         />
 
-        {polls.length === 0 ? (
+        {filteredPolls.length === 0 ? (
           <p>No hay votaciones disponibles.</p>
         ) : (
-          polls.map((poll) => {
+          filteredPolls.map((poll) => {
             const options = (poll.pollOptions || []).slice(0, 8);
             const optionsValid = options.length >= 2 && options.length <= 8;
 
@@ -157,7 +177,6 @@ export default function Votes() {
               0
             );
 
-         
             let progressPercent = 0;
             if (optionsValid && totalUsers > 0) {
               progressPercent = Math.min(
