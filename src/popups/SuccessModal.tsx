@@ -36,7 +36,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ open, onClose }) => {
             <Stack direction="row" spacing={1} alignItems="center">
               <CheckCircleOutlineIcon color="success" fontSize="medium" />
               <Typography id="success-modal-title" variant="h6" color="success.main">
-                Tu voto fue registrado en la blockchain
+                Tu voto se registro exitosamente en la blockchain
               </Typography>
             </Stack>
           </Stack>
@@ -46,7 +46,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({ open, onClose }) => {
            color="primary"
           >     
           <Typography id="success-modal-description" variant="body1" sx={{ color: "text.primary" }}>
-            Para verificarlo click aqui
+            Ver aqui
           </Typography>
  </Link>
       

@@ -137,7 +137,7 @@ export default function Votes() {
       );
     }
 
-    // 🔽 Ordenar por fecha descendente (más recientes arriba)
+    
     return filtered.sort(
       (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
