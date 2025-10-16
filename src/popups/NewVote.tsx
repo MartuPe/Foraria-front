@@ -77,7 +77,7 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
       createdAt,
       deletedAt,
       state: "activa",
-      userId: 2,
+      userId: 1,
       options,
     };
 
