@@ -25,7 +25,7 @@
 }
 
 .foraria-form-container {
-  background: var(--muted-foreground);
+  background: var( --foraria-primary);
   color: var(--foraria-light-text); 
   border-radius: var(--foraria-large-radius);
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); 
