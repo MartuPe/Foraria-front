@@ -4,7 +4,7 @@ import {
   Stack, Typography, Divider, Chip, CircularProgress, Button,
   Dialog, DialogTitle, DialogActions
 } from "@mui/material";
-import { api } from "../api/axios";
+import { api } from "../../api/axios";
 
 type Props = { id: number; onDeleted?: () => void };
 

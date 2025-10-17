@@ -17,7 +17,7 @@ import FullCalendar from "@fullcalendar/react";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import interactionPlugin, { DateClickArg } from "@fullcalendar/interaction";
 import "../styles/fullcalendar.css";
-import NewReserve from "../popups/NewReserve";
+import NewReserve from "../components/modals/NewReserve";
 import PageHeader from "../components/SectionHeader";
 import { Layout } from "../components/layout";
 

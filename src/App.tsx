@@ -21,7 +21,7 @@ import ExpensesPage from "./pages/Expenses";
 import Claims from "./pages/Claims";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
-import NewReserve from "./popups/NewEvent";
+import NewReserve from "./components/modals/NewEvent";
 
 // Proveedores (listado con popup interno)
 import AdminSuppliers from "./pages/admin/AdminSuppliers";

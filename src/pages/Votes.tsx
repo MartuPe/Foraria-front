@@ -8,10 +8,10 @@ import { Layout } from "../components/layout";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
-import ErrorModal from "../popups/ErrorModal";
-import SuccessModal from "../popups/SuccessModal";
+import ErrorModal from "../components/modals/ErrorModal";
+import SuccessModal from "../components/modals/SuccessModal";
 
-// --- Tipos ---
+
 export interface PollOption {
   id: number;
   text: string;
@@ -50,7 +50,7 @@ interface UserCountResponse {
   totalUsers: number;
 }
 
-// --- Componente principal ---
+
 export default function Votes() {
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -71,7 +71,7 @@ export default function Votes() {
     url: "https://localhost:7245/pollHub",
   });
 
-  // ✅ Traemos el total de usuarios una sola vez
+ 
   useEffect(() => {
     const fetchUserCount = async () => {
       try {
@@ -123,7 +123,7 @@ export default function Votes() {
     }
   };
 
-  // ✅ NUEVO: Filtro + ordenamiento
+
   const filteredPolls = useMemo(() => {
     let filtered = [...polls];
 
