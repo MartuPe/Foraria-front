@@ -1,5 +1,5 @@
 // src/pages/Claims.tsx
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { Box, Typography, Stack, Paper, Button, Dialog, DialogContent } from "@mui/material";
 import PageHeader from "../components/SectionHeader";
 import InfoCard from "../components/InfoCard";
@@ -8,8 +8,8 @@ import { useGet } from "../hooks/useGet";
 import NewClaim from "../components/modals/NewClaim";
 import AcceptClaimModal from "../components/modals/AcceptClaimModal";
 import RejectClaimModal from "../components/modals/RejectClaimModal";
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
 interface ClaimResponse {
   description?: string | null;
@@ -36,14 +36,21 @@ interface ClaimItem {
     archive?: string | null;
     user_id?: number | null;
     createdAt?: string | null;
+    state?: string | null;
   };
   user?: User | null;
   claimResponse?: ClaimResponse | null;
 }
 
+type TabKey = "todas" | "enproceso" | "resuelto" | "cerrado" | "rechazado";
+
 const Claims: React.FC = () => {
+  // hooks y estados (siempre primero)
   const { data: claimData, loading, error, refetch } = useGet<ClaimItem[]>("/Claim");
-  const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
+  const safeClaimData: ClaimItem[] = claimData ?? [];
+
+  const [tab, setTab] = useState<TabKey>("todas");
+  const [search, setSearch] = useState<string>("");
 
   const [openNew, setOpenNew] = useState(false);
   const handleOpenNew = () => setOpenNew(true);
@@ -54,8 +61,70 @@ const Claims: React.FC = () => {
 
   const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245";
 
+  // Filtrado por pestaña, búsqueda y orden descendente por createdAt (más recientes arriba)
+  const filteredAndSorted = useMemo(() => {
+    const normalize = (s?: string | null) => (s ?? "").toString().trim().toLowerCase();
+    const q = normalize(search);
+
+    const byTab = safeClaimData.filter((c) => {
+      const state = normalize(c.claim.state);
+
+      if (tab === "todas") return true;
+
+      if (tab === "enproceso") {
+        const inProcess = ["en proceso", "enproceso", "proceso", "in_progress", "inprogress", "processing"];
+        return state !== "" && (inProcess.includes(state) || (!["resuelto", "resolved", "cerrado", "closed", "finalizada", "finalizado", "rechazado"].includes(state) && !state.startsWith("rechaz")));
+      }
+
+      if (tab === "resuelto") {
+        const resolved = ["resuelto", "resolved", "resolvido"];
+        return resolved.includes(state);
+      }
+
+      if (tab === "cerrado") {
+        const closed = ["cerrado", "closed", "finalizada", "finalizado"];
+        return closed.includes(state);
+      }
+
+      if (tab === "rechazado") {
+        const rejected = ["rechazado", "rechazada", "rejected"];
+        return rejected.includes(state);
+      }
+
+      return true;
+    });
+
+    // Aplica búsqueda sobre los resultados ya filtrados por tab
+    const bySearch = q
+      ? byTab.filter((c) => {
+          const title = normalize(c.claim.title);
+          const description = normalize(c.claim.description);
+          const priority = normalize(c.claim.priority);
+          const category = normalize(c.claim.category);
+          const userName = normalize(`${c.user?.firstName ?? ""} ${c.user?.lastName ?? ""}`);
+          // buscar en múltiples campos; si cualquiera contiene la query, incluir
+          return (
+            title.includes(q) ||
+            description.includes(q) ||
+            priority.includes(q) ||
+            category.includes(q) ||
+            userName.includes(q)
+          );
+        })
+      : byTab;
+
+    const sorted = [...bySearch].sort((a, b) => {
+      const ta = a.claim.createdAt ? new Date(a.claim.createdAt).getTime() : 0;
+      const tb = b.claim.createdAt ? new Date(b.claim.createdAt).getTime() : 0;
+      return tb - ta;
+    });
+
+    return sorted;
+  }, [safeClaimData, tab, search]);
+
+  // retornos tempranos después de hooks y useMemo
   if (loading) return <div>Cargando reclamos...</div>;
-  if (error) return <div>Error al cargar: {error}</div>;
+  if (error) return <div>Error al cargar: {String(error)}</div>;
 
   const fileTypeFromPath = (path?: string) => {
     if (!path) return "";
@@ -74,14 +143,16 @@ const Claims: React.FC = () => {
             </Button>
           }
           showSearch
-          onSearchChange={(q) => console.log("Buscar:", q)}
+          onSearchChange={(q) => setSearch(q)}
           tabs={[
-            { label: "Todas", value: "todas" },
-            { label: "Activas", value: "actives" },
-            { label: "Finalizadas", value: "finalizada" },
+            { label: "Todos", value: "todas" },
+            { label: "En proceso", value: "enproceso" },
+            { label: "Resuelto", value: "resuelto" },
+            { label: "Cerrado", value: "cerrado" },
+            { label: "Rechazado", value: "rechazado" },
           ]}
           selectedTab={tab}
-          onTabChange={(v) => setTab(v as typeof tab)}
+          onTabChange={(v) => setTab(v as TabKey)}
         />
 
         <Dialog open={openNew} onClose={handleCloseNew} maxWidth="md" fullWidth>
@@ -97,8 +168,8 @@ const Claims: React.FC = () => {
         </Dialog>
 
         <Stack spacing={2}>
-          {claimData && claimData.length > 0 ? (
-            claimData.map((c) => {
+          {filteredAndSorted && filteredAndSorted.length > 0 ? (
+            filteredAndSorted.map((c) => {
               const id = c.claim.id ?? 0;
 
               const userFullName =
@@ -110,8 +181,8 @@ const Claims: React.FC = () => {
                 ? new Date(c.claim.createdAt).toLocaleString()
                 : "-";
 
-           const adminResponseText = c.claimResponse?.description?.trim() ?? "";
-          const adminResponseDate = c.claimResponse?.responseDate?? undefined;
+              const adminResponseText = c.claimResponse?.description?.trim() ?? "";
+              const adminResponseDate = c.claimResponse?.responseDate ?? undefined;
 
               const files = c.claim.archive
                 ? [
@@ -121,8 +192,6 @@ const Claims: React.FC = () => {
                     },
                   ]
                 : [];
-
-     
 
               const actions = [
                 {
@@ -151,10 +220,9 @@ const Claims: React.FC = () => {
                       ] as any
                     }
                     fields={[
-                      { label: userFullName, value: "", icon: <PersonOutlineIcon sx={{fontSize:25}}/> },
-                      { label: createdAtFormatted, value: "", icon: <CalendarTodayIcon sx={{fontSize:20}}/> },
+                      { label: userFullName, value: "", icon: <PersonOutlineIcon sx={{ fontSize: 25 }} /> },
+                      { label: createdAtFormatted, value: "", icon: <CalendarTodayIcon sx={{ fontSize: 20 }} /> },
                     ]}
-                    
                     {...(files.length > 0 ? { files } : {})}
                     actions={actions}
                     sx={{ mb: 1 }}
