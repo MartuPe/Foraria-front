@@ -7,7 +7,7 @@ import InfoCard from "../../components/InfoCard";
 import { useGet } from "../../hooks/useGet";
 import { useMutation } from "../../hooks/useMutation";
 import { useSignalR } from "../../hooks/useSignalR";
-import NewVote from "../../popups/NewVote";
+import NewVote from "../../components/modals/NewVote";
 
 // --- Tipos ---
 export interface PollOption {

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TextField, Button, MenuItem, Box, CircularProgress } from "@mui/material";
-import { useMutation } from "../hooks/useMutation";
+import { useMutation } from "../../hooks/useMutation";
 
 interface NewVoteProps {
   onSuccess?: () => void;

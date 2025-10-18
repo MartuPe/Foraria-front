@@ -1,3 +1,4 @@
+// src/components/InfoCard.tsx
 import React from "react";
 import {
   Box,
@@ -54,10 +55,14 @@ export interface InfoAction {
 }
 
 export interface InfoFile {
-  name: string;
-  size: number;
   url?: string;
   type?: string;
+}
+
+export interface AdminResponseCard {
+  title?: string;
+  text: string;
+  date?: string;
 }
 
 export interface InfoCardProps {
@@ -77,6 +82,10 @@ export interface InfoCardProps {
   extraActions?: InfoAction[];
   sx?: object;
   showDivider?: boolean;
+  votes?: { up: number; down: number };
+  onVote?: (type: "up" | "down") => void;
+  commentsCount?: number;
+  adminResponse?: AdminResponseCard | null;
 }
 
 export default function InfoCard({
@@ -96,9 +105,10 @@ export default function InfoCard({
   extraActions = [],
   sx = {},
   showDivider = false,
+  adminResponse = null,
 }: InfoCardProps) {
   const renderFileAvatar = (file: InfoFile) => {
-    const type = (file.type ?? file.name.split(".").pop() ?? "").toLowerCase();
+    const type = (file.type ?? "").toLowerCase();
     const isImage = ["jpg", "jpeg", "png", "webp", "gif"].includes(type);
     const isPdf = type === "pdf";
 
@@ -128,7 +138,6 @@ export default function InfoCard({
     if (!file.url) return;
     const a = document.createElement("a");
     a.href = file.url;
-    a.download = file.name;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -273,51 +282,81 @@ export default function InfoCard({
           </Stack>
         )}
 
-        {/* Sección de archivos compacta (20% ancho) sin nombre ni tamaño */}
+      
         {files.length > 0 && (
           <>
             <Divider />
             <Stack direction="column" alignItems="flex-start">
-  <Typography variant="subtitle2" sx={{ mt: 1, mb: 1 }}>
-    Archivos adjuntos ({files.length})
-  </Typography>
+              <Typography variant="subtitle2" sx={{ mt: 1, mb: 1 }}>
+                Archivos adjuntos ({files.length})
+              </Typography>
 
-  <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-start" }}>
-    <List dense sx={{ pt: 0, width: "100%", display: "flex", gap: 1 }}>
-  {files.map((f, i) => (
-    <ListItem
-      key={i}
-      sx={{
-        py: 0.5,
-        px: 0,
-        display: "flex",
-        alignItems: "center",
-        width: "auto",
-      }}
-    >
-      <ListItemAvatar>{renderFileAvatar(f)}</ListItemAvatar>
+              <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-start" }}>
+                <List dense sx={{ pt: 0, width: "100%", display: "flex", gap: 1 }}>
+                  {files.map((f, i) => (
+                    <ListItem
+                      key={i}
+                      sx={{
+                        py: 0.5,
+                        px: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        width: "auto",
+                      }}
+                    >
+                      <ListItemAvatar>{renderFileAvatar(f)}</ListItemAvatar>
 
-      {/* espacio flexible para separar avatar de los botones */}
-      <Box sx={{ flex: 1 }} />
+                      <Box sx={{ flex: 1 }} />
 
-      {/* Botones a la derecha, en su propio contenedor */}
-      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ ml: 1 }}>
-        <Tooltip title="Abrir">
-          <IconButton size="small" onClick={() => handleOpen(f.url)}>
-            <OpenInNewIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Descargar">
-          <IconButton size="small" onClick={() => handleDownload(f)}>
-            <DownloadIcon fontSize="small" />
-          </IconButton>
-        </Tooltip>
-      </Stack>
-    </ListItem>
-  ))}
-</List>
+                      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ ml: 1 }}>
+                        <Tooltip title="Abrir">
+                          <IconButton size="small" onClick={() => handleOpen(f.url)}>
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Descargar">
+                          <IconButton size="small" onClick={() => handleDownload(f)}>
+                            <DownloadIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </ListItem>
+                  ))}
+                </List>
               </Box>
             </Stack>
+          </>
+        )}
+
+        {adminResponse && (
+          <>
+            <Divider />
+            <Paper
+              elevation={0}
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: "#fafafa",
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Stack spacing={0.5}>
+                {adminResponse.title && (
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    {adminResponse.title}
+                  </Typography>
+                )}
+                <Typography variant="body2" color="text.secondary">
+                  {adminResponse.text}
+                </Typography>
+                {adminResponse.date && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Fecha estimada de solucion: {new Date(adminResponse.date).toLocaleString()}
+                  </Typography>
+                )}
+              </Stack>
+            </Paper>
           </>
         )}
 
@@ -344,6 +383,7 @@ export default function InfoCard({
             ))}
           </Stack>
         )}
+        
       </Stack>
     </Paper>
   );

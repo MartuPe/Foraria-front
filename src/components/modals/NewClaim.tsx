@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { TextField, Button, MenuItem, Box, Typography, CircularProgress } from "@mui/material";
 import { useDropzone } from "react-dropzone";
-import { useMutation } from "../hooks/useMutation";
+import { useMutation } from "../../hooks/useMutation";
 
 interface ClaimFormProps {
   onSuccess?: () => void;

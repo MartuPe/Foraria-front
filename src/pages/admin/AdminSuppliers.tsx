@@ -22,8 +22,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
 
 import { supplierService, Supplier } from "../../services/supplierService";
-import NewSupplier from "../../popups/NewSupplier";
-import SupplierDetail from "../../popups/SupplierDetail";
+import NewSupplier from "../../components/modals/NewSupplier";
+import SupplierDetail from "../../components/modals/SupplierDetail";
 import PageHeader from "../../components/SectionHeader";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 
