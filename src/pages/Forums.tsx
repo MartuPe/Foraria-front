@@ -168,8 +168,6 @@ const Forums: React.FC = () => {
               subtitle={p.subtitle}
               description={p.description}
               chips={p.chips}
-
-
               actions={p.actions}
               extraActions={p.extraActions}
               sx={{}}

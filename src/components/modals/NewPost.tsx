@@ -1,11 +1,10 @@
 import React, { useState } from "react";
-import { TextField, Button, Stack } from "@mui/material";
+import { TextField, Button } from "@mui/material";
 import { api } from "../../api/axios";
 
 export interface NewPostProps {
   onClose?: () => void;
   forumId?: number;
-  // podés agregar callbacks extra si los necesitás, p.e. onCreated(post)
   onCreated?: (post: any) => void;
 }
 
@@ -28,7 +27,6 @@ export default function NewPost({ onClose, forumId, onCreated }: NewPostProps) {
       const payload = {
         theme: title,
         description,
-        // adaptar según tu backend: state, userId, forumId, etc.
         forumId: forumId ?? 1,
       };
       const res = await api.post("/Forum", payload);

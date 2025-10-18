@@ -1,4 +1,4 @@
-// src/components/AcceptClaimModal.tsx
+// src/components/modals/AcceptClaimModal.tsx
 import React, { useEffect, useState } from "react";
 import {
   Dialog,
@@ -52,20 +52,19 @@ export default function AcceptClaimModal({
 
   useEffect(() => {
     if (open) {
-     
       setDescription("");
       setResponseDate(new Date().toISOString().slice(0, 16));
       setResponsibleSectorId(responsibleSectors[0]?.id ?? 0);
     }
-    
-  }, [open]);
+    // ✅ Agregamos responsibleSectors a las dependencias
+  }, [open, responsibleSectors]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
     const payload = {
-      description: description,
+      description,
       responseDate: new Date(responseDate).toISOString(),
-      user_id: 1,
+      user_id: userId,
       claim_id: claimId,
       responsibleSector_id: responsibleSectorId ?? 0,
     };
@@ -75,7 +74,7 @@ export default function AcceptClaimModal({
       onClose();
       onSuccess?.();
     } catch {
-    
+      // manejo de error si hace falta
     }
   };
 
@@ -104,7 +103,7 @@ export default function AcceptClaimModal({
           </div>
 
           <div className="foraria-form-group">
-            <div >
+            <div>
               <label className="foraria-form-label">Fecha estimada de resolución</label>
               <TextField
                 fullWidth

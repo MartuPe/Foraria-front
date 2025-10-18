@@ -45,9 +45,7 @@ interface ClaimItem {
 type TabKey = "todas" | "enproceso" | "resuelto" | "cerrado" | "rechazado";
 
 const Claims: React.FC = () => {
-  // hooks y estados (siempre primero)
   const { data: claimData, loading, error, refetch } = useGet<ClaimItem[]>("/Claim");
-  const safeClaimData: ClaimItem[] = claimData ?? [];
 
   const [tab, setTab] = useState<TabKey>("todas");
   const [search, setSearch] = useState<string>("");
@@ -61,7 +59,9 @@ const Claims: React.FC = () => {
 
   const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245";
 
-  // Filtrado por pestaña, búsqueda y orden descendente por createdAt (más recientes arriba)
+  // ✅ Envolvemos safeClaimData en un useMemo dependiente de claimData
+  const safeClaimData = useMemo(() => claimData ?? [], [claimData]);
+
   const filteredAndSorted = useMemo(() => {
     const normalize = (s?: string | null) => (s ?? "").toString().trim().toLowerCase();
     const q = normalize(search);
@@ -73,7 +73,12 @@ const Claims: React.FC = () => {
 
       if (tab === "enproceso") {
         const inProcess = ["en proceso", "enproceso", "proceso", "in_progress", "inprogress", "processing"];
-        return state !== "" && (inProcess.includes(state) || (!["resuelto", "resolved", "cerrado", "closed", "finalizada", "finalizado", "rechazado"].includes(state) && !state.startsWith("rechaz")));
+        return (
+          state !== "" &&
+          (inProcess.includes(state) ||
+            (!["resuelto", "resolved", "cerrado", "closed", "finalizada", "finalizado", "rechazado"].includes(state) &&
+              !state.startsWith("rechaz")))
+        );
       }
 
       if (tab === "resuelto") {
@@ -94,7 +99,6 @@ const Claims: React.FC = () => {
       return true;
     });
 
-    // Aplica búsqueda sobre los resultados ya filtrados por tab
     const bySearch = q
       ? byTab.filter((c) => {
           const title = normalize(c.claim.title);
@@ -102,7 +106,7 @@ const Claims: React.FC = () => {
           const priority = normalize(c.claim.priority);
           const category = normalize(c.claim.category);
           const userName = normalize(`${c.user?.firstName ?? ""} ${c.user?.lastName ?? ""}`);
-          // buscar en múltiples campos; si cualquiera contiene la query, incluir
+
           return (
             title.includes(q) ||
             description.includes(q) ||
@@ -122,7 +126,6 @@ const Claims: React.FC = () => {
     return sorted;
   }, [safeClaimData, tab, search]);
 
-  // retornos tempranos después de hooks y useMemo
   if (loading) return <div>Cargando reclamos...</div>;
   if (error) return <div>Error al cargar: {String(error)}</div>;
 
@@ -168,7 +171,7 @@ const Claims: React.FC = () => {
         </Dialog>
 
         <Stack spacing={2}>
-          {filteredAndSorted && filteredAndSorted.length > 0 ? (
+          {filteredAndSorted.length > 0 ? (
             filteredAndSorted.map((c) => {
               const id = c.claim.id ?? 0;
 
@@ -215,8 +218,12 @@ const Claims: React.FC = () => {
                     description={c.claim.description}
                     chips={
                       [
-                        c.claim.priority ? { label: c.claim.priority.toUpperCase(), color: "warning" } : { label: "Sin prioridad" },
-                        c.claim.category ? { label: c.claim.category, color: "info" } : { label: "Sin categoría" },
+                        c.claim.priority
+                          ? { label: c.claim.priority.toUpperCase(), color: "warning" }
+                          : { label: "Sin prioridad" },
+                        c.claim.category
+                          ? { label: c.claim.category, color: "info" }
+                          : { label: "Sin categoría" },
                       ] as any
                     }
                     fields={[
@@ -226,7 +233,9 @@ const Claims: React.FC = () => {
                     {...(files.length > 0 ? { files } : {})}
                     actions={actions}
                     sx={{ mb: 1 }}
-                    {...(adminResponseText ? { adminResponse: { title: "Respuesta de la Administración", text: adminResponseText, date: adminResponseDate } } : {})}
+                    {...(adminResponseText
+                      ? { adminResponse: { title: "Respuesta de la Administración", text: adminResponseText, date: adminResponseDate } }
+                      : {})}
                   />
 
                   <AcceptClaimModal
