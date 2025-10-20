@@ -95,7 +95,7 @@ function App() {
           {/* 🔹 Selección de consorcio (pre-dashboard) */}
           <Route path="/select-consortium" element={<SelectConsortium />} />
 
-          {/*  Admin (protegido por RequireConsortium) */}
+          {/*  Admin  */}
           <Route element={<RequireConsortium />}>
             <Route path="/admin" element={<AdminLayout />}>
               <Route path="reclaims" element={<AdminReclaims />} />
