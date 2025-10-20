@@ -1,43 +1,50 @@
 import React, { useState } from "react";
 import { TextField, Button } from "@mui/material";
-import { api } from "../../api/axios";
+import { useMutation } from "../../hooks/useMutation";
 
 export interface NewPostProps {
   onClose?: () => void;
   forumId?: number;
   onCreated?: (post: any) => void;
+  onSubmit?: (data: { theme: string; description: string; forumId: number }) => Promise<void>;
+  loading?: boolean;
+  error?: string | null;
 }
 
-export default function NewPost({ onClose, forumId, onCreated }: NewPostProps) {
+export default function NewPost({
+  onClose,
+  forumId,
+  onCreated,
+  onSubmit,
+  loading = false,
+  error = null,
+}: NewPostProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
+    setLocalError(null);
+
     if (!title.trim()) {
-      setError("El título es obligatorio");
+      setLocalError("El título es obligatorio");
       return;
     }
 
-    setSubmitting(true);
+    const payload = {
+      theme: title,
+      description,
+      forumId: forumId ?? 1,
+    };
+
     try {
-      const payload = {
-        theme: title,
-        description,
-        forumId: forumId ?? 1,
-      };
-      const res = await api.post("/Forum", payload);
-      const created = res.data;
-      if (onCreated) onCreated(created);
-      if (onClose) onClose();
-    } catch (err: any) {
+      if (onSubmit) {
+        await onSubmit(payload);
+      }
+      if (onCreated) onCreated(payload);
+    } catch (err) {
       console.error("Error creando post", err);
-      setError(err?.response?.data?.message ?? err?.message ?? "Error al crear post");
-    } finally {
-      setSubmitting(false);
     }
   };
 
@@ -58,7 +65,7 @@ export default function NewPost({ onClose, forumId, onCreated }: NewPostProps) {
           placeholder="Titulo del post..."
           variant="outlined"
           className="foraria-form-input"
-          disabled={submitting}
+          disabled={loading}
         />
       </div>
 
@@ -70,15 +77,15 @@ export default function NewPost({ onClose, forumId, onCreated }: NewPostProps) {
           minRows={4}
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="¿Que queres compartir con la comunidad?"
+          placeholder="¿Qué querés compartir con la comunidad?"
           className="foraria-form-textarea"
-          disabled={submitting}
+          disabled={loading}
         />
       </div>
 
-      {error && (
+      {(localError || error) && (
         <div style={{ color: "red", marginBottom: 8 }}>
-          {error}
+          {localError ?? error}
         </div>
       )}
 
@@ -86,16 +93,16 @@ export default function NewPost({ onClose, forumId, onCreated }: NewPostProps) {
         <Button
           type="submit"
           className="foraria-gradient-button boton-crear-reclamo"
-          disabled={submitting}
+          disabled={loading}
           variant="contained"
           color="primary"
         >
-          {submitting ? "Publicando..." : "Publicar"}
+          {loading ? "Publicando..." : "Publicar"}
         </Button>
 
         <Button
           className="foraria-outlined-white-button"
-          disabled={submitting}
+          disabled={loading}
           onClick={handleCancel}
           variant="outlined"
           sx={{ ml: 1 }}

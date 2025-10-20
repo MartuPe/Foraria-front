@@ -28,6 +28,7 @@ import AdminSuppliers from "./pages/admin/AdminSuppliers";
 
 // Forums (usuario)
 import Forums from "./pages/Forums";
+import Comentarios from "./pages/ForumsComment"
 
 // Configuración
 import Configuration from "./pages/Configuration";
@@ -80,6 +81,7 @@ function App() {
           <Route path="/forums/mantenimiento" element={<Forums />} />
           <Route path="/forums/espacios-comunes" element={<Forums />} />
           <Route path="/forums/garage-parking" element={<Forums />} />
+          <Route path="/forums/comentarios" element={<Comentarios />} />
 
           {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
