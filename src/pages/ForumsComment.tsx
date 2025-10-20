@@ -91,10 +91,6 @@ const ThreadView: React.FC = () => {
     console.log("Toggle reaction thread", thread?.id, type);
   };
 
-  const onToggleMessageReaction = (messageId: number, type: 1 | -1) => {
-    console.log("Toggle reaction message", messageId, type);
-  };
-
   const goBackToForum = () => {
     window.location.href = "http://localhost:3000/forums/general";
   };

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { TextField, Button } from "@mui/material";
-import { useMutation } from "../../hooks/useMutation";
+
 
 export interface NewPostProps {
   onClose?: () => void;
