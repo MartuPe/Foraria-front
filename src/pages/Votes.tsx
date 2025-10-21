@@ -192,9 +192,7 @@ export default function Votes() {
               return { label: `${o.text}: ${count} votos (${percent}%)` };
             });
 
-            const invalidOptionsField = !optionsValid
-              ? [{ label: "La votación debe tener entre 2 y 8 opciones" }]
-              : [];
+            
             const normalizedState = poll.state?.toLowerCase().trim();
             const canVote = normalizedState === "activa" && optionsValid;
 

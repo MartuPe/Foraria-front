@@ -79,7 +79,7 @@ function toSlug(text: string) {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9\-]/g, "");
+    .replace(/[^a-z0-9-]/g, ""); // escape removed
 }
 
 const Forums: React.FC = () => {
@@ -121,7 +121,7 @@ const Forums: React.FC = () => {
   // extrae slug actual desde la ruta /forums/:slug o /forums (fallback "general")
   const currentSlug = useMemo(() => {
     const path = location.pathname;
-    const match = path.match(/\/forums\/([^\/]+)/);
+    const match = path.match(/\/forums\/([^/]+)/); // escape removed
     return match ? match[1] : "general";
   }, [location.pathname]);
 
