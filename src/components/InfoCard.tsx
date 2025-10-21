@@ -15,6 +15,7 @@ import {
   Avatar,
   IconButton,
   Tooltip,
+  useTheme,
 } from "@mui/material";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
@@ -31,6 +32,7 @@ export interface InfoChip {
     | "warning"
     | "error"
     | "info";
+  variant?: "filled" | "outlined";
 }
 
 export interface InfoField {
@@ -107,6 +109,8 @@ export default function InfoCard({
   showDivider = false,
   adminResponse = null,
 }: InfoCardProps) {
+  const theme = useTheme();
+
   const renderFileAvatar = (file: InfoFile) => {
     const type = (file.type ?? "").toLowerCase();
     const isImage = ["jpg", "jpeg", "png", "webp", "gif"].includes(type);
@@ -177,15 +181,35 @@ export default function InfoCard({
               <Typography variant="subtitle1" fontWeight={600} color="primary">
                 {title}
               </Typography>
-              {chips.map((chip, i) => (
-                <Chip
-                  key={i}
-                  size="small"
-                  label={chip.label}
-                  color={chip.color && chip.color !== "default" ? chip.color : undefined}
-                  sx={{ fontWeight: 500 }}
-                />
-              ))}
+              {chips.map((chip, i) => {
+                const isOutlined = chip.variant === "outlined";
+                const chipColor = chip.color && chip.color !== "default" ? chip.color : undefined;
+                // Force visible border for outlined variants using theme palette
+                const borderColor =
+                  isOutlined && chipColor ? (theme.palette as any)[chipColor]?.main ?? theme.palette.primary.main : undefined;
+
+                return (
+                  <Chip
+                    key={i}
+                    size="small"
+                    label={chip.label}
+                    color={chipColor}
+                    variant={isOutlined ? "outlined" : "filled"}
+                    sx={{
+                      fontWeight: 500,
+                      ...(isOutlined
+                        ? {
+                            borderWidth: 1,
+                            borderStyle: "solid",
+                            borderColor,
+                            backgroundColor: "transparent",
+                            color: chipColor ? (theme.palette as any)[chipColor]?.main ?? undefined : undefined,
+                          }
+                        : {}),
+                    }}
+                  />
+                );
+              })}
             </Stack>
 
             {subtitle && (
@@ -282,7 +306,6 @@ export default function InfoCard({
           </Stack>
         )}
 
-      
         {files.length > 0 && (
           <>
             <Divider />
@@ -383,7 +406,6 @@ export default function InfoCard({
             ))}
           </Stack>
         )}
-        
       </Stack>
     </Paper>
   );

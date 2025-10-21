@@ -28,7 +28,7 @@ import AdminSuppliers from "./pages/admin/AdminSuppliers";
 
 // Forums (usuario)
 import Forums from "./pages/Forums";
-import Comentarios from "./pages/ForumsComment"
+import Comentarios from "./pages/ThreadView"
 
 // Configuración
 import Configuration from "./pages/Configuration";
