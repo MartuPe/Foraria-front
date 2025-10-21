@@ -48,7 +48,7 @@ interface ReactionResponse {
   total: number;
   likes: number;
   dislikes: number;
-  userReaction?: 1 | -1 | 0; // optional: reaction of the current user
+  userReaction?: 1 | -1 | 0;
 }
 
 interface Message {
@@ -115,6 +115,9 @@ const Forums: React.FC = () => {
     userReaction?: 1 | -1 | 0;
   }>>({});
 
+  const [forumStats, setForumStats] = useState<Forum | null>(null); // stats for current forum from API
+  const API_BASE = process.env.REACT_APP_API_BASE || "https://localhost:7245/api";
+
   // extrae slug actual desde la ruta /forums/:slug o /forums (fallback "general")
   const currentSlug = useMemo(() => {
     const path = location.pathname;
@@ -125,7 +128,6 @@ const Forums: React.FC = () => {
   // resuelve el nombre de la categoría para mostrar en header (opcional)
   const currentCategory = useMemo(() => {
     if (!forumsRaw) {
-      // heurística basada en slug para mostrar título aunque forosRaw no esté listo
       switch (currentSlug) {
         case "administracion": return "Administración";
         case "seguridad": return "Seguridad";
@@ -171,6 +173,39 @@ const Forums: React.FC = () => {
     return found ? found.id : null;
   }, [forumsRaw, currentSlug]);
 
+  // fetch stats for the resolved forum id (uses the API that returns the forum object with counts)
+  useEffect(() => {
+    let mounted = true;
+    if (!resolvedForumId) {
+      setForumStats(null);
+      return;
+    }
+
+    const controller = new AbortController();
+    const signal = controller.signal;
+
+    (async () => {
+      try {
+        const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, { signal });
+        if (!res.ok) {
+          setForumStats(null);
+          return;
+        }
+        const json: Forum = await res.json();
+        if (!mounted) return;
+        setForumStats(json);
+      } catch {
+        if (!mounted) return;
+        setForumStats(null);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      try { controller.abort(); } catch {}
+    };
+  }, [resolvedForumId, API_BASE]);
+
   useEffect(() => {
     if (!postsRaw || postsRaw.length === 0) {
       setEnriched({});
@@ -179,7 +214,6 @@ const Forums: React.FC = () => {
 
     let mounted = true;
     const controllers: AbortController[] = [];
-    const API_BASE = process.env.REACT_APP_API_BASE || "https://localhost:7245/api";
 
     const fetchForThread = async (threadId: number) => {
       const key = String(threadId);
@@ -231,7 +265,7 @@ const Forums: React.FC = () => {
         try { c.abort(); } catch {}
       });
     };
-  }, [postsRaw]);
+  }, [postsRaw, API_BASE]);
 
   const posts = useMemo(() => {
     if (!postsRaw) return [];
@@ -270,13 +304,23 @@ const Forums: React.FC = () => {
     });
   }, [postsRaw, forumsRaw]);
 
-  const stats = useMemo(() => {
+  const computedStats = useMemo(() => {
     const totalPosts = posts.length;
     const activeUsers = new Set(postsRaw?.map((p) => p.userId).filter(Boolean)).size || 0;
     const totalResponses = Object.values(enriched).reduce((acc, e) => acc + (e?.commentsCount ?? 0), 0);
     const pinned = posts.filter((p) => (p as any).isPinned).length;
     return { totalPosts, activeUsers, totalResponses, pinned };
   }, [posts, postsRaw, enriched]);
+
+  // Prefer authoritative counts from forumStats if available
+  const headerStats = useMemo(() => {
+    return {
+      totalPosts: forumStats?.countThreads ?? computedStats.totalPosts,
+      activeUsers: forumStats?.countUserActives ?? computedStats.activeUsers,
+      totalResponses: forumStats?.countResponses ?? computedStats.totalResponses,
+      pinned: computedStats.pinned,
+    };
+  }, [forumStats, computedStats]);
 
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
@@ -326,7 +370,6 @@ const Forums: React.FC = () => {
       }
 
       // fallback: fetch authoritative reactions
-      const API_BASE = process.env.REACT_APP_API_BASE || "https://localhost:7245/api";
       const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`);
       const ct = reacRes.headers.get("content-type") || "";
       if (!reacRes.ok || !ct.includes("application/json")) throw new Error("Reactions fallback failed");
@@ -347,7 +390,6 @@ const Forums: React.FC = () => {
     } catch (err: any) {
       // On error, revert to server state if possible, otherwise mark error and revert reacting flag
       try {
-        const API_BASE = process.env.REACT_APP_API_BASE || "https://localhost:7245/api";
         const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`);
         const ct = reacRes.headers.get("content-type") || "";
         if (reacRes.ok && ct.includes("application/json")) {
@@ -379,10 +421,10 @@ const Forums: React.FC = () => {
         <PageHeader
           title={`Foro - ${currentCategory}`}
           stats={[
-            { icon: <ChatIcon />, title: `Posts en ${currentCategory}`, value: stats.totalPosts, color: "primary" },
-            { icon: <GroupsIcon />, title: "Participantes Activos", value: stats.activeUsers, color: "success" },
-            { icon: <TrendingIcon />, title: "Total Respuestas", value: stats.totalResponses, color: "secondary" },
-            { icon: <PinIcon />, title: "Posts Fijados", value: stats.pinned, color: "warning" },
+            { icon: <ChatIcon />, title: `Posts en ${currentCategory}`, value: headerStats.totalPosts, color: "primary" },
+            { icon: <GroupsIcon />, title: "Participantes Activos", value: headerStats.activeUsers, color: "success" },
+            { icon: <TrendingIcon />, title: "Total Respuestas", value: headerStats.totalResponses, color: "secondary" },
+            { icon: <PinIcon />, title: "Posts Fijados", value: headerStats.pinned, color: "warning" },
           ]}
           actions={
             <Button
