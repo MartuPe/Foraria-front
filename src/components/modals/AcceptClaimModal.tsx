@@ -56,7 +56,7 @@ export default function AcceptClaimModal({
       setResponseDate(new Date().toISOString().slice(0, 16));
       setResponsibleSectorId(responsibleSectors[0]?.id ?? 0);
     }
-    // ✅ Agregamos responsibleSectors a las dependencias
+
   }, [open, responsibleSectors]);
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -74,7 +74,7 @@ export default function AcceptClaimModal({
       onClose();
       onSuccess?.();
     } catch {
-      // manejo de error si hace falta
+
     }
   };
 

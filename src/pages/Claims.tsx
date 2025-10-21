@@ -14,8 +14,8 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 interface ClaimResponse {
   description?: string | null;
   responseDate?: string | null;
-  user_id?: number | null;
-  claim_id?: number | null;
+  user_id: number;
+  claim_id: number;
   responsibleSector_id?: number | null;
 }
 
@@ -59,7 +59,6 @@ const Claims: React.FC = () => {
 
   const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245";
 
-  // ✅ Envolvemos safeClaimData en un useMemo dependiente de claimData
   const safeClaimData = useMemo(() => claimData ?? [], [claimData]);
 
   const filteredAndSorted = useMemo(() => {
@@ -133,6 +132,36 @@ const Claims: React.FC = () => {
     if (!path) return "";
     const parts = path.split(".");
     return parts.length > 1 ? parts.pop()?.toLowerCase() ?? "" : "";
+  };
+
+  // helpers para chips
+  const normalize = (s?: string | null) => (s ?? "").toString().trim().toLowerCase();
+
+  const stateChipFor = (raw?: string | null) => {
+    const s = normalize(raw);
+    if (!s) return { label: "Nuevo", color: "primary" as const, variant: "filled" as const };
+    if (s.startsWith("rechaz")) return { label: raw!, color: "error" as const, variant: "filled" as const };
+    if (s.includes("en proceso") || s.includes("proceso") || s.includes("in_progress") || s.includes("processing"))
+      return { label: raw!, color: "warning" as const, variant: "filled" as const };
+    if (s.includes("resuelto") || s.includes("resolved") || s.includes("acept") || s.includes("aceptado"))
+      return { label: raw!, color: "success" as const, variant: "filled" as const };
+
+    return { label: raw!, color: "primary" as const, variant: "filled" as const };
+  };
+
+  const priorityChipFor = (raw?: string | null) => {
+    const p = normalize(raw);
+    if (!p) return { label: "Sin prioridad", color: "default" as const, variant: "outlined" as const };
+    if (p.includes("alta")) return { label: raw!, color: "error" as const, variant: "outlined" as const };
+    if (p.includes("media") || p.includes("media/alta") || p.includes("mediana")) return { label: raw!, color: "warning" as const, variant: "outlined" as const };
+    if (p.includes("baja") || p.includes("low")) return { label: raw!, color: "warning" as const, variant: "outlined" as const };
+    return { label: raw!, color: "warning" as const, variant: "outlined" as const };
+  };
+
+  const categoryChipFor = (raw?: string | null) => {
+    if (!raw) return { label: "Sin categoría", color: "default" as const, variant: "outlined" as const };
+  
+    return { label: raw, color: "info" as const, variant: "outlined" as const };
   };
 
   return (
@@ -211,21 +240,23 @@ const Claims: React.FC = () => {
                 },
               ];
 
+          
+              const stateChip = stateChipFor(c.claim.state);
+              const priorityChip = priorityChipFor(c.claim.priority);
+              const categoryChip = categoryChipFor(c.claim.category);
+
+              const chips = [
+                { label: stateChip.label, color: stateChip.color, variant: stateChip.variant },
+                { label: priorityChip.label, color: priorityChip.color, variant: priorityChip.variant },
+                { label: categoryChip.label, color: categoryChip.color, variant: categoryChip.variant },
+              ] as any;
+
               return (
                 <Box key={id}>
                   <InfoCard
                     title={c.claim.title}
                     description={c.claim.description}
-                    chips={
-                      [
-                        c.claim.priority
-                          ? { label: c.claim.priority.toUpperCase(), color: "warning" }
-                          : { label: "Sin prioridad" },
-                        c.claim.category
-                          ? { label: c.claim.category, color: "info" }
-                          : { label: "Sin categoría" },
-                      ] as any
-                    }
+                    chips={chips}
                     fields={[
                       { label: userFullName, value: "", icon: <PersonOutlineIcon sx={{ fontSize: 25 }} /> },
                       { label: createdAtFormatted, value: "", icon: <CalendarTodayIcon sx={{ fontSize: 20 }} /> },
@@ -244,7 +275,7 @@ const Claims: React.FC = () => {
                     claimId={id}
                     claimTitle={c.claim.title}
                     claimantName={userFullName}
-                    userId={Number(localStorage.getItem("userId") ?? 0)}
+                    userId={Number(localStorage.getItem("userId") ?? 1)}
                     responsibleSectors={[
                       { id: 1, name: "Mantenimiento" },
                       { id: 2, name: "Administración" },

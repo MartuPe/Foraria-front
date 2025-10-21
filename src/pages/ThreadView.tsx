@@ -1,3 +1,4 @@
+// src/pages/ThreadView.tsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -14,6 +15,7 @@ import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoCard from "../components/InfoCard";
 import { Layout } from "../components/layout";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 
 interface Thread {
   id: number;
@@ -45,7 +47,15 @@ const API_BASE = "https://localhost:7245/api";
 const currentUserId = 1;
 
 const ThreadView: React.FC = () => {
-  const threadId = 1;
+  const location = useLocation();
+  const navigate = useNavigate();
+  const params = useParams<{ threadId?: string }>();
+
+  // threadId: prefer location.state.threadId, fallback to route param
+  const threadIdFromState = (location.state as any)?.threadId;
+  const threadIdParam = params.threadId ? Number(params.threadId) : undefined;
+  const threadId = typeof threadIdFromState === "number" ? threadIdFromState : threadIdParam;
+
   const [thread, setThread] = useState<Thread | null>(null);
   const [reactions, setReactions] = useState<ReactionResponse | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -55,8 +65,15 @@ const ThreadView: React.FC = () => {
   const [sending, setSending] = useState(false);
 
   useEffect(() => {
+    if (!threadId) {
+      setLoading(false);
+      setThread(null);
+      return;
+    }
+
     let mounted = true;
     const fetchAll = async () => {
+      setLoading(true);
       try {
         const [threadRes, reactionsRes, messagesRes] = await Promise.all([
           fetch(`${API_BASE}/Thread/${threadId}`),
@@ -67,13 +84,24 @@ const ThreadView: React.FC = () => {
         if (!mounted) return;
 
         if (threadRes.ok) setThread(await threadRes.json());
+        else setThread(null);
+
         if (reactionsRes.ok) setReactions(await reactionsRes.json());
+        else setReactions(null);
+
         if (messagesRes.ok) {
           const msgs = await messagesRes.json();
           setMessages(Array.isArray(msgs) ? msgs : []);
+        } else {
+          setMessages([]);
         }
       } catch (err) {
         console.error("Error cargando datos del hilo", err);
+        if (mounted) {
+          setThread(null);
+          setReactions(null);
+          setMessages([]);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -92,28 +120,31 @@ const ThreadView: React.FC = () => {
   };
 
   const goBackToForum = () => {
-    window.location.href = "http://localhost:3000/forums/general";
+    // intento de volver a la página anterior; si no hay historial, navegar a general
+    if (location.key) {
+      navigate(-1);
+    } else {
+      navigate("/forums/general");
+    }
   };
 
   const onCommentThread = () => {
     setShowCommentBox((prev) => !prev);
   };
 
-  // --- CORRECCIÓN: enviar multipart/form-data con las keys exactas que espera el backend
   const handleSendComment = async () => {
     if (!commentText.trim() || !thread) return;
     setSending(true);
     try {
-      // Usar FormData incluso sin archivo; backend espera "Content" capitalizado
       const form = new FormData();
+      // usar las keys que espera el backend; ajustá si tu API usa otro casing
       form.append("Content", commentText);
       form.append("Thread_id", String(thread.id));
       form.append("User_id", String(currentUserId));
-      // No file appended (usuario pidió sin archivo)
 
       const res = await fetch(`${API_BASE}/Message`, {
         method: "POST",
-        body: form, // no Content-Type header: browser lo setea correctamente
+        body: form,
       });
 
       if (res.ok) {
@@ -142,6 +173,21 @@ const ThreadView: React.FC = () => {
     );
   }
 
+  if (!threadId) {
+    return (
+      <Layout>
+        <Box sx={{ py: 6, textAlign: "center" }}>
+          <Typography variant="h6" color="error">
+            No se recibió el ID del hilo
+          </Typography>
+          <Button sx={{ mt: 2 }} onClick={() => navigate("/forums/general")}>
+            Volver a foros
+          </Button>
+        </Box>
+      </Layout>
+    );
+  }
+
   if (!thread) {
     return (
       <Layout>
@@ -149,6 +195,9 @@ const ThreadView: React.FC = () => {
           <Typography variant="h6" color="error">
             No se encontró el hilo
           </Typography>
+          <Button sx={{ mt: 2 }} onClick={goBackToForum}>
+            Volver
+          </Button>
         </Box>
       </Layout>
     );

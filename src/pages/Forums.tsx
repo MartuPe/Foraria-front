@@ -48,6 +48,7 @@ interface ReactionResponse {
   total: number;
   likes: number;
   dislikes: number;
+  userReaction?: 1 | -1 | 0; // optional: reaction of the current user
 }
 
 interface Message {
@@ -71,6 +72,16 @@ function formatDateNumeric(dateString?: string | null) {
   });
 }
 
+function toSlug(text: string) {
+  return text
+    .toString()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9\-]/g, "");
+}
+
 const Forums: React.FC = () => {
   const { data: forumsRaw, loading: loadingForums, error: errorForums, refetch: refetchForums } =
     useGet<Forum[]>("/Forum");
@@ -84,7 +95,7 @@ const Forums: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const currentUserId = 1;
+  const currentUserId = 1; // reemplazar por auth real cuando esté disponible
 
   const { mutate: toggleMutate } =
     useMutation<
@@ -101,32 +112,64 @@ const Forums: React.FC = () => {
     loading?: boolean;
     error?: boolean;
     reacting?: boolean;
+    userReaction?: 1 | -1 | 0;
   }>>({});
 
-  const currentCategory = useMemo(() => {
+  // extrae slug actual desde la ruta /forums/:slug o /forums (fallback "general")
+  const currentSlug = useMemo(() => {
     const path = location.pathname;
-    if (path.includes("/forums/administracion")) return "Administración";
-    if (path.includes("/forums/seguridad")) return "Seguridad";
-    if (path.includes("/forums/mantenimiento")) return "Mantenimiento";
-    if (path.includes("/forums/espacios-comunes")) return "Espacios Comunes";
-    if (path.includes("/forums/garage-parking")) return "Garage y Parking";
-    return "General";
+    const match = path.match(/\/forums\/([^\/]+)/);
+    return match ? match[1] : "general";
   }, [location.pathname]);
 
+  // resuelve el nombre de la categoría para mostrar en header (opcional)
+  const currentCategory = useMemo(() => {
+    if (!forumsRaw) {
+      // heurística basada en slug para mostrar título aunque forosRaw no esté listo
+      switch (currentSlug) {
+        case "administracion": return "Administración";
+        case "seguridad": return "Seguridad";
+        case "mantenimiento": return "Mantenimiento";
+        case "espacios-comunes": return "Espacios Comunes";
+        case "garage-parking": return "Garage y Parking";
+        default: return "General";
+      }
+    }
+    const found = forumsRaw.find((f) => toSlug(f.categoryName) === currentSlug);
+    return found ? found.categoryName : (() => {
+      switch (currentSlug) {
+        case "administracion": return "Administración";
+        case "seguridad": return "Seguridad";
+        case "mantenimiento": return "Mantenimiento";
+        case "espacios-comunes": return "Espacios Comunes";
+        case "garage-parking": return "Garage y Parking";
+        default: return "General";
+      }
+    })();
+  }, [forumsRaw, currentSlug]);
+
+  // resuelve set de forum ids que pertenecen a la categoría actual
   const forumIdsForCategory = useMemo(() => {
     if (!forumsRaw) return new Set<number>();
     return new Set(
       forumsRaw
-        .filter((f) => f.categoryName?.toLowerCase() === currentCategory.toLowerCase())
+        .filter((f) => toSlug(f.categoryName) === currentSlug)
         .map((f) => f.id)
     );
-  }, [forumsRaw, currentCategory]);
+  }, [forumsRaw, currentSlug]);
 
   const postsRaw = useMemo(() => {
     if (!threadsRaw) return [];
     if (!forumsRaw) return threadsRaw;
     return threadsRaw.filter((t) => forumIdsForCategory.has(t.forumId ?? -1));
   }, [threadsRaw, forumsRaw, forumIdsForCategory]);
+
+  // forumId resuelto (si hay múltiples foros para el mismo slug, toma el primero)
+  const resolvedForumId = useMemo(() => {
+    if (!forumsRaw) return null;
+    const found = forumsRaw.find((f) => toSlug(f.categoryName) === currentSlug);
+    return found ? found.id : null;
+  }, [forumsRaw, currentSlug]);
 
   useEffect(() => {
     if (!postsRaw || postsRaw.length === 0) {
@@ -168,6 +211,7 @@ const Forums: React.FC = () => {
             loading: false,
             error: false,
             reacting: false,
+            userReaction: typeof reactions.userReaction === "number" ? (reactions.userReaction as 1 | -1 | 0) : 0,
           },
         }));
       } catch (err: any) {
@@ -239,15 +283,23 @@ const Forums: React.FC = () => {
 
   const toggleReactionForThread = async (threadId: number, reactionType: 1 | -1) => {
     const key = String(threadId);
-    const current = enriched[key] ?? { likes: 0, dislikes: 0, totalReactions: 0, reacting: false };
+    const current = enriched[key] ?? { likes: 0, dislikes: 0, totalReactions: 0, reacting: false, userReaction: 0 };
     if (current.reacting) return;
 
     setEnriched((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), reacting: true } }));
 
+    // infer new userReaction: toggle behavior (same reaction => remove, different => set)
+    const prevUserReaction = current.userReaction ?? 0;
+    const willRemove = prevUserReaction === reactionType;
+    const newUserReaction = willRemove ? 0 : reactionType;
+
+    // adjust counts optimistically
     const optimistic = {
-      likes: current.likes + (reactionType === 1 ? 1 : 0),
-      dislikes: current.dislikes + (reactionType === -1 ? 1 : 0),
-      totalReactions: current.totalReactions + 1,
+      likes: current.likes + (reactionType === 1 && !willRemove ? 1 : reactionType === 1 && willRemove ? -1 : 0),
+      dislikes: current.dislikes + (reactionType === -1 && !willRemove ? 1 : reactionType === -1 && willRemove ? -1 : 0),
+      totalReactions:
+        current.totalReactions + (willRemove ? -1 : 1),
+      userReaction: newUserReaction as 1 | -1 | 0,
     };
 
     setEnriched((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), ...optimistic } }));
@@ -256,6 +308,7 @@ const Forums: React.FC = () => {
 
     try {
       const result = await toggleMutate(payload);
+
       if (result && typeof result.likes === "number" && typeof result.dislikes === "number") {
         setEnriched((prev) => ({
           ...prev,
@@ -266,11 +319,13 @@ const Forums: React.FC = () => {
             totalReactions: result.total ?? result.likes + result.dislikes,
             reacting: false,
             error: false,
+            userReaction: typeof result.userReaction === "number" ? (result.userReaction as 1 | -1 | 0) : newUserReaction,
           },
         }));
         return;
       }
 
+      // fallback: fetch authoritative reactions
       const API_BASE = process.env.REACT_APP_API_BASE || "https://localhost:7245/api";
       const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`);
       const ct = reacRes.headers.get("content-type") || "";
@@ -286,9 +341,11 @@ const Forums: React.FC = () => {
           totalReactions: reacJson.total ?? (reacJson.likes ?? 0) + (reacJson.dislikes ?? 0),
           reacting: false,
           error: false,
+          userReaction: typeof reacJson.userReaction === "number" ? (reacJson.userReaction as 1 | -1 | 0) : newUserReaction,
         },
       }));
     } catch (err: any) {
+      // On error, revert to server state if possible, otherwise mark error and revert reacting flag
       try {
         const API_BASE = process.env.REACT_APP_API_BASE || "https://localhost:7245/api";
         const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`);
@@ -304,13 +361,14 @@ const Forums: React.FC = () => {
               totalReactions: reacJson.total ?? (reacJson.likes ?? 0) + (reacJson.dislikes ?? 0),
               reacting: false,
               error: false,
+              userReaction: typeof reacJson.userReaction === "number" ? (reacJson.userReaction as 1 | -1 | 0) : prevUserReaction,
             },
           }));
         } else {
-          setEnriched((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), reacting: false, error: true } }));
+          setEnriched((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), reacting: false, error: true, userReaction: prevUserReaction } }));
         }
       } catch {
-        setEnriched((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), reacting: false, error: true } }));
+        setEnriched((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), reacting: false, error: true, userReaction: prevUserReaction } }));
       }
     }
   };
@@ -377,6 +435,7 @@ const Forums: React.FC = () => {
               loading: false,
               error: false,
               reacting: false,
+              userReaction: 0,
             };
 
             return (
@@ -387,24 +446,22 @@ const Forums: React.FC = () => {
                 description={p.description}
                 image=""
                 chips={p.chips}
-                actions={p.actions}
                 extraActions={[
                   {
                     label: String(meta.likes || 0),
                     onClick: () => (meta.reacting ? undefined : toggleReactionForThread(p.threadId, 1)),
                     variant: "text",
-                    icon: <ThumbUpOutlinedIcon />,
+                    icon: <ThumbUpOutlinedIcon sx={{ color: meta.userReaction === 1 ? "success.main" : undefined }} />,
                   },
                   {
                     label: String(meta.dislikes || 0),
                     onClick: () => (meta.reacting ? undefined : toggleReactionForThread(p.threadId, -1)),
                     variant: "text",
-                    icon: <ThumbDownOutlinedIcon />,
+                    icon: <ThumbDownOutlinedIcon sx={{ color: meta.userReaction === -1 ? "error.main" : undefined }} />,
                   },
                   {
                     label: ` ${meta.commentsCount ?? 0} Respuestas`,
                     onClick: () => {
-                      // Navega a la pantalla de comentarios enviando threadId en location.state
                       navigate("/forums/comentarios", { state: { threadId: p.threadId } });
                     },
                     variant: "text",
@@ -420,7 +477,26 @@ const Forums: React.FC = () => {
 
         <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
           <DialogContent>
-            <NewPost onClose={handleClose} />
+            {!resolvedForumId ? (
+              <Box sx={{ py: 4, textAlign: "center" }}>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+                  No se pudo identificar el foro destino. Esperá mientras se cargan los datos.
+                </Typography>
+                <Button onClick={() => { refetchForums(); }} variant="outlined">
+                  Reintentar cargar foros
+                </Button>
+              </Box>
+            ) : (
+              <NewPost
+                onClose={handleClose}
+                forumId={resolvedForumId}
+                userId={currentUserId}
+                onCreated={() => {
+                  refetchThreads();
+                  handleClose();
+                }}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </Box>

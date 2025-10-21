@@ -110,7 +110,7 @@ export default function Votes() {
 
   const handleVote = async (pollId: number, optionId: number) => {
     const vote: VoteDto = {
-      user_Id: 2, // reemplazar con usuario real
+      user_Id: 1, // reemplazar con usuario real
       poll_Id: pollId,
       pollOption_Id: optionId,
     };
@@ -220,7 +220,6 @@ export default function Votes() {
                 progress={progressPercent}
                 progressLabel={`Participación: ${progressPercent}% de usuarios`}
                 optionalFields={[
-                  ...invalidOptionsField,
                   ...optionFields,
                   { label: `Total votos emitidos: ${totalVotes}` },
                   { label: `Total usuarios: ${totalUsers}` },
