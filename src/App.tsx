@@ -1,10 +1,10 @@
-// src/App.tsx
 import React from "react";
 import "./App.css";
 
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./styles/muiStyle";
+import { getActiveConsortium } from "./services/consortiumStorage";
 
 // Rutas “main” (auth / perfil)
 import Login from "./pages/Login";
@@ -21,13 +21,14 @@ import ExpensesPage from "./pages/Expenses";
 import Claims from "./pages/Claims";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
-import NewReserve from "./popups/NewEvent";
+import NewReserve from "./components/modals/NewEvent";
 
 // Proveedores (listado con popup interno)
-import Suppliers from "./pages/Suppliers";
+import AdminSuppliers from "./pages/admin/AdminSuppliers";
 
 // Forums (usuario)
 import Forums from "./pages/Forums";
+import Comentarios from "./pages/ThreadView"
 
 // Configuración
 import Configuration from "./pages/Configuration";
@@ -37,14 +38,28 @@ import AdminLayout from "./components/layout/AdminLayout";
 import AdminReclaims from "./pages/admin/AdminReclaims";
 import AdminForums from "./pages/admin/AdminForums";
 import AdminAudit from "./pages/admin/AdminAudit";
-import UserManagment from "./pages/admin/UserManagement";
+import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminVotes from "./pages/admin/AdminVotes";
+
+// Nueva pantalla: selección de consorcio
+import SelectConsortium from "./pages/SelectConsortium";
+
+//  Guard inline: bloquea admin sin consorcio seleccionado
+function RequireConsortium() {
+  const active = getActiveConsortium();
+  return active ? <Outlet /> : <Navigate to="/select-consortium" replace />;
+}
 
 function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router>
+      <Router
+        future={{
+          v7_startTransition: true,
+          v7_relativeSplatPath: true,
+        }}
+      >
         <Routes>
           {/* Redirección inicial */}
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
@@ -67,9 +82,6 @@ function App() {
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
 
-          {/* Proveedores (solo listado; el alta/edición es popup dentro de esta vista) */}
-          <Route path="/proveedores" element={<Suppliers />} />
-
           {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
           <Route path="/forums/administracion" element={<Forums />} />
@@ -77,22 +89,24 @@ function App() {
           <Route path="/forums/mantenimiento" element={<Forums />} />
           <Route path="/forums/espacios-comunes" element={<Forums />} />
           <Route path="/forums/garage-parking" element={<Forums />} />
+          <Route path="/forums/comentarios" element={<Comentarios />} />
 
           {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
 
-          {/* Admin (layout con sidebar + <Outlet/>) */}
-          <Route path="/admin" element={<AdminLayout />}>
-            <Route path="reclaims" element={<AdminReclaims />} />
-            <Route path="forums" element={<AdminForums />} />
-            <Route path="audit" element={<AdminAudit />} />
-            <Route path="gestionUsuario" element={<UserManagment />} />
-            <Route path="votaciones" element={<AdminVotes />} />
-            {/* Proveedores en admin: también solo listado con popup interno */}
-            <Route path="suppliers" element={<Suppliers />} />
-            {/* No usamos rutas full-page para alta/edición */}
-            {/* <Route path="suppliers/nuevo" element={<Suppliers />} />
-                <Route path="suppliers/:id/editar" element={<Suppliers />} /> */}
+          {/* 🔹 Selección de consorcio (pre-dashboard) */}
+          <Route path="/select-consortium" element={<SelectConsortium />} />
+
+          {/*  Admin  */}
+          <Route element={<RequireConsortium />}>
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="reclaims" element={<AdminReclaims />} />
+              <Route path="forums" element={<AdminForums />} />
+              <Route path="audit" element={<AdminAudit />} />
+              <Route path="gestionUsuario" element={<AdminUserManagment />} />
+              <Route path="votaciones" element={<AdminVotes />} />
+              <Route path="suppliers" element={<AdminSuppliers />} />
+            </Route>
           </Route>
 
           {/* Fallback */}

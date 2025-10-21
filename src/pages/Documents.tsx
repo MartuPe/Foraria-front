@@ -20,7 +20,7 @@ import {
   formatDate,
   formatSize,
 } from "../services/documentService";
-import NewDocument from "../popups/NewDocument";
+import NewDocument from "../components/modals/NewDocument";
 import { Layout } from "../components/layout";
 import "../styles/documents.css";
 

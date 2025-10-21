@@ -28,7 +28,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Box className="foraria-login-page">  {}
+    <Box className="foraria-login-page foraria-wrapper">  {}
       <Box 
         className="foraria-form-container"  
         component="form" 
@@ -94,6 +94,7 @@ const Login: React.FC = () => {
             ),
           }}
         />
+        <Link component={RouterLink} to="/actualizarInformacion" underline="hover" className="foraria-form-link">
         <Button 
           type="submit" 
           variant="contained" 
@@ -102,6 +103,17 @@ const Login: React.FC = () => {
         >
           Iniciar Sesión
         </Button>
+        </Link>
+        <Link component={RouterLink} to="/admin/votaciones" underline="hover" className="foraria-form-link">
+        <Button 
+          type="submit" 
+          variant="contained" 
+          fullWidth 
+          className="foraria-gradient-button"
+        >
+          Iniciar Sesión Administrador
+        </Button>
+        </Link>
         <Box className="foraria-centered-link">  {}
           <Link component={RouterLink} to="/recuperar" underline="hover" className="foraria-form-link">
             Olvidé mi contraseña

@@ -1,3 +1,5 @@
+// src/components/InfoCard.tsx
+import React from "react";
 import {
   Box,
   Typography,
@@ -7,7 +9,18 @@ import {
   Divider,
   Button,
   LinearProgress,
+  List,
+  ListItem,
+  ListItemAvatar,
+  Avatar,
+  IconButton,
+  Tooltip,
+  useTheme,
 } from "@mui/material";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
+import OpenInNewIcon from "@mui/icons-material/OpenInNew";
+import DownloadIcon from "@mui/icons-material/Download";
 
 export interface InfoChip {
   label: string;
@@ -19,6 +32,7 @@ export interface InfoChip {
     | "warning"
     | "error"
     | "info";
+  variant?: "filled" | "outlined";
 }
 
 export interface InfoField {
@@ -42,6 +56,17 @@ export interface InfoAction {
     | "warning";
 }
 
+export interface InfoFile {
+  url?: string;
+  type?: string;
+}
+
+export interface AdminResponseCard {
+  title?: string;
+  text: string;
+  date?: string;
+}
+
 export interface InfoCardProps {
   title: string;
   subtitle?: string;
@@ -52,12 +77,17 @@ export interface InfoCardProps {
   price?: string | number;
   filesCount?: number;
   image?: string;
+  files?: InfoFile[];
   progress?: number;
   progressLabel?: string;
   actions?: InfoAction[];
   extraActions?: InfoAction[];
   sx?: object;
   showDivider?: boolean;
+  votes?: { up: number; down: number };
+  onVote?: (type: "up" | "down") => void;
+  commentsCount?: number;
+  adminResponse?: AdminResponseCard | null;
 }
 
 export default function InfoCard({
@@ -70,13 +100,53 @@ export default function InfoCard({
   price,
   filesCount,
   image,
+  files = [],
   progress,
   progressLabel,
   actions = [],
   extraActions = [],
   sx = {},
   showDivider = false,
+  adminResponse = null,
 }: InfoCardProps) {
+  const theme = useTheme();
+
+  const renderFileAvatar = (file: InfoFile) => {
+    const type = (file.type ?? "").toLowerCase();
+    const isImage = ["jpg", "jpeg", "png", "webp", "gif"].includes(type);
+    const isPdf = type === "pdf";
+
+    if (isImage && file.url) {
+      return <Avatar variant="rounded" src={file.url} sx={{ width: 56, height: 56, borderRadius: 1 }} />;
+    }
+    if (isPdf) {
+      return (
+        <Avatar sx={{ bgcolor: "#E53935", width: 56, height: 56 }}>
+          <PictureAsPdfIcon />
+        </Avatar>
+      );
+    }
+    return (
+      <Avatar sx={{ bgcolor: "grey.200", color: "text.primary", width: 56, height: 56 }}>
+        <InsertDriveFileIcon />
+      </Avatar>
+    );
+  };
+
+  const handleOpen = (url?: string) => {
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
+
+  const handleDownload = (file: InfoFile) => {
+    if (!file.url) return;
+    const a = document.createElement("a");
+    a.href = file.url;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  };
+
   return (
     <Paper
       elevation={0}
@@ -90,9 +160,7 @@ export default function InfoCard({
       }}
     >
       <Stack spacing={2}>
-        
         <Stack direction="row" spacing={2} alignItems="flex-start">
-          
           {image && (
             <Box
               component="img"
@@ -108,38 +176,44 @@ export default function InfoCard({
             />
           )}
 
-         
           <Box sx={{ flex: 1 }}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              spacing={1}
-              flexWrap="wrap"
-            >
+            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
               <Typography variant="subtitle1" fontWeight={600} color="primary">
                 {title}
               </Typography>
-              {chips.map((chip, i) => (
-                <Chip
-                  key={i}
-                  size="small"
-                  label={chip.label}
-                  color={
-                    chip.color && chip.color !== "default"
-                      ? chip.color
-                      : undefined
-                  }
-                  sx={{ fontWeight: 500 }}
-                />
-              ))}
+              {chips.map((chip, i) => {
+                const isOutlined = chip.variant === "outlined";
+                const chipColor = chip.color && chip.color !== "default" ? chip.color : undefined;
+                // Force visible border for outlined variants using theme palette
+                const borderColor =
+                  isOutlined && chipColor ? (theme.palette as any)[chipColor]?.main ?? theme.palette.primary.main : undefined;
+
+                return (
+                  <Chip
+                    key={i}
+                    size="small"
+                    label={chip.label}
+                    color={chipColor}
+                    variant={isOutlined ? "outlined" : "filled"}
+                    sx={{
+                      fontWeight: 500,
+                      ...(isOutlined
+                        ? {
+                            borderWidth: 1,
+                            borderStyle: "solid",
+                            borderColor,
+                            backgroundColor: "transparent",
+                            color: chipColor ? (theme.palette as any)[chipColor]?.main ?? undefined : undefined,
+                          }
+                        : {}),
+                    }}
+                  />
+                );
+              })}
             </Stack>
 
             {subtitle && (
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mb: 0.5 }}
-              >
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                 {subtitle}
               </Typography>
             )}
@@ -150,7 +224,6 @@ export default function InfoCard({
               </Typography>
             )}
 
-           
             <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 1 }}>
               {fields.map((f, i) => (
                 <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -170,15 +243,9 @@ export default function InfoCard({
             </Stack>
           </Box>
 
-        
           <Stack spacing={1} alignItems="flex-end" sx={{ minWidth: 160 }}>
             {price && (
-              <Typography
-                variant="h6"
-                fontWeight={700}
-                color="primary"
-                sx={{ whiteSpace: "nowrap" }}
-              >
+              <Typography variant="h6" fontWeight={700} color="primary" sx={{ whiteSpace: "nowrap" }}>
                 ${price}
               </Typography>
             )}
@@ -208,18 +275,11 @@ export default function InfoCard({
           </Stack>
         </Stack>
 
-      
         {showDivider && <Divider sx={{ my: 1 }} />}
 
-       
         {progress !== undefined && (
           <Box sx={{ width: "100%" }}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ mb: 0.5 }}
-            >
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
               {progressLabel && (
                 <Typography variant="body2" color="text.secondary">
                   {progressLabel}
@@ -229,16 +289,10 @@ export default function InfoCard({
                 {progress}%
               </Typography>
             </Stack>
-            <LinearProgress
-              variant="determinate"
-              value={progress}
-              color="primary"
-              sx={{ borderRadius: 2, height: 8 }}
-            />
+            <LinearProgress variant="determinate" value={progress} color="primary" sx={{ borderRadius: 2, height: 8 }} />
           </Box>
         )}
 
-      
         {optionalFields.length > 0 && (
           <Stack direction="row" spacing={2} flexWrap="wrap">
             {optionalFields.map((field, i) => (
@@ -252,7 +306,83 @@ export default function InfoCard({
           </Stack>
         )}
 
-        
+        {files.length > 0 && (
+          <>
+            <Divider />
+            <Stack direction="column" alignItems="flex-start">
+              <Typography variant="subtitle2" sx={{ mt: 1, mb: 1 }}>
+                Archivos adjuntos ({files.length})
+              </Typography>
+
+              <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-start" }}>
+                <List dense sx={{ pt: 0, width: "100%", display: "flex", gap: 1 }}>
+                  {files.map((f, i) => (
+                    <ListItem
+                      key={i}
+                      sx={{
+                        py: 0.5,
+                        px: 0,
+                        display: "flex",
+                        alignItems: "center",
+                        width: "auto",
+                      }}
+                    >
+                      <ListItemAvatar>{renderFileAvatar(f)}</ListItemAvatar>
+
+                      <Box sx={{ flex: 1 }} />
+
+                      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ ml: 1 }}>
+                        <Tooltip title="Abrir">
+                          <IconButton size="small" onClick={() => handleOpen(f.url)}>
+                            <OpenInNewIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Descargar">
+                          <IconButton size="small" onClick={() => handleDownload(f)}>
+                            <DownloadIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      </Stack>
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            </Stack>
+          </>
+        )}
+
+        {adminResponse && (
+          <>
+            <Divider />
+            <Paper
+              elevation={0}
+              sx={{
+                p: 1.5,
+                borderRadius: 2,
+                bgcolor: "#fafafa",
+                border: "1px solid",
+                borderColor: "divider",
+              }}
+            >
+              <Stack spacing={0.5}>
+                {adminResponse.title && (
+                  <Typography variant="subtitle2" fontWeight={600}>
+                    {adminResponse.title}
+                  </Typography>
+                )}
+                <Typography variant="body2" color="text.secondary">
+                  {adminResponse.text}
+                </Typography>
+                {adminResponse.date && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Fecha estimada de solucion: {new Date(adminResponse.date).toLocaleString()}
+                  </Typography>
+                )}
+              </Stack>
+            </Paper>
+          </>
+        )}
+
         {extraActions.length > 0 && (
           <Stack direction="row" spacing={1}>
             {extraActions.map((a, i) => (

@@ -34,7 +34,7 @@ const Login: React.FC = () => {
   };
 
   return (
-    <Box className="foraria-login-page">  {}
+    <Box className="foraria-login-page foraria-wrapper">  {}
       <Box 
         className="foraria-form-container"  
         component="form" 
@@ -185,6 +185,7 @@ const Login: React.FC = () => {
   Seleccionar imagen
   <input type="file" hidden accept="image/*" onChange={handleImageChange} />
 </Button>
+<Link component={RouterLink} to="/dashboard" underline="hover" className="foraria-form-link">
         <Button 
           type="submit" 
           variant="contained" 
@@ -193,7 +194,7 @@ const Login: React.FC = () => {
         >
           Actualizar informacion
         </Button>
-        
+        </Link>
       </Box>
     </Box>
   );

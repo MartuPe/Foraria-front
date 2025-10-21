@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TextField, Button, MenuItem, Box, CircularProgress } from "@mui/material";
-import { useMutation } from "../hooks/useMutation";
+import { useMutation } from "../../hooks/useMutation";
 
 interface NewVoteProps {
   onSuccess?: () => void;
@@ -77,13 +77,13 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
       createdAt,
       deletedAt,
       state: "activa",
-      userId: 2,
+      userId: 1,
       options,
     };
 
     try {
       await mutate(payload);
-      alert("✅ Votación creada correctamente");
+    
 
       setTitle("");
       setDescription("");
@@ -93,7 +93,7 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
       if (onSuccess) onSuccess();
     } catch (err) {
       console.error("Error al crear votación:", err);
-      alert("Error al crear votación");
+
     }
   };
 

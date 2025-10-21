@@ -1,9 +1,10 @@
 // src/popups/SupplierDetail.tsx
 import { useEffect, useState } from "react";
 import {
-  Stack, Typography, Divider, Chip, CircularProgress, Button, Dialog, DialogTitle, DialogActions
+  Stack, Typography, Divider, Chip, CircularProgress, Button,
+  Dialog, DialogTitle, DialogActions
 } from "@mui/material";
-import { api } from "../api/axios";
+import { api } from "../../api/axios";
 
 type Props = { id: number; onDeleted?: () => void };
 
@@ -42,7 +43,8 @@ export default function SupplierDetail({ id, onDeleted }: Props) {
   const handleDelete = async () => {
     try {
       await api.delete(`/Supplier/${id}`);
-      if (onDeleted) onDeleted();
+      setConfirmOpen(false);
+      onDeleted?.(); // el padre cierra modal + refresca + muestra toast
     } catch (err) {
       console.error("Error al eliminar proveedor", err);
     }
@@ -54,7 +56,9 @@ export default function SupplierDetail({ id, onDeleted }: Props) {
   return (
     <Stack gap={1.2} p={1}>
       <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Typography variant="h5" color="primary">{data.commercialName}</Typography>
+        <Typography variant="h5" color="primary" sx={{ wordBreak: "break-word" }}>
+          {data.commercialName}
+        </Typography>
         <Button
           variant="contained"
           color="error"
@@ -67,7 +71,7 @@ export default function SupplierDetail({ id, onDeleted }: Props) {
 
       <Typography variant="body2" color="text.secondary">{data.businessName}</Typography>
 
-      <Stack direction="row" gap={1}>
+      <Stack direction="row" gap={1} flexWrap="wrap">
         <Chip label={data.supplierCategory} />
         <Chip
           label={data.active ? "Activo" : "Inactivo"}
@@ -82,7 +86,10 @@ export default function SupplierDetail({ id, onDeleted }: Props) {
       {data.phone && <Typography><b>Teléfono:</b> {data.phone}</Typography>}
       {data.address && <Typography><b>Dirección:</b> {data.address}</Typography>}
       {data.contactPerson && <Typography><b>Contacto:</b> {data.contactPerson}</Typography>}
-      <Typography><b>Fecha de alta:</b> {new Date(data.registrationDate).toLocaleDateString("es-AR")}</Typography>
+      <Typography>
+        <b>Fecha de alta:</b>{" "}
+        {new Date(data.registrationDate).toLocaleDateString("es-AR")}
+      </Typography>
 
       {data.observations && (
         <>
