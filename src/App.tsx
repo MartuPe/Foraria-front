@@ -1,10 +1,10 @@
 import React from "react";
 import "./App.css";
 
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, /**Outlet**/ } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./styles/muiStyle";
-import { getActiveConsortium } from "./services/consortiumStorage";
+//import { getActiveConsortium } from "./services/consortiumStorage";
 
 // Rutas “main” (auth / perfil)
 import Login from "./pages/Login";
@@ -40,15 +40,13 @@ import AdminForums from "./pages/admin/AdminForums";
 import AdminAudit from "./pages/admin/AdminAudit";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminVotes from "./pages/admin/AdminVotes";
+import AdminFactura from "./pages/admin/AdminExpenses";
+
+import CargaFacturas from "./components/modals/CargaFactura"
 
 // Nueva pantalla: selección de consorcio
 import SelectConsortium from "./pages/SelectConsortium";
 
-//  Guard inline: bloquea admin sin consorcio seleccionado
-function RequireConsortium() {
-  const active = getActiveConsortium();
-  return active ? <Outlet /> : <Navigate to="/select-consortium" replace />;
-}
 
 function App() {
   return (
@@ -81,6 +79,7 @@ function App() {
           <Route path="/reclamos" element={<Claims />} />
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
+          <Route path="/factura" element={<CargaFacturas />} />
 
           {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
@@ -93,20 +92,19 @@ function App() {
 
           {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
-
-          {/* 🔹 Selección de consorcio (pre-dashboard) */}
+{/* 🔹 Selección de consorcio (pre-dashboard) */}
           <Route path="/select-consortium" element={<SelectConsortium />} />
 
-          {/*  Admin  */}
-          <Route element={<RequireConsortium />}>
-            <Route path="/admin" element={<AdminLayout />}>
-              <Route path="reclaims" element={<AdminReclaims />} />
-              <Route path="forums" element={<AdminForums />} />
-              <Route path="audit" element={<AdminAudit />} />
-              <Route path="gestionUsuario" element={<AdminUserManagment />} />
-              <Route path="votaciones" element={<AdminVotes />} />
-              <Route path="suppliers" element={<AdminSuppliers />} />
-            </Route>
+          {/* Admin (layout con sidebar + <Outlet/>) */}
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route path="reclaims" element={<AdminReclaims />} />
+            <Route path="forums" element={<AdminForums />} />
+            <Route path="audit" element={<AdminAudit />} />
+            <Route path="gestionUsuario" element={<AdminUserManagment />} />
+            <Route path="votaciones" element={<AdminVotes />} />
+            <Route path="suppliers" element={<AdminSuppliers />} />
+            <Route path="expensas" element={<AdminFactura />} />
+
           </Route>
 
           {/* Fallback */}
