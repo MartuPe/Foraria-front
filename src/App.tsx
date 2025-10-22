@@ -40,6 +40,9 @@ import AdminForums from "./pages/admin/AdminForums";
 import AdminAudit from "./pages/admin/AdminAudit";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminVotes from "./pages/admin/AdminVotes";
+import AdminFactura from "./pages/admin/AdminExpenses";
+
+import CargaFacturas from "./components/modals/CargaFactura"
 
 function App() {
   return (
@@ -72,6 +75,7 @@ function App() {
           <Route path="/reclamos" element={<Claims />} />
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
+          <Route path="/factura" element={<CargaFacturas />} />
 
 
           {/* Forums (usuario) */}
@@ -94,6 +98,7 @@ function App() {
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
             <Route path="suppliers" element={<AdminSuppliers />} />
+            <Route path="expensas" element={<AdminFactura />} />
           </Route>
 
           {/* Fallback */}
