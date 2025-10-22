@@ -1,10 +1,10 @@
 import React from "react";
 import "./App.css";
 
-import { BrowserRouter as Router, Routes, Route, Navigate, Outlet } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, /**Outlet**/ } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./styles/muiStyle";
-import { getActiveConsortium } from "./services/consortiumStorage";
+//import { getActiveConsortium } from "./services/consortiumStorage";
 
 // Rutas “main” (auth / perfil)
 import Login from "./pages/Login";
