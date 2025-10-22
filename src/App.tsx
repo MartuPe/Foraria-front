@@ -47,11 +47,6 @@ import CargaFacturas from "./components/modals/CargaFactura"
 // Nueva pantalla: selección de consorcio
 import SelectConsortium from "./pages/SelectConsortium";
 
-//  Guard inline: bloquea admin sin consorcio seleccionado
-function RequireConsortium() {
-  const active = getActiveConsortium();
-  return active ? <Outlet /> : <Navigate to="/select-consortium" replace />;
-}
 
 function App() {
   return (
