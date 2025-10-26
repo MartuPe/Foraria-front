@@ -42,7 +42,7 @@ import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminVotes from "./pages/admin/AdminVotes";
 import AdminFactura from "./pages/admin/AdminExpenses";
 
-import CargaFacturas from "./components/modals/CargaFactura"
+import CargaFacturas from "./components/modals/UploadInvoice"
 
 // Nueva pantalla: selección de consorcio
 import SelectConsortium from "./pages/SelectConsortium";

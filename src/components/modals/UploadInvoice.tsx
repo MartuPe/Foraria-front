@@ -11,13 +11,14 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useDropzone } from "react-dropzone";
+import { useMutation } from "../../hooks/useMutation";
+import { api } from "../../api/axios";
 
 type FileWithPreview = File & { id: string };
 
 export default function InvoiceUploadForm() {
   const [concepto, setConcepto] = useState("");
-  const [categoria, setCategoria] = useState("Gastos"); // nuevo campo categoria (select)
-
+  const [categoria, setCategoria] = useState("Gastos");
   const [invoiceNumber, setInvoiceNumber] = useState("");
   const [supplier, setSupplier] = useState("");
   const [issueDate, setIssueDate] = useState("");
@@ -33,7 +34,6 @@ export default function InvoiceUploadForm() {
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
 
-  // Opciones de categoria (ajusta según necesites)
   const categoriaOptions = [
     "Mantenimiento",
     "Limpieza",
@@ -42,6 +42,13 @@ export default function InvoiceUploadForm() {
     "Otros",
   ];
 
+  // --- useMutation para subir factura ---
+  const { mutate: uploadInvoice, loading: uploading, error: uploadError } = useMutation(
+    "/Invoices/upload",
+    "post"
+  );
+
+  // OCR: llamada directa porque se hace por archivo, no con hook
   async function callOcrApi(file: File) {
     const form = new FormData();
     form.append("file", file, file.name);
@@ -49,18 +56,11 @@ export default function InvoiceUploadForm() {
     try {
       setOcrError(null);
       setOcrLoading(true);
-      const resp = await fetch("https://localhost:7245/api/Ocr/process-invoice", {
-        method: "POST",
-        body: form,
-      });
-
-      if (!resp.ok) {
-        const text = await resp.text();
-        throw new Error(`OCR request failed: ${resp.status} ${text}`);
-      }
-
-      const data = await resp.json();
+      const { data } = await api.post("/Ocr/process-invoice", form);
       return data;
+    } catch (err: any) {
+      setOcrError(err?.message ?? "Error desconocido en OCR");
+      return null;
     } finally {
       setOcrLoading(false);
     }
@@ -68,25 +68,25 @@ export default function InvoiceUploadForm() {
 
   function applyOcrResult(data: any) {
     if (!data) return;
-
     if (data.supplierName) setSupplier(String(data.supplierName).trim());
     if (data.invoiceNumber) setInvoiceNumber(String(data.invoiceNumber).trim());
     if (data.invoiceDate) setIssueDate(formatIsoDateToInput(data.invoiceDate));
     if (data.dueDate) setDueDate(formatIsoDateToInput(data.dueDate));
-    if (data.totalAmount !== undefined && data.totalAmount !== null) setAmount(String(data.totalAmount));
-    if (data.subTotal !== undefined && data.subTotal !== null) setSubTotal(Number(data.subTotal));
-    if (data.totalTax !== undefined && data.totalTax !== null) setTotalTax(Number(data.totalTax));
+    if (data.totalAmount) setAmount(String(data.totalAmount));
+    if (data.subTotal) setSubTotal(Number(data.subTotal));
+    if (data.totalTax) setTotalTax(Number(data.totalTax));
     if (data.cuit) setCuit(String(data.cuit));
     if (data.supplierAddress) setSupplierAddress(String(data.supplierAddress));
 
-    // Items concatenados en la descripción
     if (Array.isArray(data.items) && data.items.length > 0) {
       const desc = data.items
         .map((it: any) => {
           const d = it.description ?? "";
-          const a = it.amount !== undefined && it.amount !== null ? Number(it.amount) : null;
+          const a = it.amount ? Number(it.amount) : null;
           const qty = it.quantity ?? "";
-          return a !== null ? `${d}${qty ? ` x${qty}` : ""} — ${formatNumber(a)}` : `${d}${qty ? ` x${qty}` : ""}`;
+          return a !== null
+            ? `${d}${qty ? ` x${qty}` : ""} — ${formatNumber(a)}`
+            : `${d}${qty ? ` x${qty}` : ""}`;
         })
         .join(" ; ");
       setDescription((prev) => (prev ? `${prev} ; ${desc}` : desc));
@@ -100,26 +100,14 @@ export default function InvoiceUploadForm() {
     setFiles((prev) => [...prev, ...mapped]);
 
     for (const file of mapped) {
-      try {
-        const data = await callOcrApi(file);
-        if (data && data.success) {
-          applyOcrResult(data);
-        } else {
-          const msg = data?.errorMessage ?? "OCR returned success:false";
-          setOcrError(msg);
-        }
-      } catch (err: any) {
-        setOcrError(err?.message ?? "Error desconocido en OCR");
-      }
+      const data = await callOcrApi(file);
+      if (data?.success) applyOcrResult(data);
     }
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
-    accept: {
-      "application/pdf": [],
-      "image/*": [],
-    },
+    accept: { "application/pdf": [], "image/*": [] },
     multiple: true,
     maxSize: 10 * 1024 * 1024,
   });
@@ -133,12 +121,9 @@ export default function InvoiceUploadForm() {
     setFiles((prev) => prev.filter((f) => f.id !== id));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isFormValid) {
-      console.warn("Faltan campos obligatorios");
-      return;
-    }
+    if (!isFormValid) return;
 
     const payload = new FormData();
     payload.append("concepto", concepto);
@@ -155,25 +140,16 @@ export default function InvoiceUploadForm() {
     payload.append("description", description);
     files.forEach((f) => payload.append("files", f, f.name));
 
-    console.log("Enviar payload de factura", {
-      concepto,
-      categoria,
-      invoiceNumber,
-      supplier,
-      issueDate,
-      dueDate,
-      amount: totalAmount,
-      subTotal,
-      totalTax,
-      cuit,
-      supplierAddress,
-      description,
-      files,
-    });
+    try {
+      const resp = await uploadInvoice(payload);
+      console.log("Factura subida correctamente", resp);
+      resetForm();
+    } catch (err) {
+      console.error("Error al subir factura", err);
+    }
+  };
 
-    // Aquí harías el fetch/axios para enviar payload al backend real
-
-    // Reset
+  const resetForm = () => {
     setConcepto("");
     setCategoria("Gastos");
     setInvoiceNumber("");
@@ -204,7 +180,7 @@ export default function InvoiceUploadForm() {
     <form className="foraria-form" onSubmit={handleSubmit} noValidate>
       <h2 className="foraria-form-title">Cargar Factura</h2>
 
-      {/* Concepto + Categoria (al principio) */}
+      {/* Concepto + Categoria */}
       <div className="foraria-form-row" style={{ display: "flex", gap: 16 }}>
         <div style={{ flex: 1 }}>
           <label className="foraria-form-label">Concepto</label>
@@ -238,7 +214,7 @@ export default function InvoiceUploadForm() {
 
       {/* Número y proveedor */}
       <div className="foraria-form-row" style={{ display: "flex", gap: 16, marginTop: 12 }}>
-        <div className="foraria-form-group" style={{ flex: 1 }}>
+        <div style={{ flex: 1 }}>
           <label className="foraria-form-label">Número de factura</label>
           <TextField
             fullWidth
@@ -250,7 +226,7 @@ export default function InvoiceUploadForm() {
           />
         </div>
 
-        <div className="foraria-form-group" style={{ flex: 1 }}>
+        <div style={{ flex: 1 }}>
           <label className="foraria-form-label">Proveedor</label>
           <TextField
             fullWidth
@@ -263,93 +239,72 @@ export default function InvoiceUploadForm() {
         </div>
       </div>
 
-{/* Fecha e importe — ocupa todo el ancho disponible */}
-<div
-  className="foraria-form-row"
-  style={{
-    display: "flex",
-    gap: 16,
-    marginTop: 12,
-    justifyContent: "stretch",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
-  }}
->
-  <div style={{ flex: "1 1 220px", minWidth: 180 }}>
-    <label className="foraria-form-label">Fecha de emisión</label>
-    <TextField
-      fullWidth
-      type="date"
-      value={issueDate}
-      onChange={(e) => setIssueDate(e.target.value)}
-      InputLabelProps={{ shrink: true }}
-      required
-    />
-  </div>
+      {/* Fechas e importes */}
+      <div className="foraria-form-row" style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 220px" }}>
+          <label className="foraria-form-label">Fecha de emisión</label>
+          <TextField
+            fullWidth
+            type="date"
+            value={issueDate}
+            onChange={(e) => setIssueDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+            required
+          />
+        </div>
 
-  <div style={{ flex: "1 1 220px", minWidth: 180 }}>
-    <label className="foraria-form-label">Importe</label>
-    <TextField
-      fullWidth
-      value={amount}
-      onChange={(e) => setAmount(e.target.value)}
-      placeholder="0.00"
-      inputMode="decimal"
-      required
-    />
-  </div>
+        <div style={{ flex: "1 1 220px" }}>
+          <label className="foraria-form-label">Importe</label>
+          <TextField
+            fullWidth
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            placeholder="0.00"
+            inputMode="decimal"
+            required
+          />
+        </div>
 
-  <div style={{ flex: "1 1 220px", minWidth: 180 }}>
-    <label className="foraria-form-label">CUIT</label>
-    <TextField fullWidth value={cuit ?? ""} onChange={(e) => setCuit(e.target.value)} />
-  </div>
-</div>
+        <div style={{ flex: "1 1 220px" }}>
+          <label className="foraria-form-label">CUIT</label>
+          <TextField fullWidth value={cuit ?? ""} onChange={(e) => setCuit(e.target.value)} />
+        </div>
+      </div>
 
-{/* Vencimiento, subtotal, tax — ocupa todo el ancho disponible */}
-<div
-  className="foraria-form-row"
-  style={{
-    display: "flex",
-    gap: 16,
-    marginTop: 12,
-    justifyContent: "stretch",
-    alignItems: "flex-start",
-    flexWrap: "wrap",
-  }}
->
-  <div style={{ flex: "1 1 220px", minWidth: 180 }}>
-    <label className="foraria-form-label">Fecha de vencimiento</label>
-    <TextField
-      fullWidth
-      type="date"
-      value={dueDate}
-      onChange={(e) => setDueDate(e.target.value)}
-      InputLabelProps={{ shrink: true }}
-    />
-  </div>
+      {/* Vencimiento, Subtotal, Impuesto */}
+      <div className="foraria-form-row" style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 220px" }}>
+          <label className="foraria-form-label">Fecha de vencimiento</label>
+          <TextField
+            fullWidth
+            type="date"
+            value={dueDate}
+            onChange={(e) => setDueDate(e.target.value)}
+            InputLabelProps={{ shrink: true }}
+          />
+        </div>
 
-  <div style={{ flex: "1 1 220px", minWidth: 180 }}>
-    <label className="foraria-form-label">Sub total</label>
-    <TextField
-      fullWidth
-      value={subTotal !== null ? String(subTotal) : ""}
-      onChange={(e) => setSubTotal(e.target.value === "" ? null : Number(e.target.value))}
-    />
-  </div>
+        <div style={{ flex: "1 1 220px" }}>
+          <label className="foraria-form-label">Sub total</label>
+          <TextField
+            fullWidth
+            value={subTotal !== null ? String(subTotal) : ""}
+            onChange={(e) => setSubTotal(e.target.value === "" ? null : Number(e.target.value))}
+          />
+        </div>
 
-  <div style={{ flex: "1 1 220px", minWidth: 180 }}>
-    <label className="foraria-form-label">Total impuesto</label>
-    <TextField
-      fullWidth
-      value={totalTax !== null ? String(totalTax) : ""}
-      onChange={(e) => setTotalTax(e.target.value === "" ? null : Number(e.target.value))}
-    />
-  </div>
-</div>
+        <div style={{ flex: "1 1 220px" }}>
+          <label className="foraria-form-label">Total impuesto</label>
+          <TextField
+            fullWidth
+            value={totalTax !== null ? String(totalTax) : ""}
+            onChange={(e) => setTotalTax(e.target.value === "" ? null : Number(e.target.value))}
+          />
+        </div>
+      </div>
 
-
-
-      <div className="foraria-form-group" style={{ marginTop: 12 }}>
+      {/* Descripción */}
+      <div style={{ marginTop: 12 }}>
         <label className="foraria-form-label">Descripción</label>
         <TextField
           fullWidth
@@ -361,7 +316,8 @@ export default function InvoiceUploadForm() {
         />
       </div>
 
-      <div className="foraria-form-group" style={{ marginTop: 12 }}>
+      {/* Archivos */}
+      <div style={{ marginTop: 12 }}>
         <label className="foraria-form-label">Adjuntar factura (PDF o imagen)</label>
         <Box
           {...getRootProps()}
@@ -427,35 +383,17 @@ export default function InvoiceUploadForm() {
         )}
       </div>
 
+      {/* Botones */}
       <div className="foraria-form-actions" style={{ marginTop: 16, display: "flex", gap: 12 }}>
         <Button
           type="submit"
-          className="foraria-gradient-button boton-crear-reclamo"
           variant="contained"
           color="primary"
-          disabled={!isFormValid || ocrLoading}
+          disabled={!isFormValid || ocrLoading || uploading}
         >
-          Subir Factura
+          {uploading ? "Subiendo..." : "Subir Factura"}
         </Button>
-        <Button
-          className="foraria-outlined-white-button"
-          variant="outlined"
-          onClick={() => {
-            setConcepto("");
-            setCategoria("Gastos");
-            setInvoiceNumber("");
-            setSupplier("");
-            setIssueDate("");
-            setDueDate("");
-            setAmount("");
-            setSubTotal(null);
-            setTotalTax(null);
-            setCuit(null);
-            setSupplierAddress(null);
-            setDescription("");
-            setFiles([]);
-          }}
-        >
+        <Button variant="outlined" onClick={resetForm}>
           Cancelar
         </Button>
 
@@ -465,6 +403,12 @@ export default function InvoiceUploadForm() {
           </Typography>
         </Box>
       </div>
+
+      {uploadError && (
+        <Typography color="error" variant="body2" sx={{ mt: 1 }}>
+          Error al subir factura: {uploadError}
+        </Typography>
+      )}
     </form>
   );
 }

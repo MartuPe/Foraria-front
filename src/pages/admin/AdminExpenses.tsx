@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button, Dialog, DialogContent } from "@mui/material";
 import PageHeader from "../../components/SectionHeader";
-import InvoiceUploadForm from "../../components/modals/CargaFactura"; // ajusta la ruta si es necesario
+import InvoiceUploadForm from "../../components/modals/UploadInvoice"; // ajusta la ruta si es necesario
 
 export default function AdminCargaFactura() {
   const [open, setOpen] = useState(false);
