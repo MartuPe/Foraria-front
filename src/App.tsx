@@ -97,12 +97,12 @@ function App() {
 
           {/* Admin (layout con sidebar + <Outlet/>) */}
           <Route path="/admin" element={<AdminLayout />}>
-            <Route path="reclaims" element={<AdminReclaims />} />
-            <Route path="forums" element={<AdminForums />} />
-            <Route path="audit" element={<AdminAudit />} />
+            <Route path="reclamos" element={<AdminReclaims />} />
+            <Route path="foros" element={<AdminForums />} />
+            <Route path="auditoria" element={<AdminAudit />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
-            <Route path="suppliers" element={<AdminSuppliers />} />
+            <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
 
           </Route>
