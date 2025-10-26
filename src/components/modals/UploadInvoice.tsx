@@ -42,13 +42,12 @@ export default function InvoiceUploadForm() {
     "Otros",
   ];
 
-  // --- useMutation para subir factura ---
+
   const { mutate: uploadInvoice, loading: uploading, error: uploadError } = useMutation(
     "/Invoices/upload",
     "post"
   );
 
-  // OCR: llamada directa porque se hace por archivo, no con hook
   async function callOcrApi(file: File) {
     const form = new FormData();
     form.append("file", file, file.name);
@@ -180,7 +179,7 @@ export default function InvoiceUploadForm() {
     <form className="foraria-form" onSubmit={handleSubmit} noValidate>
       <h2 className="foraria-form-title">Cargar Factura</h2>
 
-      {/* Concepto + Categoria */}
+
       <div className="foraria-form-row" style={{ display: "flex", gap: 16 }}>
         <div style={{ flex: 1 }}>
           <label className="foraria-form-label">Concepto</label>
@@ -212,7 +211,7 @@ export default function InvoiceUploadForm() {
         </div>
       </div>
 
-      {/* Número y proveedor */}
+
       <div className="foraria-form-row" style={{ display: "flex", gap: 16, marginTop: 12 }}>
         <div style={{ flex: 1 }}>
           <label className="foraria-form-label">Número de factura</label>
@@ -239,7 +238,7 @@ export default function InvoiceUploadForm() {
         </div>
       </div>
 
-      {/* Fechas e importes */}
+
       <div className="foraria-form-row" style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
         <div style={{ flex: "1 1 220px" }}>
           <label className="foraria-form-label">Fecha de emisión</label>
@@ -271,7 +270,7 @@ export default function InvoiceUploadForm() {
         </div>
       </div>
 
-      {/* Vencimiento, Subtotal, Impuesto */}
+
       <div className="foraria-form-row" style={{ display: "flex", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
         <div style={{ flex: "1 1 220px" }}>
           <label className="foraria-form-label">Fecha de vencimiento</label>
@@ -303,7 +302,7 @@ export default function InvoiceUploadForm() {
         </div>
       </div>
 
-      {/* Descripción */}
+
       <div style={{ marginTop: 12 }}>
         <label className="foraria-form-label">Descripción</label>
         <TextField
@@ -316,7 +315,7 @@ export default function InvoiceUploadForm() {
         />
       </div>
 
-      {/* Archivos */}
+
       <div style={{ marginTop: 12 }}>
         <label className="foraria-form-label">Adjuntar factura (PDF o imagen)</label>
         <Box
@@ -383,7 +382,7 @@ export default function InvoiceUploadForm() {
         )}
       </div>
 
-      {/* Botones */}
+      
       <div className="foraria-form-actions" style={{ marginTop: 16, display: "flex", gap: 12 }}>
         <Button
           type="submit"
@@ -413,7 +412,7 @@ export default function InvoiceUploadForm() {
   );
 }
 
-/* Helpers */
+
 function formatBytes(bytes: number) {
   if (bytes === 0) return "0 B";
   const k = 1024;
