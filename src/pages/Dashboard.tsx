@@ -221,11 +221,11 @@ export default function DashboardPage() {
               </Box>
 
               <div className="panel__content two">
-                <DonutChart data={expenseBreakdown.map(s => ({ ...s, color: s.color ?? "#ccc" }))} />
+                <DonutChart data={expenseBreakdown.map(s => ({ ...s, color: s.color ?? "#aaaaaaff" }))} />
                 <ul className="legend">
                   {expenseBreakdown.map((s) => (
                     <li key={s.label}>
-                      <span className="dot" style={{ background: s.color ?? "#ccc" }} />
+                      <span className="dot" style={{ background: s.color ?? "#aaaaaaff" }} />
                       {s.label} <span className="muted">{s.value}%</span>
                     </li>
                   ))}

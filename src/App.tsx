@@ -46,6 +46,7 @@ import CargaFacturas from "./components/modals/CargaFactura"
 
 // Nueva pantalla: selección de consorcio
 import SelectConsortium from "./pages/SelectConsortium";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 
 function App() {
@@ -97,6 +98,7 @@ function App() {
 
           {/* Admin (layout con sidebar + <Outlet/>) */}
           <Route path="/admin" element={<AdminLayout />}>
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="reclaims" element={<AdminReclaims />} />
             <Route path="forums" element={<AdminForums />} />
             <Route path="audit" element={<AdminAudit />} />
