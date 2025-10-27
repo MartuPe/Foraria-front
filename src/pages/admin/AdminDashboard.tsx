@@ -79,7 +79,6 @@ export default function AdminDashboardPage() {
   const { header, kpis, recentActivity, tasks } = data;
 
   return (
-    <AdminLayout>
       <Box className="foraria-page-container">
         <PageHeader
           title={header.title}
@@ -201,6 +200,5 @@ export default function AdminDashboardPage() {
           </Grid>
         </Grid>
         </Box>
-    </AdminLayout>
   );
 }
