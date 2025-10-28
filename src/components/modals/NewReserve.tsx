@@ -41,7 +41,7 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
   const [time, setTime] = React.useState<string | null>(null);
   const [pressedTime, setPressedTime] = React.useState<string | null>(null); // efecto visual
 
-  const { data: reservas, loading: loadingReservas, refetch } = useGet("/Reserve");
+  const { data: reservas, loading: loadingReservas, /*refetch*/ } = useGet("/Reserve");
   const { mutate: crearReserva, loading: creando } = useMutation("/Reserve", "post");
 
   const isPastDate = React.useMemo(() => {
@@ -52,9 +52,9 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
     return chosen < today;
   }, [day]);
 
-  React.useEffect(() => {
-    if (area && day) refetch();
-  }, [area, day]);
+  // React.useEffect(() => {
+  //   if (area && day) refetch();
+  // }, [area, day]);
 
   const horariosOcupados = React.useMemo(() => {
     if (!reservas || !Array.isArray(reservas) || !area || !day) return [];
