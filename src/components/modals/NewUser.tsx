@@ -55,7 +55,6 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
     }
   }, [open]);
 
-  /** 🔹 Helpers para sanitizar inputs */
   function splitFullName(full: string) {
     const parts = full.trim().split(/\s+/);
     const first = parts.shift() ?? "";
@@ -64,17 +63,15 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
   }
 
   function sanitizePhone(p: string) {
-    const digits = (p || "").replace(/\D+/g, ""); // deja solo números
+    const digits = (p || "").replace(/\D+/g, "");
     return digits.length ? Number(digits) : NaN;
   }
 
-  /** 🔹 Envío al backend */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
 
-    // Validaciones
     if (!form.fullName.trim()) return setError("Ingresá el nombre completo.");
     if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email))
       return setError("Ingresá un email válido.");
@@ -83,17 +80,13 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
 
     const { first, last } = splitFullName(form.fullName);
     const phone = sanitizePhone(form.phone);
-
-    if (Number.isNaN(phone)) {
-      setError("Ingresá un teléfono válido (solo números).");
-      return;
-    }
+    if (Number.isNaN(phone)) return setError("Ingresá un teléfono válido (solo números).");
 
     const payload = {
       FirstName: first,
       LastName: last,
       Email: form.email.trim(),
-      PhoneNumber: phone,
+      PhoneNumber: phone, 
       RoleId: Number(form.roleId),
       ResidenceId: Number(form.residenceId),
     };
@@ -101,16 +94,20 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
     setSubmitting(true);
     try {
       const resp = await registerUser(payload);
-      setSuccess({
-        id: resp?.Id,
-        email: resp?.Email,
-        temporaryPassword: resp?.TemporaryPassword,
-      });
-      onCreated?.(resp);
+
+      const normalized = {
+        id: resp?.id ?? resp?.Id,
+        email: resp?.email ?? resp?.Email,
+        temporaryPassword: resp?.temporaryPassword ?? resp?.TemporaryPassword,
+      };
+
+      setSuccess(normalized);
+      onCreated?.(normalized);
     } catch (err: any) {
       const serverMsg =
         err?.response?.data?.message ||
         JSON.stringify(err?.response?.data || {}) ||
+        err?.message ||
         "No se pudo crear el usuario.";
       setError(serverMsg);
       console.error("Register error:", err?.response || err);
@@ -120,7 +117,17 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog
+      open={open}
+      onClose={(_e, reason) => {
+        if (reason === "backdropClick" || reason === "escapeKeyDown") return;
+        onClose();
+      }}
+      disableEscapeKeyDown
+      keepMounted
+      maxWidth="sm"
+      fullWidth
+    >
       <DialogTitle
         sx={{ fontWeight: 800, display: "flex", alignItems: "center", gap: 1 }}
       >
@@ -134,7 +141,7 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
       <DialogContent>
         <form onSubmit={handleSubmit}>
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6}}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                 Nombre completo
               </Typography>
@@ -147,7 +154,7 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6}}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                 Email
               </Typography>
@@ -160,7 +167,7 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6}}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                 Teléfono
               </Typography>
@@ -172,7 +179,7 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6}}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                 Unidad (ID de residencia)
               </Typography>
@@ -182,13 +189,13 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                 value={form.residenceId}
                 onChange={(e) => {
                   const v = e.target.value.replace(/[^\d]/g, "");
-                  setForm({ ...form, residenceId: v === "" ? "" : v });
+                  setForm({ ...form, residenceId: v });
                 }}
                 helperText="Este valor se envía como ResidenceId al backend"
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6}}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                 Rol
               </Typography>
@@ -196,7 +203,9 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                 select
                 fullWidth
                 value={form.roleId}
-                onChange={(e) => setForm({ ...form, roleId: Number(e.target.value) })}
+                onChange={(e) =>
+                  setForm({ ...form, roleId: Number(e.target.value) })
+                }
               >
                 {ROLES.map((r) => (
                   <MenuItem key={r.id} value={r.id}>
@@ -256,10 +265,6 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                   ) : (
                     "Crear Usuario"
                   )}
-                </Button>
-
-                <Button variant="outlined" onClick={onClose} disabled={submitting}>
-                  Cancelar
                 </Button>
               </Stack>
             </Grid>

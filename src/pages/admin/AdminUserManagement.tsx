@@ -57,7 +57,6 @@ export default function AdminUserManagment() {
         onClose={() => setOpenNewUser(false)}
         onCreated={(resp) => {
           console.log("Usuario creado:", resp);
-          setOpenNewUser(false);
         }}
       />
 
