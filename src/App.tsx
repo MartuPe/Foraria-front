@@ -42,7 +42,7 @@ import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminVotes from "./pages/admin/AdminVotes";
 import AdminFactura from "./pages/admin/AdminExpenses";
 
-import CargaFacturas from "./components/modals/CargaFactura"
+import CargaFacturas from "./components/modals/UploadInvoice"
 
 // Nueva pantalla: selección de consorcio
 import SelectConsortium from "./pages/SelectConsortium";
@@ -98,13 +98,13 @@ function App() {
 
           {/* Admin (layout con sidebar + <Outlet/>) */}
           <Route path="/admin" element={<AdminLayout />}>
+            <Route path="reclamos" element={<AdminReclaims />} />
+            <Route path="foros" element={<AdminForums />} />
+            <Route path="auditoria" element={<AdminAudit />} />
             <Route path="dashboard" element={<AdminDashboard />} />
-            <Route path="reclaims" element={<AdminReclaims />} />
-            <Route path="forums" element={<AdminForums />} />
-            <Route path="audit" element={<AdminAudit />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
-            <Route path="suppliers" element={<AdminSuppliers />} />
+            <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
 
           </Route>

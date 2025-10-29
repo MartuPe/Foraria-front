@@ -50,7 +50,7 @@ interface MenuItem {
 const menuItems: MenuItem[] = [
   { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
   { id: 'users', label: 'Gestión de Usuarios', icon: <UsersIcon />, path: '/admin/users' },
-  { id: 'expenses', label: 'Gastos y Facturas', icon: <ExpensesIcon />, path: '/admin/expenses' },
+  { id: 'expenses', label: 'Gastos y Facturas', icon: <ExpensesIcon />, path: '/admin/expensas' },
   { id: 'suppliers', label: 'Proveedores', icon: <SuppliersIcon />, path: '/admin/suppliers' },
   { id: 'votes', label: 'Crear Votaciones', icon: <CreateVotesIcon />, path: '/admin/votaciones' }, // CAMBIAR ruta
   { id: 'meetings', label: 'Crear Reuniones', icon: <CreateMeetingsIcon />, path: '/admin/meetings' },
