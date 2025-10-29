@@ -1,3 +1,5 @@
+import { api } from "../api/axios";
+
 export interface AdminDashboardData {
   header: { title: string };
   kpis: {
@@ -14,7 +16,7 @@ export interface RecentActivity {
   id: string;
   type: "claim" | "payment" | "meeting" | "maintenance" | "user";
   title: string;
-  when: string;   // ej: "Hace 15 minutos"
+  when: string;
   status: "Pendiente" | "Completado" | "Programado";
 }
 
@@ -25,32 +27,112 @@ export interface AdminTask {
   priority: "Alta" | "Media" | "Baja";
 }
 
-export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
-  // Simulamos latencia para que se vea el "Cargando..."
-  await new Promise(r => setTimeout(r, 500));
+const getConsortiumId = () =>
+  Number(localStorage.getItem("activeConsortiumId")) || 1;
 
+async function safeGetAny<T>(
+  url: string,
+  params: any,
+  fallback: T,
+  label: string
+): Promise<T> {
+  try {
+    const r = await api.get(url, { params });
+    return r.data as T;
+  } catch (e: any) {
+    const status = e?.response?.status;
+    const payload = e?.response?.data;
+    // Log útil para depurar rápidamente cuál endpoint tronó
+    // (no rompe la UI)
+    // eslint-disable-next-line no-console
+    console.warn(
+      `[AdminDashboard] ${label} → error ${status ?? "?"}:`,
+      payload ?? e?.message
+    );
+    return fallback;
+  }
+}
+
+const firstOr = <T,>(v: any, def: T): T => (v ?? def) as T;
+
+function parseCollectedRate(raw: any): number {
+  if (raw == null) return 0;
+  if (typeof raw === "number") return raw;
+  return Number(
+    raw.collectedRate ??
+      raw.percentage ??
+      raw.percent ??
+      raw.collectedPercentage ??
+      raw.value ??
+      0
+  );
+}
+
+function parseNextReservation(raw: any): { summary: string; when: string } {
+  const list: any[] =
+    Array.isArray(raw)
+      ? raw
+      : Array.isArray(raw?.upcomingReservations)
+      ? raw.upcomingReservations
+      : raw?.data && Array.isArray(raw.data)
+      ? raw.data
+      : [];
+
+  if (!list.length) return { summary: "—", when: "Sin próximas" };
+
+  const r = list[0];
+  const place =
+    r?.place?.name ?? r?.placeName ?? r?.summary ?? r?.title ?? "Reserva";
+
+  const dt = r?.date ?? r?.startDate ?? r?.when ?? r?.start ?? r?.startTime;
+  const when = dt ? new Date(dt).toLocaleString("es-AR") : "Próxima";
+
+  return { summary: String(place), when };
+}
+
+export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
+  const consortiumId = getConsortiumId();
+
+  const [usersCount, pendingClaims, collectedRaw, upcomingRaw] =
+    await Promise.all([
+      safeGetAny<{ consortiumId?: number; totalUsers: number }>(
+        "/dashboard/admin/users/count",
+        { consortiumId },
+        { totalUsers: 0 },
+        "users/count"
+      ),
+      safeGetAny<{ consortiumId?: number; pendingClaims: number }>(
+        "/dashboard/admin/claims/pending-count",
+        { consortiumId },
+        { pendingClaims: 0 },
+        "claims/pending-count"
+      ),
+      safeGetAny<any>(
+        "/dashboard/admin/expenses/collected-percentage",
+        { consortiumId },
+        0,
+        "expenses/collected-percentage"
+      ),
+      safeGetAny<any>(
+        "/dashboard/admin/reservations/upcoming",
+        { consortiumId, limit: 5 },
+        [],
+        "reservations/upcoming"
+      ),
+    ]);
+
+  const kpis = {
+    totalUsers: firstOr(usersCount.totalUsers, 0),
+    pendingClaims: firstOr(pendingClaims.pendingClaims, 0),
+    collectedRate: parseCollectedRate(collectedRaw),
+    nextReservation: parseNextReservation(upcomingRaw),
+  };
+
+  // Hasta que tengas endpoints para esto, dejamos listas vacías
   return {
     header: { title: "Dashboard Administrativo" },
-    kpis: {
-      totalUsers: 124,
-      pendingClaims: 8,
-      collectedRate: 87,
-      nextReservation: { summary: "SUM", when: "Hoy · 18:00" },
-    },
-    recentActivity: [
-      { id: "a1", type: "claim",       title: "Nuevo reclamo sobre filtración en Depto. 3A", when: "Hace 15 minutos", status: "Pendiente" },
-      { id: "a2", type: "payment",     title: "Pago de expensas recibido · Depto. 5B",       when: "Hace 30 minutos", status: "Completado" },
-      { id: "a3", type: "meeting",     title: "Reunión de consorcio programada para mañana",  when: "Hace 1 hora",     status: "Programado" },
-      { id: "a4", type: "maintenance", title: "Mantenimiento de ascensores completado",       when: "Hace 2 horas",    status: "Completado" },
-      { id: "a5", type: "user",        title: "Nuevo usuario registrado · Depto. 7C",         when: "Hace 3 horas",    status: "Completado" },
-    ],
-    tasks: {
-      items: [
-        { id: "t1", title: "Revisar presupuestos de proveedores", when: "Hoy",            priority: "Alta" },
-        { id: "t2", title: "Preparar asamblea mensual",           when: "Mañana",         priority: "Alta" },
-        { id: "t3", title: "Actualizar lista de morosos",         when: "Esta semana",    priority: "Media" },
-        { id: "t4", title: "Programar mantenimiento trimestral",  when: "Próxima semana", priority: "Media" },
-      ],
-    },
+    kpis,
+    recentActivity: [],
+    tasks: { items: [] },
   };
 }

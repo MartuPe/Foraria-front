@@ -118,7 +118,7 @@ export default function AdminDashboardPage() {
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
-                to="/admin/usuarios/nuevo"
+                to="/admin/gestionUsuario"
                 icon={<PersonAddAlt1Outlined color="primary" />}
                 title="Nuevo Usuario"
                 subtitle="Crear cuenta"

@@ -14,10 +14,11 @@ export interface DashboardData {
   paymentsHistory: { label: string; value: number }[];
 }
 
-const consortiumId = Number(process.env.REACT_APP_DEMO_CONSORTIUM_ID) || 1;
-const userId = Number(process.env.REACT_APP_DEMO_USER_ID) || 1;
+/** 🔒 Hardcode momentáneo para que SIEMPRE haya datos (igual que en User Management) */
+const consortiumId = 1;
+const userId = 1;
 
-/** 404 a fallback*/
+/** 404 ⇒ fallback; otros errores ⇒ se propagan (para no ocultar bugs reales) */
 async function safeGet<T>(url: string, params: any, fallback: T): Promise<T> {
   try {
     const r = await api.get(url, { params });
@@ -28,7 +29,7 @@ async function safeGet<T>(url: string, params: any, fallback: T): Promise<T> {
   }
 }
 
-/** Normaliza cualquier valor a array: [], {data: []}, null -> [] */
+/** Normaliza a array: [], {data: []}, null -> [] */
 function asArray<T = any>(v: any): T[] {
   if (Array.isArray(v)) return v as T[];
   if (Array.isArray(v?.data)) return v.data as T[];
@@ -59,7 +60,7 @@ export async function fetchDashboard(): Promise<DashboardData> {
     { consortiumId },
     { pendingExpenses: [] }
   );
-  const pendingList = asArray(pendingRaw.pendingExpenses);
+  const pendingList = asArray(pendingRaw?.pendingExpenses);
 
   const summary = await safeGet<{ data: any }>(
     "/dashboard/expenses/summary",
@@ -97,40 +98,40 @@ export async function fetchDashboard(): Promise<DashboardData> {
   );
 
   return {
-  header: { welcomeTitle: "¡Bienvenido a tu Dashboard!" },
-  kpis: {
-    expensesThisMonth: firstOr(total.totalAmount, 0),
-    activePolls: firstOr(polls.activePolls, 0),
-    activeBookings: firstOr(reserves.activeReservations, 0),
-    notifications: 0,
-  },
-  expenseBreakdown: byCat.map((c: any) => ({
-    label: firstOr(c.categoryName ?? c.label, "Sin categoría"),
-    value: firstOr(c.percentage ?? c.amount, 0),
-    color: c.color ?? "#0B3A6E",
-  })),
-  pendingBills: pendingList.map((e: any) => ({
-    id: firstOr(e.id, 0),
-    title: firstOr(e.title ?? e.description, "Expensa"),
-    code: firstOr(e.code ?? e.id, "").toString(),
-    amount: firstOr(e.amount, 0),
-    dueISO: firstOr(e.dueDate ?? e.dueISO, new Date().toISOString()),
-    status: e.isOverdue ? "overdue" : "upcoming",
-  })),
-  paymentStatus: [
-    { label: "Pagadas", value: firstOr(summary.data.paidPercent, 0), color: "#2568a7ff" },
-    { label: "Vencidas", value: firstOr(summary.data.overduePercent, 0), color: "#EF4444" },
-    { label: "Próximas", value: firstOr(summary.data.upcomingPercent, 0), color: "#F59E0B" },
-  ],
-  totals: {
-    totalPending: firstOr(summary.data.totalPending, 0),
-    nextToDue: firstOr(summary.data.nextToDue, 0),
-    overdueCount: firstOr(summary.data.overdueCount, 0),
-    paidThisYear: firstOr(summary.data.paidThisYear, 0),
-  },
-  paymentsHistory: monthly.map((m: any) => ({
-    label: firstOr(m.monthName ?? m.label, ""),
-    value: firstOr(m.totalPaid ?? m.value, 0),
-  })),
-};
+    header: { welcomeTitle: "¡Bienvenido a tu Dashboard!" },
+    kpis: {
+      expensesThisMonth: firstOr(total.totalAmount, 0),
+      activePolls: firstOr(polls.activePolls, 0),
+      activeBookings: firstOr(reserves.activeReservations, 0),
+      notifications: 0,
+    },
+    expenseBreakdown: byCat.map((c: any) => ({
+      label: firstOr(c.categoryName ?? c.label, "Sin categoría"),
+      value: firstOr(c.percentage ?? c.amount, 0),
+      color: c.color ?? "#0B3A6E",
+    })),
+    pendingBills: pendingList.map((e: any) => ({
+      id: firstOr(e.id, 0),
+      title: firstOr(e.title ?? e.description, "Expensa"),
+      code: firstOr(e.code ?? e.id, "").toString(),
+      amount: firstOr(e.amount, 0),
+      dueISO: firstOr(e.dueDate ?? e.dueISO, new Date().toISOString()),
+      status: e.isOverdue ? "overdue" : "upcoming",
+    })),
+    paymentStatus: [
+      { label: "Pagadas",  value: firstOr(summary.data.paidPercent, 0),    color: "#2568a7ff" },
+      { label: "Vencidas", value: firstOr(summary.data.overduePercent, 0), color: "#EF4444" },
+      { label: "Próximas", value: firstOr(summary.data.upcomingPercent, 0),color: "#F59E0B" },
+    ],
+    totals: {
+      totalPending: firstOr(summary.data.totalPending, 0),
+      nextToDue: firstOr(summary.data.nextToDue, 0),
+      overdueCount: firstOr(summary.data.overdueCount, 0),
+      paidThisYear: firstOr(summary.data.paidThisYear, 0),
+    },
+    paymentsHistory: monthly.map((m: any) => ({
+      label: firstOr(m.monthName ?? m.label, ""),
+      value: firstOr(m.totalPaid ?? m.value, 0),
+    })),
+  };
 }

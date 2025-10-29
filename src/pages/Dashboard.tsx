@@ -45,6 +45,12 @@ export default function DashboardPage() {
     totals,
   } = data;
 
+  const paymentSum = paymentStatus.reduce((acc, s) => acc + (Number(s.value) || 0), 0);
+  const paymentData =
+    paymentSum > 0
+      ? paymentStatus
+      : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }];
+
   return (
     <Layout>
       <Box className="foraria-page-container">
@@ -137,9 +143,9 @@ export default function DashboardPage() {
               </Box>
 
               <Box className="panel__content two">
-                <DonutChart data={paymentStatus} />
+                <DonutChart data={paymentData} />
                 <ul className="legend">
-                  {paymentStatus.map((s) => (
+                  {paymentData.map((s) => (
                     <li key={s.label}>
                       <span className="dot" style={{ background: s.color }} />
                       {s.label} <span className="muted">{s.value}%</span>
@@ -221,9 +227,13 @@ export default function DashboardPage() {
               </Box>
 
               <div className="panel__content two">
-                <DonutChart data={expenseBreakdown.map(s => ({ ...s, color: s.color ?? "#aaaaaaff" }))} />
+                <DonutChart data={(expenseBreakdown.length ? expenseBreakdown : [
+                  { label: "Sin datos", value: 100, color: "#e5e7eb" },
+                ]).map(s => ({ ...s, color: s.color ?? "#aaaaaaff" }))} />
                 <ul className="legend">
-                  {expenseBreakdown.map((s) => (
+                  {(expenseBreakdown.length ? expenseBreakdown : [
+                    { label: "Sin datos", value: 100, color: "#e5e7eb" },
+                  ]).map((s) => (
                     <li key={s.label}>
                       <span className="dot" style={{ background: s.color ?? "#aaaaaaff" }} />
                       {s.label} <span className="muted">{s.value}%</span>
