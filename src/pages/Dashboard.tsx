@@ -6,7 +6,7 @@ import Money from "../components/Money";
 import DonutChart from "../components/charts/Donut";
 import BarsChart from "../components/charts/Bar";
 import QuickAction from "../components/QuickAction";
-import { fetchDashboardMock } from "../services/dashboard.mock";
+import { fetchDashboard } from "../services/dashboardService";
 import { Layout } from "../components/layout";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
@@ -19,11 +19,10 @@ import PaymentsIcon from "@mui/icons-material/Payments";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 
 export default function DashboardPage() {
-  const [data, setData] =
-    useState<Awaited<ReturnType<typeof fetchDashboardMock>> | null>(null);
-
+  const [data, setData] = useState<Awaited<ReturnType<typeof fetchDashboard>> | null>(null);
+  
   useEffect(() => {
-    fetchDashboardMock().then(setData);
+    fetchDashboard().then(setData);
   }, []);
 
   if (!data) {
@@ -222,11 +221,11 @@ export default function DashboardPage() {
               </Box>
 
               <div className="panel__content two">
-                <DonutChart data={expenseBreakdown} />
+                <DonutChart data={expenseBreakdown.map(s => ({ ...s, color: s.color ?? "#aaaaaaff" }))} />
                 <ul className="legend">
                   {expenseBreakdown.map((s) => (
                     <li key={s.label}>
-                      <span className="dot" style={{ background: s.color }} />
+                      <span className="dot" style={{ background: s.color ?? "#aaaaaaff" }} />
                       {s.label} <span className="muted">{s.value}%</span>
                     </li>
                   ))}
