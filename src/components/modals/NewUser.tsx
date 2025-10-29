@@ -191,7 +191,6 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                   const v = e.target.value.replace(/[^\d]/g, "");
                   setForm({ ...form, residenceId: v });
                 }}
-                helperText="Este valor se envía como ResidenceId al backend"
               />
             </Grid>
 
