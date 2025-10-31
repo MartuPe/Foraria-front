@@ -94,7 +94,7 @@ function App() {
 
           {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
-{/* 🔹 Selección de consorcio (pre-dashboard) */}
+          {/* 🔹 Selección de consorcio (pre-dashboard) */}
           <Route path="/select-consortium" element={<SelectConsortium />} />
 
           {/* Admin (layout con sidebar + <Outlet/>) */}

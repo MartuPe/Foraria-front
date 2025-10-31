@@ -25,7 +25,6 @@ export default function ExpensesQuickView() {
             </div>
 
             <div>
-              {/* Botón que envía POST por body. Para la expensa 1 enviamos residenceId 2 */}
               <CheckoutButton expenseId={e.id} residenceId={e.id === 1 ? 2 : 2} />
             </div>
           </CardContent>

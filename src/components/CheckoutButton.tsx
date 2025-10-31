@@ -32,7 +32,6 @@ export default function CheckoutButton({ expenseId, residenceId, label = "Pagar 
       const initPoint = json.initPoint ?? json.data?.initPoint ?? null;
       if (!initPoint) throw new Error("initPoint no recibido del backend");
 
-      // Redirigir al checkout de MercadoPago
       window.location.href = String(initPoint);
     } catch (e: any) {
       console.error("CheckoutButton error:", e);
