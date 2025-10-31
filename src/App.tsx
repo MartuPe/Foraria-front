@@ -1,19 +1,17 @@
+// src/App.tsx
 import React from "react";
 import "./App.css";
-
-import { BrowserRouter as Router, Routes, Route, Navigate, /**Outlet**/ } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { ThemeProvider, CssBaseline } from "@mui/material";
 import theme from "./styles/muiStyle";
-//import { getActiveConsortium } from "./services/consortiumStorage";
+import { RequireAuth, RequireAnyRole } from "./routes/guards";
 
-// Rutas “main” (auth / perfil)
 import Login from "./pages/Login";
 import RecoverPassword from "./pages/RecoverPassword";
 import UpdateData from "./pages/UpdateData";
 import Profile from "./pages/Profile";
 import ChangeData from "./pages/ChangeData";
 
-// Funcionalidades
 import Votes from "./pages/Votes";
 import Meetings from "./pages/Meetings";
 import Documents from "./pages/Documents";
@@ -22,91 +20,88 @@ import Claims from "./pages/Claims";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import NewReserve from "./components/modals/NewEvent";
-
-// Proveedores (listado con popup interno)
-import AdminSuppliers from "./pages/admin/AdminSuppliers";
-
-// Forums (usuario)
 import Forums from "./pages/Forums";
-import Comentarios from "./pages/ThreadView"
-
-// Configuración
+import Comentarios from "./pages/ThreadView";
 import Configuration from "./pages/Configuration";
+import SelectConsortium from "./pages/SelectConsortium";
+import CargaFacturas from "./components/modals/UploadInvoice";
 
-// Admin + layout
 import AdminLayout from "./components/layout/AdminLayout";
 import AdminReclaims from "./pages/admin/AdminReclaims";
 import AdminForums from "./pages/admin/AdminForums";
 import AdminAudit from "./pages/admin/AdminAudit";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminVotes from "./pages/admin/AdminVotes";
+import AdminSuppliers from "./pages/admin/AdminSuppliers";
 import AdminFactura from "./pages/admin/AdminExpenses";
-
-import CargaFacturas from "./components/modals/UploadInvoice"
-
-// Nueva pantalla: selección de consorcio
-import SelectConsortium from "./pages/SelectConsortium";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
-
-function App() {
+export default function App() {
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <Router
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
+      <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
-          {/* Redirección inicial */}
-          <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
-
           {/* Auth */}
+          <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
           <Route path="/iniciarSesion" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
-          <Route path="/actualizarInformacion" element={<UpdateData />} />
-          <Route path="/perfil" element={<Profile />} />
-          <Route path="/editarInformacion" element={<ChangeData />} />
 
-          {/* Funcionalidades (usuario normal) */}
-          <Route path="/votaciones" element={<Votes />} />
-          <Route path="/reuniones" element={<Meetings />} />
-          <Route path="/documentos" element={<Documents />} />
-          <Route path="/expensas" element={<ExpensesPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/reclamos" element={<Claims />} />
-          <Route path="/calendario" element={<Calendar />} />
-          <Route path="/nuevaReserva" element={<NewReserve />} />
-          <Route path="/factura" element={<CargaFacturas />} />
+          {/* UpdateData SOLO para Propietario/Inquilino */}
+          <Route
+            path="/actualizarInformacion"
+            element={
+              <RequireAuth>
+                <RequireAnyRole roles={["Propietario", "Inquilino"]}>
+                  <UpdateData />
+                </RequireAnyRole>
+              </RequireAuth>
+            }
+          />
 
-          {/* Forums (usuario) */}
-          <Route path="/forums/general" element={<Forums />} />
-          <Route path="/forums/administracion" element={<Forums />} />
-          <Route path="/forums/seguridad" element={<Forums />} />
-          <Route path="/forums/mantenimiento" element={<Forums />} />
-          <Route path="/forums/espacios-comunes" element={<Forums />} />
-          <Route path="/forums/garage-parking" element={<Forums />} />
-          <Route path="/forums/comentarios" element={<Comentarios />} />
+          {/* Rutas protegidas */}
+          <Route path="/perfil" element={<RequireAuth><Profile /></RequireAuth>} />
+          <Route path="/editarInformacion" element={<RequireAuth><ChangeData /></RequireAuth>} />
+          <Route path="/votaciones" element={<RequireAuth><Votes /></RequireAuth>} />
+          <Route path="/reuniones" element={<RequireAuth><Meetings /></RequireAuth>} />
+          <Route path="/documentos" element={<RequireAuth><Documents /></RequireAuth>} />
+          <Route path="/expensas" element={<RequireAuth><ExpensesPage /></RequireAuth>} />
+          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+          <Route path="/reclamos" element={<RequireAuth><Claims /></RequireAuth>} />
+          <Route path="/calendario" element={<RequireAuth><Calendar /></RequireAuth>} />
+          <Route path="/nuevaReserva" element={<RequireAuth><NewReserve /></RequireAuth>} />
+          <Route path="/factura" element={<RequireAuth><CargaFacturas /></RequireAuth>} />
 
-          {/* Configuración */}
-          <Route path="/configuracion" element={<Configuration />} />
-{/* 🔹 Selección de consorcio (pre-dashboard) */}
-          <Route path="/select-consortium" element={<SelectConsortium />} />
+          {/* Forums */}
+          {["general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"].map((f) => (
+            <Route key={f} path={`/forums/${f}`} element={<RequireAuth><Forums /></RequireAuth>} />
+          ))}
+          <Route path="/forums/comentarios" element={<RequireAuth><Comentarios /></RequireAuth>} />
 
-          {/* Admin (layout con sidebar + <Outlet/>) */}
-          <Route path="/admin" element={<AdminLayout />}>
+          {/* Configuración & Consorcio */}
+          <Route path="/configuracion" element={<RequireAuth><Configuration /></RequireAuth>} />
+          <Route path="/select-consortium" element={<RequireAuth><SelectConsortium /></RequireAuth>} />
+
+          {/* Área Admin (solo Administrador) */}
+          <Route
+            path="/admin"
+            element={
+              <RequireAuth>
+                <RequireAnyRole roles={["Administrador"]}>
+                  <AdminLayout />
+                </RequireAnyRole>
+              </RequireAuth>
+            }
+          >
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="reclamos" element={<AdminReclaims />} />
             <Route path="foros" element={<AdminForums />} />
             <Route path="auditoria" element={<AdminAudit />} />
-            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
-
           </Route>
 
           {/* Fallback */}
@@ -116,5 +111,3 @@ function App() {
     </ThemeProvider>
   );
 }
-
-export default App;
