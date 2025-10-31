@@ -69,7 +69,7 @@ const ThreadView: React.FC = () => {
   const [commentText, setCommentText] = useState("");
   const [sending, setSending] = useState(false);
   const [reacting, setReacting] = useState(false);
-  const [error, setError] = useState(false);
+  const [/*error*/, setError] = useState(false);
 
   const { mutate: toggleMutate } =
     useMutation<
