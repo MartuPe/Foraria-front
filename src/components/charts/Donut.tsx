@@ -9,7 +9,7 @@ export type DonutDatum = { label: string; value: number; color: string };
 export default function DonutChart({
   data,
   size = 220,
-  cutout = "68%", // agujero central
+  cutout = "68%",
   showLegend = false,
 }: {
   data: DonutDatum[];

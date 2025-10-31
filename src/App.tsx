@@ -47,6 +47,7 @@ import CargaFacturas from "./components/modals/UploadInvoice"
 
 // Nueva pantalla: selección de consorcio
 import SelectConsortium from "./pages/SelectConsortium";
+import AdminDashboard from "./pages/admin/AdminDashboard";
 
 
 function App() {
@@ -102,6 +103,7 @@ function App() {
             <Route path="reclamos" element={<AdminReclaims />} />
             <Route path="foros" element={<AdminForums />} />
             <Route path="auditoria" element={<AdminAudit />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
