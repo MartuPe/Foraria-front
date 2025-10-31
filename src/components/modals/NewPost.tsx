@@ -56,12 +56,12 @@ export default function NewPost({
       return;
     }
 
-    const payloadForBackend = {
-      theme: title.trim(),
-      description: description.trim(),
-      forum_id: forumId,
-      user_id: userId,
-    };
+  const payloadForBackend = {
+  theme: title.trim(),
+  description: description.trim(),
+  forumId: forumId,
+  userId: userId,
+};
 
     try {
       if (onSubmit) {
@@ -69,7 +69,7 @@ export default function NewPost({
         await onSubmit({
           theme: payloadForBackend.theme,
           description: payloadForBackend.description,
-          forumId: payloadForBackend.forum_id,
+          forumId: payloadForBackend.forumId,
         });
         onCreated?.(payloadForBackend);
       } else {
