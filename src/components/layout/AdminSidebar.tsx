@@ -339,14 +339,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
         </ListItemButton>
       </Box>
 
-      {/* Usuario Admin - EXACTAMENTE IGUAL */}
       <Box sx={{ 
         p: 1.5,
         borderTop: '1px solid rgba(255,255,255,0.1)',
         flexShrink: 0,
       }}>
         <Box
-          onClick={() => handleNavigation('/admin/perfil')}
+          onClick={() => handleNavigation('/perfil')}
           sx={{
             display: 'flex',
             alignItems: 'center',

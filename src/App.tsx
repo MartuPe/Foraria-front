@@ -71,8 +71,9 @@ export default function App() {
           <Route path="/select-consortium" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><SelectConsortium /></RequireAnyRole></RequireAuth>} />
 
           <Route path="/admin" element={ <RequireAuth> <RequireAnyRole roles={["Administrador"]}> <AdminLayout /> </RequireAnyRole> </RequireAuth> }>
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
+            <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="reclamos" element={<AdminReclaims />} />
+            <Route path="perfil" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="foros" element={<AdminForums />} />
             <Route path="auditoria" element={<AdminAudit />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />

@@ -14,40 +14,36 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    try {
-      const res = await authService.login(email, password);
-      if (!res.success) throw new Error(res.message ?? "Login inválido");
+  e.preventDefault();
+  setLoading(true);
+  try {
+    const res = await authService.login(email, password);
+    if (!res.success) throw new Error(res.message ?? "Login inválido");
 
-      const requires = (res.requiresPasswordChange === true) || (res.user as any)?.mustUpdatePassword === true;
-      const role = res.user?.roleName;
+    const requires =
+      res.requiresPasswordChange === true ||
+      (res.user as any)?.mustUpdatePassword === true;
+    const role =
+      res.user?.roleName ??
+      (res.user as any)?.role ??
+      localStorage.getItem("role");
 
-      if (requires) {
-        navigate("/actualizarInformacion");
-        return;
-      }
+    if (role) localStorage.setItem("role", role);
 
-      // ruteo por rol
-      switch (role) {
-        case "Administrador":
-        case "Consorcio":
-          navigate("/admin/dashboard");
-          break;
-        case "Propietario":
-        case "Inquilino":
-          navigate("/dashboard");
-          break;
-        default:
-          navigate("/dashboard");
-      }
-    } catch (err) {
-      alert("Error al iniciar sesión.");
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    if (requires && (role === "Propietario" || role === "Inquilino")) { 
+      navigate("/actualizarInformacion"); 
+    return; }
+
+    const target = role === "Administrador" || role === "Consorcio" ? "/admin/dashboard" : "/dashboard";
+
+    navigate(target);
+  } catch (err) {
+    alert("Error al iniciar sesión.");
+    console.error(err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <Box className="foraria-login-page foraria-wrapper">
