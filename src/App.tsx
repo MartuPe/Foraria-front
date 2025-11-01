@@ -22,6 +22,7 @@ import Claims from "./pages/Claims";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import NewReserve from "./components/modals/NewEvent";
+import ExpensasMp from "./pages/ExpensasMp";
 
 // Proveedores (listado con popup interno)
 import AdminSuppliers from "./pages/admin/AdminSuppliers";
@@ -81,6 +82,7 @@ function App() {
           <Route path="/calendario" element={<Calendar />} />
           <Route path="/nuevaReserva" element={<NewReserve />} />
           <Route path="/factura" element={<CargaFacturas />} />
+          <Route path="/expensasMp" element={<ExpensasMp />} />
 
           {/* Forums (usuario) */}
           <Route path="/forums/general" element={<Forums />} />
@@ -93,7 +95,7 @@ function App() {
 
           {/* Configuración */}
           <Route path="/configuracion" element={<Configuration />} />
-{/* 🔹 Selección de consorcio (pre-dashboard) */}
+          {/* 🔹 Selección de consorcio (pre-dashboard) */}
           <Route path="/select-consortium" element={<SelectConsortium />} />
 
           {/* Admin (layout con sidebar + <Outlet/>) */}

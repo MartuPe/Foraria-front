@@ -1,3 +1,4 @@
+// src/pages/AdminSuppliers.tsx
 import { useEffect, useMemo, useState, useCallback } from "react";
 import {
   Card,
@@ -65,6 +66,9 @@ export default function Suppliers() {
   const [page, setPage] = useState(1);
   const pageSize = 6;
 
+  //  TEMPORAL: consortiumId hardcodeado (DEBE existir en DB)
+  const consortiumId = 1; // ← reemplazá por un Id válido de tabla [consortium]
+
   // Debounce básico para q (mejor UX)
   const [qDebounced, setQDebounced] = useState(q);
   useEffect(() => {
@@ -78,8 +82,8 @@ export default function Suppliers() {
       const data = await supplierService.getAll();
       setSuppliers(data);
     } catch (err) {
-      console.error("❌ Error al obtener proveedores:", err);
-      openSnack("Error al cargar proveedores ❌", "error");
+      console.error(" Error al obtener proveedores:", err);
+      openSnack("Error al cargar proveedores ", "error");
     } finally {
       setLoading(false);
     }
@@ -107,7 +111,7 @@ export default function Suppliers() {
         return Math.min(p, maxPage);
       });
     } catch {
-      openSnack("Error al eliminar proveedor ❌", "error");
+      openSnack("Error al eliminar proveedor ", "error");
     } finally {
       setConfirmOpen(false);
       setToDeleteId(null);
@@ -159,7 +163,6 @@ export default function Suppliers() {
   // Paginación
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   useEffect(() => {
-    // reset page cuando cambian filtros/búsqueda/orden
     setPage(1);
   }, [qDebounced, category, sort]);
 
@@ -187,19 +190,15 @@ export default function Suppliers() {
     </Card>
   );
 
-  return(
+  return (
     <div className="page">
       <PageHeader
         title="Proveedores del Consorcio"
         actions={
           <Button variant="contained" color="secondary" onClick={() => setOpenNew(true)}>
-            + Nuevo Provedor
+            + Nuevo Proveedor
           </Button>
-
-
         }
-
-        
       />
 
       {/* Controles */}
@@ -297,7 +296,6 @@ export default function Suppliers() {
                   spacing={1}
                 >
                   <div>
-                    {/* TÍTULO CLICKEABLE -> abre detalle */}
                     <Typography
                       variant="h6"
                       color="primary"
@@ -318,8 +316,8 @@ export default function Suppliers() {
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary">
-                      {s.email && <>📧 {s.email} </>}
-                      {s.phone && <>| ☎️ {s.phone}</>}
+                      {s.email && <> {s.email} </>}
+                      {s.phone && <>|  {s.phone}</>}
                     </Typography>
                   </div>
 
@@ -367,6 +365,7 @@ export default function Suppliers() {
       <Dialog open={openNew} onClose={() => setOpenNew(false)} maxWidth="md" fullWidth>
         <DialogContent>
           <NewSupplier
+            consortiumId={consortiumId} // ← pasamos el ID requerido por el back
             onSuccess={() => {
               setOpenNew(false);
               fetchSuppliers();
@@ -422,5 +421,4 @@ export default function Suppliers() {
       </Snackbar>
     </div>
   );
-
 }
