@@ -345,7 +345,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
         flexShrink: 0,
       }}>
         <Box
-          onClick={() => handleNavigation('/perfil')}
+          onClick={() => handleNavigation('/admin/perfil')}
           sx={{
             display: 'flex',
             alignItems: 'center',

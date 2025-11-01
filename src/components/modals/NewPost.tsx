@@ -59,8 +59,8 @@ export default function NewPost({
     const payloadForBackend = {
       theme: title.trim(),
       description: description.trim(),
-      forum_id: forumId,
-      user_id: userId,
+      forumId: forumId,
+      userId: userId,
     };
 
     try {
@@ -69,7 +69,7 @@ export default function NewPost({
         await onSubmit({
           theme: payloadForBackend.theme,
           description: payloadForBackend.description,
-          forumId: payloadForBackend.forum_id,
+          forumId: payloadForBackend.forumId,
         });
         onCreated?.(payloadForBackend);
       } else {

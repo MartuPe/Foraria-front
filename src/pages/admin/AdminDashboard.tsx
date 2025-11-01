@@ -15,7 +15,8 @@ import {
 import { AdminLayout } from "../../components/layout/AdminLayout";
 import PageHeader from "../../components/SectionHeader";
 import QuickAction from "../../components/QuickAction";
-
+import { authService } from "../../services/authService";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 import {
   fetchAdminDashboard,
   AdminDashboardData,
@@ -34,6 +35,7 @@ const PriorityChip: React.FC<{ level: "Alta" | "Media" | "Baja" | "Pendiente" | 
   };
   return <Chip size="small" label={level} color={map[level] ?? "default"} variant="outlined" />;
 };
+
 
 const ActivityItem: React.FC<{ item: RecentActivity }> = ({ item }) => {
   return (
@@ -60,6 +62,8 @@ const TaskItem: React.FC<{ task: AdminTask }> = ({ task }) => {
 };
 
 export default function AdminDashboardPage() {
+const navigate = useNavigate();
+
   const [data, setData] = useState<AdminDashboardData | null>(null);
 
   useEffect(() => {
@@ -75,11 +79,24 @@ export default function AdminDashboardPage() {
       </AdminLayout>
     );
   }
-
+  
   const { header, kpis, recentActivity, tasks } = data;
 
+  
+const handleLogout = async () => {
+    await authService.logout();
+    navigate("/iniciarSesion", { replace: true });
+  };
   return (
       <Box className="foraria-page-container">
+           <Button
+              onClick={handleLogout}
+              color="secondary"
+              variant="contained"
+              size="small"
+            >
+              Cerrar sesión
+            </Button>
         <PageHeader
           title={header.title}
           stats={[

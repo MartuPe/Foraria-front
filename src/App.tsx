@@ -36,6 +36,7 @@ import AdminSuppliers from "./pages/admin/AdminSuppliers";
 import AdminFactura from "./pages/admin/AdminExpenses";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 
+
 export default function App() {
   const isAdmin = storage.role === Role.ADMIN;
 
@@ -49,7 +50,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           
-          <Route path="/actualizarInformacion" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><UpdateData /></RequireRoles></RequireAuth>} />
+          <Route path="/actualizarInformacion" element={<RequireRoles roles={RoleGroups.USER}><UpdateData /></RequireRoles>} />
           <Route path="/dashboard" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Dashboard /></RequireRoles></RequireAuth>} />
           <Route path="/perfil" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Profile /></RequireRoles></RequireAuth>} />
           <Route path="/editarInformacion" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><ChangeData /></RequireRoles></RequireAuth>} />
@@ -60,13 +61,12 @@ export default function App() {
           <Route path="/reclamos" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Claims /></RequireRoles></RequireAuth>} />
           <Route path="/calendario" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Calendar /></RequireRoles></RequireAuth>} />
           <Route path="/nuevaReserva" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><NewReserve /></RequireRoles></RequireAuth>} />
-          <Route path="/factura" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><CargaFacturas /></RequireRoles></RequireAuth>} />
           {["general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"].map(f => <Route key={f} path={`/forums/${f}`} element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Forums /></RequireRoles></RequireAuth>} />)}
           <Route path="/forums/comentarios" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Comentarios /></RequireRoles></RequireAuth>} />
           <Route path="/configuracion" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Configuration /></RequireRoles></RequireAuth>} />
           <Route path="/select-consortium" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><SelectConsortium /></RequireRoles></RequireAuth>} />
           
-          <Route path="/admin" element={<RequireAuth><RequireRoles roles={[Role.ADMIN]}><AdminLayout /></RequireRoles></RequireAuth>}>
+          <Route path="/admin" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><AdminLayout /></RequireRoles></RequireAuth>}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="reclamos" element={<AdminReclaims />} />
             <Route path="perfil" element={<RequireAuth><Profile /></RequireAuth>} />
@@ -75,7 +75,7 @@ export default function App() {
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
-            <Route path="expensas" element={<AdminFactura />} />
+            <Route path="expensas" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><AdminFactura /></RequireRoles></RequireAuth>} />
           </Route>
           <Route path="*" element={<Navigate to={isAdmin ? "/admin/dashboard" : "/dashboard"} replace />} />
         </Routes>
