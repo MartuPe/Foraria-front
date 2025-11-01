@@ -42,59 +42,36 @@ export default function App() {
       <CssBaseline />
       <Router future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         <Routes>
-          {/* Auth */}
           <Route path="/" element={<Navigate to="/iniciarSesion" replace />} />
           <Route path="/iniciarSesion" element={<Login />} />
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
 
-          {/* UpdateData SOLO para Propietario/Inquilino */}
-          <Route
-            path="/actualizarInformacion"
-            element={
-              <RequireAuth>
-                <RequireAnyRole roles={["Propietario", "Inquilino"]}>
-                  <UpdateData />
-                </RequireAnyRole>
-              </RequireAuth>
-            }
-          />
-
-          {/* Rutas protegidas */}
-          <Route path="/perfil" element={<RequireAuth><Profile /></RequireAuth>} />
-          <Route path="/editarInformacion" element={<RequireAuth><ChangeData /></RequireAuth>} />
-          <Route path="/votaciones" element={<RequireAuth><Votes /></RequireAuth>} />
-          <Route path="/reuniones" element={<RequireAuth><Meetings /></RequireAuth>} />
-          <Route path="/documentos" element={<RequireAuth><Documents /></RequireAuth>} />
-          <Route path="/expensas" element={<RequireAuth><ExpensesPage /></RequireAuth>} />
-          <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
-          <Route path="/reclamos" element={<RequireAuth><Claims /></RequireAuth>} />
-          <Route path="/calendario" element={<RequireAuth><Calendar /></RequireAuth>} />
-          <Route path="/nuevaReserva" element={<RequireAuth><NewReserve /></RequireAuth>} />
-          <Route path="/factura" element={<RequireAuth><CargaFacturas /></RequireAuth>} />
-
-          {/* Forums */}
+          <Route path="/actualizarInformacion" element={<RequireAuth><RequireAnyRole roles={["Propietario", "Inquilino"]}><UpdateData /></RequireAnyRole></RequireAuth>} />
+          <Route path="/dashboard" element={ <RequireAuth> <RequireAnyRole roles={["Propietario", "Inquilino"]}> <Dashboard /> </RequireAnyRole> </RequireAuth>} />
+          <Route path="/perfil" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Profile /></RequireAnyRole></RequireAuth>} />
+          <Route path="/editarInformacion" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><ChangeData /></RequireAnyRole></RequireAuth>} />
+          <Route path="/votaciones" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Votes /></RequireAnyRole></RequireAuth>} />
+          <Route path="/reuniones" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Meetings /></RequireAnyRole></RequireAuth>} />
+          <Route path="/documentos" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Documents /></RequireAnyRole></RequireAuth>} />
+          <Route path="/expensas" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><ExpensesPage /></RequireAnyRole></RequireAuth>} />
+          <Route path="/reclamos" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Claims /></RequireAnyRole></RequireAuth>} />
+          <Route path="/calendario" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Calendar /></RequireAnyRole></RequireAuth>} />
+          <Route path="/nuevaReserva" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><NewReserve /></RequireAnyRole></RequireAuth>} />
+          <Route path="/factura" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><CargaFacturas /></RequireAnyRole></RequireAuth>} />
           {["general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"].map((f) => (
-            <Route key={f} path={`/forums/${f}`} element={<RequireAuth><Forums /></RequireAuth>} />
+            <Route key={f} path={`/forums/${f}`} element={
+              <RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Forums /></RequireAnyRole></RequireAuth>
+            } />
           ))}
-          <Route path="/forums/comentarios" element={<RequireAuth><Comentarios /></RequireAuth>} />
+          <Route path="/forums/comentarios" element={
+            <RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Comentarios /></RequireAnyRole></RequireAuth>
+          } />
+          <Route path="/configuracion" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><Configuration /></RequireAnyRole></RequireAuth>} />
+          <Route path="/select-consortium" element={<RequireAuth><RequireAnyRole roles={["Propietario","Inquilino"]}><SelectConsortium /></RequireAnyRole></RequireAuth>} />
 
-          {/* Configuración & Consorcio */}
-          <Route path="/configuracion" element={<RequireAuth><Configuration /></RequireAuth>} />
-          <Route path="/select-consortium" element={<RequireAuth><SelectConsortium /></RequireAuth>} />
-
-          {/* Área Admin (solo Administrador) */}
-          <Route
-            path="/admin"
-            element={
-              <RequireAuth>
-                <RequireAnyRole roles={["Administrador"]}>
-                  <AdminLayout />
-                </RequireAnyRole>
-              </RequireAuth>
-            }
-          >
-            <Route path="dashboard" element={<AdminDashboard />} />
+          <Route path="/admin" element={ <RequireAuth> <RequireAnyRole roles={["Administrador"]}> <AdminLayout /> </RequireAnyRole> </RequireAuth> }>
+            <Route path="/admin/dashboard" element={<AdminDashboard />} />
             <Route path="reclamos" element={<AdminReclaims />} />
             <Route path="foros" element={<AdminForums />} />
             <Route path="auditoria" element={<AdminAudit />} />
@@ -104,8 +81,7 @@ export default function App() {
             <Route path="expensas" element={<AdminFactura />} />
           </Route>
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route path="*" element={<Navigate to={localStorage.getItem("role") === "Administrador" ? "/admin/dashboard" : "/dashboard"} replace />} />
         </Routes>
       </Router>
     </ThemeProvider>
