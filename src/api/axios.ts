@@ -1,13 +1,15 @@
+// src/api/axios.ts
 import axios from "axios";
 
-// Usa process.env porque CRA no soporta import.meta.env
-const baseURL = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
+const baseURL = process.env.REACT_APP_API_URL || "http://localhost:5205/api";
 
 export const api = axios.create({
   baseURL,
-  withCredentials: true, // si el backend necesita cookies/sesión
-  timeout: 15000, // 15 segundos
+  withCredentials: true,
+  timeout: 15000,
 });
+
+
 
 // Interceptor para agregar token automáticamente
 api.interceptors.request.use((config) => {
