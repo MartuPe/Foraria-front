@@ -10,7 +10,7 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { supplierService, Supplier, CreateSupplier } from "../../services/supplierService";
+import { supplierService, CreateSupplier } from "../../services/supplierService";
 
 interface Props {
   onSuccess?: () => void;   // el padre muestra el toast de éxito
