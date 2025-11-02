@@ -26,6 +26,7 @@ import ExpensasMp from "./pages/ExpensasMp";
 
 // Proveedores (listado con popup interno)
 import AdminSuppliers from "./pages/admin/AdminSuppliers";
+import AdminDocuments from "./pages/admin/AdminDocuments";
 
 // Forums (usuario)
 import Forums from "./pages/Forums";
@@ -108,7 +109,7 @@ function App() {
             <Route path="votaciones" element={<AdminVotes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
-
+            <Route path="documents" element={<AdminDocuments />} />
           </Route>
 
           {/* Fallback */}

@@ -57,23 +57,21 @@ export default function NewPost({
     }
 
   const payloadForBackend = {
-  theme: title.trim(),
-  description: description.trim(),
-  forumId: forumId,
-  userId: userId,
-};
+    Theme: title.trim(),        // Cambiado de 'theme' a 'Theme'
+    Description: description.trim(), // Cambiado de 'description' a 'Description'
+    ForumId: forumId,          // Cambiado de 'forumId' a 'ForumId'
+    UserId: userId,            // Cambiado de 'userId' a 'UserId'
+  };
 
     try {
       if (onSubmit) {
-        
         await onSubmit({
-          theme: payloadForBackend.theme,
-          description: payloadForBackend.description,
-          forumId: payloadForBackend.forumId,
+          theme: payloadForBackend.Theme,         // Ajustar aquí también
+          description: payloadForBackend.Description,
+          forumId: payloadForBackend.ForumId,
         });
         onCreated?.(payloadForBackend);
       } else {
-     
         const created = await mutate(payloadForBackend);
         onCreated?.(created ?? payloadForBackend);
       }
