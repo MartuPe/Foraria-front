@@ -30,7 +30,6 @@ import {
 } from "@mui/icons-material";
 import PageHeader from "../../components/SectionHeader";
 import { useGet } from "../../hooks/useGet";
-import { useMutation } from "../../hooks/useMutation";
 import NewDocument from "../../components/modals/NewDocument";
 
 // Tipos actualizados según el backend
@@ -65,9 +64,9 @@ export default function AdminDocuments() {
   // 🔧 CORREGIDO: Usar endpoint correcto del backend
   const { data: documents, loading, error, refetch } = useGet<Document[]>("/UserDocument");
 
-  // Debug mejorado
+  // Debug: mostrar qué está devolviendo el backend
   console.log("📄 UserDocuments data:", documents);
-  console.log("📊 Total documentos encontrados:", Array.isArray(documents) ? documents.length : 0);
+  console.log("⚠️ UserDocuments error:", error);
 
   // Filtros (solo si hay datos)
   const filteredDocuments = useMemo(() => {
@@ -196,24 +195,14 @@ export default function AdminDocuments() {
       <PageHeader
         title="Gestión de Documentos"
         actions={
-          <Stack direction="row" spacing={1}>
-            <Button
-              variant="outlined"
-              color="primary"
-              onClick={() => refetch()}
-              size="small"
-            >
-              🔄 Actualizar
-            </Button>
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<AddOutlined />}
-              onClick={() => setOpenNew(true)}
-            >
-              + Nuevo Documento
-            </Button>
-          </Stack>
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AddOutlined />}
+            onClick={() => setOpenNew(true)}
+          >
+            + Nuevo Documento
+          </Button>
         }
         tabs={[
           { label: "Todos", value: "todos" },
@@ -224,21 +213,16 @@ export default function AdminDocuments() {
         onTabChange={(v) => setTab(v as typeof tab)}
       />
 
-      {/* 🐛 Debug info mejorado */}
-      <Paper sx={{ p: 2, mb: 2, bgcolor: "success.light" }}>
-        <Typography variant="subtitle2" color="success.dark">
-          ✅ Conexión establecida con /UserDocument
+      {/* 🐛 Debug info */}
+      <Paper sx={{ p: 2, mb: 2, bgcolor: "info.light" }}>
+        <Typography variant="subtitle2" color="info.dark">
+          📊 Estado del backend:
         </Typography>
         <Typography variant="body2">
-          • Total documentos: <strong>{totalDocs}</strong>
+          • Total documentos: {totalDocs} 
+          • Públicos: {publicDocs}
           • Endpoint: <code>/UserDocument</code>
-          • Último refresh: {new Date().toLocaleTimeString()}
         </Typography>
-        {totalDocs > 0 && (
-          <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
-            💡 Los documentos se están guardando correctamente en la BD
-          </Typography>
-        )}
       </Paper>
 
       {/* KPIs simplificados */}
@@ -378,14 +362,13 @@ export default function AdminDocuments() {
         </TableContainer>
       </Paper>
 
-      {/* Modal mejorado */}
+      {/* Modal básico */}
       <Dialog open={openNew} onClose={() => setOpenNew(false)} maxWidth="md" fullWidth>
         <DialogContent>
           <NewDocument
             onSuccess={() => {
               setOpenNew(false);
-              // Refetch automático después de subir
-              setTimeout(() => refetch(), 500);
+              refetch();
             }}
             onCancel={() => setOpenNew(false)}
           />

@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, IconButton, useTheme, useMediaQuery } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
 import { Sidebar } from './Sidebar';
+import { useLocation } from 'react-router-dom';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -11,9 +12,24 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const location = useLocation();
+
+  // Mantener el sidebar abierto en desktop, especialmente en rutas de foros
+  useEffect(() => {
+    if (!isMobile) {
+      setSidebarOpen(true);
+    }
+  }, [isMobile, location.pathname]);
 
   const handleSidebarToggle = () => {
     setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleSidebarClose = () => {
+    // Solo cerrar en mobile Y si no estamos en una ruta de foros
+    if (isMobile && !location.pathname.startsWith('/forums')) {
+      setSidebarOpen(false);
+    }
   };
 
   return (
@@ -21,7 +37,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Sidebar */}
       <Sidebar 
         open={sidebarOpen} 
-        onClose={() => setSidebarOpen(false)} 
+        onClose={handleSidebarClose}
       />
 
       {/* Main Content */}

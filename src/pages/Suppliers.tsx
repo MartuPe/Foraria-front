@@ -312,7 +312,7 @@ export default function Suppliers() {
         fullWidth
       >
         <DialogContent>
-          <NewSupplier />
+          <NewSupplier consortiumId={1} />
         </DialogContent>
       </Dialog>
     </>
