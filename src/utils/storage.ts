@@ -19,6 +19,17 @@ export const storage = {
   set refresh(v: string | null) {
     v ? localStorage.setItem("refreshToken", v) : localStorage.removeItem("refreshToken");
   },
+  
+ get residenceId(): number | null {
+    const v = localStorage.getItem("residenceId");
+    if (!v) return null;
+    const n = Number(v);
+    return Number.isNaN(n) ? null : n;
+  },
+  set residenceId(id: number | null) {
+    if (id && id > 0) localStorage.setItem("residenceId", String(id));
+    else localStorage.removeItem("residenceId");
+  },
 
   clear() {
     localStorage.clear();
