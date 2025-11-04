@@ -106,9 +106,9 @@ export default function AdminCargaFactura() {
     fetchExpenses();
   }, []);
 
-  const toInfoFiles = (filePath?: string | null): InfoFile[] =>
+  /*const toInfoFiles = (filePath?: string | null): InfoFile[] =>
     filePath ? filePath.split(",").map((name) => ({ url: name, type: name.split(".").pop() })) : [];
-
+*/
   // Generar expensa (con JSON.stringify y Content-Type)
   const handleGenerateExpense = async () => {
     try {
