@@ -86,7 +86,7 @@ export default function App() {
             <Route path="votaciones" element={<AdminVotes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
 
-           <Route path="expensas" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><AdminFactura /></RequireRoles></RequireAuth>} />
+           //<Route path="expensas" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><AdminFactura /></RequireRoles></RequireAuth>} />
 
             <Route path="expensas" element={<AdminFactura />} />
             <Route path="documents" element={<AdminDocuments />} />
