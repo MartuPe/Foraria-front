@@ -21,6 +21,13 @@ import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
 import NewReserve from "./components/modals/NewEvent";
 
+
+// Proveedores (listado con popup interno)
+
+import AdminDocuments from "./pages/admin/AdminDocuments";
+
+// Forums (usuario)
+
 import Forums from "./pages/Forums";
 import Comentarios from "./pages/ThreadView";
 import Configuration from "./pages/Configuration";
@@ -78,7 +85,12 @@ export default function App() {
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
-            <Route path="expensas" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><AdminFactura /></RequireRoles></RequireAuth>} />
+
+          //  <Route path="expensas" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><AdminFactura /></RequireRoles></RequireAuth>} />
+
+            <Route path="expensas" element={<AdminFactura />} />
+            <Route path="documents" element={<AdminDocuments />} />
+
           </Route>
           <Route path="*" element={<Navigate to={isAdmin ? "/admin/dashboard" : "/dashboard"} replace />} />
         </Routes>

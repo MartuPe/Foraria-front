@@ -1,3 +1,4 @@
+// src/components/modals/NewSupplier.tsx
 import { FormEvent, useState } from "react";
 import {
   TextField,
@@ -9,14 +10,15 @@ import {
   Snackbar,
   Alert,
 } from "@mui/material";
-import { supplierService, Supplier } from "../../services/supplierService";
+import { supplierService, CreateSupplier } from "../../services/supplierService";
 
 interface Props {
-  onSuccess?: () => void; // el padre muestra el toast de éxito
+  onSuccess?: () => void;   // el padre muestra el toast de éxito
+  consortiumId: number;     // ← OBLIGATORIO: lo recibimos desde arriba
 }
 
-export default function NewSupplier({ onSuccess }: Props) {
-  const [form, setForm] = useState<Supplier>({
+export default function NewSupplier({ onSuccess, consortiumId }: Props) {
+  const [form, setForm] = useState<CreateSupplier>({
     commercialName: "",
     businessName: "",
     cuit: "",
@@ -26,33 +28,35 @@ export default function NewSupplier({ onSuccess }: Props) {
     address: "",
     contactPerson: "",
     observations: "",
-    active: true,
+    consortiumId,           // ← set inicial
   });
 
   const [loading, setLoading] = useState(false);
   const [errorOpen, setErrorOpen] = useState(false);
 
-  
-const handleChange = (
-  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-) => {
-  const { name, value } = e.target;
-  let v = value;
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    const { name, value } = e.target;
+    let v = value;
 
-  if (name === "cuit") {
-    // solo dígitos y máx 11
-    v = value.replace(/\D+/g, "").slice(0, 11);
-  }
+    if (name === "cuit") {
+      // sólo dígitos y máx 11
+      v = value.replace(/\D+/g, "").slice(0, 11);
+    }
 
-  setForm((prev) => ({ ...prev, [name]: v }));
-};
-
+    setForm((prev) => ({ ...prev, [name]: v }));
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    if (!consortiumId || consortiumId <= 0) {
+      setErrorOpen(true);
+      return;
+    }
     setLoading(true);
     try {
-      await supplierService.create(form);
+      await supplierService.create({ ...form, consortiumId }); // aseguramos enviar el ID actual
       onSuccess?.(); // cierra modal + refresca + toast en el padre
     } catch {
       setErrorOpen(true);
@@ -182,7 +186,7 @@ const handleChange = (
         anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
         <Alert severity="error" onClose={() => setErrorOpen(false)} variant="filled">
-          Error al guardar proveedor ❌
+          Error al guardar proveedor 
         </Alert>
       </Snackbar>
     </form>
