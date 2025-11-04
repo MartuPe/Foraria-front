@@ -16,7 +16,7 @@ export type LoginResponse = {
     lastName?: string;
     roleId?: number;
     roleName?: string;
-    role?: string;     // tolerante a otra propiedad
+    role?: string;     
   };
 };
 

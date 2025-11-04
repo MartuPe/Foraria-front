@@ -18,7 +18,7 @@ export type UserProfile = {
   dni?: string | number | null;
   consortiumId?: number | null;
   hasPermission?: boolean;
-  photo?: string | null;       // ruta de tu back si guardaste foto
+  photo?: string | null;       
   residences?: ResidenceDto[];
 };
 
@@ -39,29 +39,29 @@ function claimsToUserProfile(token: string): Partial<UserProfile> {
   }
 }
 
-// Intenta /User/me; si no existe, cae a localStorage, y si sos Admin/Consorcio prueba /User?id=<userId>
+
 export async function getCurrentUser(): Promise<UserProfile> {
-  // 1) si existe endpoint /User/me (recomendado)
+  
   try {
     const { data } = await api.get<UserProfile>("/User/me");
     return data;
   } catch (e: any) {
-    // 404 o no implementado: continuamos
+   
   }
 
-  // 2) localStorage (lo que guardaste en el login)
+
   const raw = localStorage.getItem("user");
   const token = localStorage.getItem("accessToken");
   let base: Partial<UserProfile> = raw ? JSON.parse(raw) : {};
   if (token) base = { ...claimsToUserProfile(token), ...base };
 
-  // 3) si sos Admin/Consorcio y hay userId, traé desde /User?id
+
   const role = (base.role as string) || localStorage.getItem("role") || "";
   const userId = Number((base.id as number) || localStorage.getItem("userId") || 0);
   if ((role === "Administrador" || role === "Consorcio") && userId > 0) {
     try {
       const { data } = await api.get("/User", { params: { id: userId } });
-      // El DTO de tu endpoint /User?id devuelve { id, firstName, lastName, email, phoneNumber, roleId, success }
+ 
       const merged: UserProfile = {
         id: data.id ?? userId,
         firstName: data.firstName ?? base.firstName ?? "",
@@ -77,11 +77,11 @@ export async function getCurrentUser(): Promise<UserProfile> {
       };
       return merged;
     } catch {
-      // seguimos con base
+   
     }
   }
 
-  // 4) saneo final
+
   const prof: UserProfile = {
     id: Number(base.id) || 0,
     firstName: base.firstName ?? "",

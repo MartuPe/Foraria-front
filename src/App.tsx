@@ -24,7 +24,6 @@ import Forums from "./pages/Forums";
 import Comentarios from "./pages/ThreadView";
 import Configuration from "./pages/Configuration";
 import SelectConsortium from "./pages/SelectConsortium";
-import CargaFacturas from "./components/modals/UploadInvoice";
 
 import AdminLayout from "./components/layout/AdminLayout";
 import AdminReclaims from "./pages/admin/AdminReclaims";
@@ -35,6 +34,7 @@ import AdminVotes from "./pages/admin/AdminVotes";
 import AdminSuppliers from "./pages/admin/AdminSuppliers";
 import AdminFactura from "./pages/admin/AdminExpenses";
 import AdminDashboard from "./pages/admin/AdminDashboard";
+import ResetPassword from "./pages/ResetPassword";
 
 
 export default function App() {
@@ -65,6 +65,7 @@ export default function App() {
           <Route path="/forums/comentarios" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Comentarios /></RequireRoles></RequireAuth>} />
           <Route path="/configuracion" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Configuration /></RequireRoles></RequireAuth>} />
           <Route path="/select-consortium" element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><SelectConsortium /></RequireRoles></RequireAuth>} />
+          <Route path="/reset-password" element={<ResetPassword />} />
           
           <Route path="/admin" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><AdminLayout /></RequireRoles></RequireAuth>}>
             <Route path="dashboard" element={<AdminDashboard />} />
