@@ -17,6 +17,8 @@ export type LoginResponse = {
     roleId?: number;
     roleName?: string;
     role?: string;     
+    residenceId?: number ;
+    consortiumId?: number; 
   };
 };
 
@@ -40,6 +42,20 @@ export const authService = {
     } else {
       localStorage.setItem("requiresPasswordChange", "false");
     }
+   
+    if (data.user?.id) localStorage.setItem("userId", String(data.user.id));
+if (data.user?.email) localStorage.setItem("email", data.user.email);
+
+if (data.user?.residenceId !== undefined && data.user?.residenceId !== null) {
+  localStorage.setItem("residenceId", String(data.user.residenceId));
+} else {
+  localStorage.removeItem("residenceId");
+}
+if (data.user?.consortiumId !== undefined && data.user?.consortiumId !== null) {
+  localStorage.setItem("consortiumId", String(data.user.consortiumId));
+} else {
+  localStorage.removeItem("consortiumId");
+}
 
     return data;
   },
