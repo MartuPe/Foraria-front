@@ -56,12 +56,14 @@ export default function NewPost({
       return;
     }
 
-  const payloadForBackend = {
-  theme: title.trim(),
-  description: description.trim(),
-  forumId: forumId,
-  userId: userId,
-};
+
+    const payloadForBackend = {
+      theme: title.trim(),
+      description: description.trim(),
+      forumId: forumId,
+      userId: userId,
+    };
+
 
     try {
       if (onSubmit) {

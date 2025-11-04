@@ -36,7 +36,7 @@ export default function AcceptClaimModal({
   claimId,
   claimTitle = "",
   claimantName = "",
-  userId = 1,
+  userId = Number(localStorage.getItem("userId")),
   responsibleSectors = [{ id: 0, name: "Seleccionar responsable" }],
   onSuccess,
 }: Props) {

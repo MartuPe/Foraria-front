@@ -110,7 +110,7 @@ export default function Votes() {
 
   const handleVote = async (pollId: number, optionId: number) => {
     const vote: VoteDto = {
-      user_Id: 1, // reemplazar con usuario real
+      user_Id: Number(localStorage.getItem("userId")),
       poll_Id: pollId,
       pollOption_Id: optionId,
     };

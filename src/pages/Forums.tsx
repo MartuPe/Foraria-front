@@ -95,7 +95,7 @@ const Forums: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const currentUserId = 1; // reemplazar por auth real cuando esté disponible
+  const currentUserId = Number(localStorage.getItem("userId")); // reemplazar por auth real cuando esté disponible
 
   const { mutate: toggleMutate } =
     useMutation<

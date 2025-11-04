@@ -76,8 +76,8 @@ const handleSubmit = async (e: React.FormEvent) => {
       priority,
       category,
       archive: base64File,
-      user_id: 1, //remplazar por usuario real
-      residenceId: 1,
+      user_id: Number(localStorage.getItem("userId")), 
+      residenceId: localStorage.getItem("residenceId"),
     };
 
     await mutate(payload);
