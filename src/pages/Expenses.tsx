@@ -1,4 +1,3 @@
-// ExpensesPage.tsx
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
@@ -16,6 +15,7 @@ import {
   Card,
   CardContent,
   useTheme,
+  CircularProgress,
 } from "@mui/material";
 import "../styles/expenses.css";
 import Money from "../components/Money";
@@ -26,13 +26,12 @@ import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import PageHeader from "../components/SectionHeader";
 import { Layout } from "../components/layout";
 import axios from "axios";
-import InfoCard, { InfoFile } from "../components/InfoCard";
 import DownloadIcon from "@mui/icons-material/Download";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import LocalAtmIcon from "@mui/icons-material/LocalAtm";
 import PaidIcon from "@mui/icons-material/Paid";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import LocalAtmIcon from "@mui/icons-material/LocalAtm";
 
 type Invoice = {
   id: number;
@@ -45,8 +44,6 @@ type Invoice = {
   amount: number;
   description?: string | null;
   filePath?: string | null;
-  supplierAddress?: string | null;
-  items?: any[];
 };
 
 type ExpenseInner = {
@@ -81,7 +78,7 @@ export default function ExpensesPage() {
 
   const [detailsOpenFor, setDetailsOpenFor] = useState<ExpenseDetail | null>(null);
   const [downloadingPdfFor, setDownloadingPdfFor] = useState<number | null>(null);
-  const [payingFor, setPayingFor] = useState<number | null>(null);
+  const [loadingPaymentFor, setLoadingPaymentFor] = useState<number | null>(null);
   const theme = useTheme();
 
   useEffect(() => {
@@ -179,26 +176,34 @@ export default function ExpensesPage() {
     }
   };
 
-  const handlePay = async (detail: ExpenseDetail) => {
+  // 🔹 Nuevo: lógica para crear preferencia de pago (MercadoPago)
+  const handleMercadoPago = async (detail: ExpenseDetail) => {
+    const residenceId = detail.residenceId;
+    const expenseId = detail.id;
+
     try {
-      setPayingFor(detail.id);
-      const payload = { residenceId: detail.residenceId, expenseDetailId: detail.id, amount: detail.total };
-      const resp = await axios.post("https://localhost:7245/api/Payment", payload, {
-        headers: { "Content-Type": "application/json" },
-        validateStatus: () => true,
-      });
-      if (resp.status === 200 || resp.status === 201) {
-        const residenceId = detail.residenceId;
-        const url = `https://localhost:7245/api/ExpenseDetail?id=${residenceId}`;
-        const r2 = await axios.get<ExpenseDetail[]>(url);
-        setItems(r2.data || []);
-      } else {
-        console.warn("Pago no procesado. status:", resp.status);
+      setLoadingPaymentFor(detail.id);
+      const res = await fetch(
+        `https://localhost:7245/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
+        { method: "POST" }
+      );
+
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `HTTP ${res.status}`);
       }
-    } catch (err) {
-      console.error("Error procesando pago:", err);
+
+      const json = await res.json();
+      console.log("create-preference response:", json);
+      const initPoint = json.initPoint ?? json.data?.initPoint ?? null;
+      if (!initPoint) throw new Error("initPoint no recibido del backend");
+
+      window.location.href = String(initPoint);
+    } catch (e: any) {
+      console.error("Error iniciando pago:", e);
+      alert(e?.message || "Error al iniciar pago");
     } finally {
-      setPayingFor(null);
+      setLoadingPaymentFor(null);
     }
   };
 
@@ -243,11 +248,7 @@ export default function ExpensesPage() {
           ]}
         />
 
-  
-        <Box
-         
-          
-        >
+        <Box>
           {items.map((detail) => {
             const exp = detail.expense;
             const color = stateColor(detail.state);
@@ -297,7 +298,6 @@ export default function ExpensesPage() {
                   </Typography>
 
                   <Stack direction="row" justifyContent="flex-end" spacing={1}>
-                    
                     <Button
                       size="small"
                       startIcon={<DownloadIcon />}
@@ -306,7 +306,7 @@ export default function ExpensesPage() {
                     >
                       {downloadingPdfFor === detail.id ? "Descargando..." : "PDF"}
                     </Button>
-                   
+
                     <Button
                       size="small"
                       startIcon={<VisibilityIcon />}
@@ -314,15 +314,23 @@ export default function ExpensesPage() {
                     >
                       Ver
                     </Button>
-                     <Button
+
+                    <Button
                       size="small"
                       variant="contained"
                       color="primary"
                       startIcon={<LocalAtmIcon />}
-                      onClick={() => handlePay(detail)}
-                      disabled={payingFor === detail.id}
+                      onClick={() => handleMercadoPago(detail)}
+                      disabled={loadingPaymentFor === detail.id}
                     >
-                      {payingFor === detail.id ? "Procesando..." : "Pagar"}
+                      {loadingPaymentFor === detail.id ? (
+                        <>
+                          <CircularProgress size={18} color="inherit" />
+                          &nbsp;Redirigiendo...
+                        </>
+                      ) : (
+                        "Pagar con MercadoPago"
+                      )}
                     </Button>
                   </Stack>
                 </CardContent>
@@ -359,10 +367,7 @@ export default function ExpensesPage() {
               <Stack spacing={1}>
                 {detailsOpenFor.expense.invoices.length === 0 && <Typography>No hay facturas.</Typography>}
                 {detailsOpenFor.expense.invoices.map((inv) => (
-                  <Box
-                    key={`dlg-inv-${inv.id}`}
-                    sx={{ borderRadius: 1, p: 1.25, bgcolor: "background.paper" }}
-                  >
+                  <Box key={`dlg-inv-${inv.id}`} sx={{ borderRadius: 1, p: 1.25, bgcolor: "background.paper" }}>
                     <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle2" noWrap>
@@ -372,14 +377,9 @@ export default function ExpensesPage() {
                           {inv.supplierName || "-"} • {inv.category || "-"}
                         </Typography>
                       </Box>
-                      <Typography variant="subtitle2">
-                        ${inv.amount?.toFixed(2) ?? "0.00"}
-                      </Typography>
+                      <Typography variant="subtitle2">${inv.amount?.toFixed(2) ?? "0.00"}</Typography>
                       {inv.filePath && (
-                        <IconButton
-                          size="small"
-                          onClick={() => window.open(inv.filePath!, "_blank")}
-                        >
+                        <IconButton size="small" onClick={() => window.open(inv.filePath!, "_blank")}>
                           <DownloadIcon fontSize="small" />
                         </IconButton>
                       )}

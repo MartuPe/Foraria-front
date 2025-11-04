@@ -36,7 +36,6 @@ import AdminSuppliers from "./pages/admin/AdminSuppliers";
 import AdminFactura from "./pages/admin/AdminExpenses";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import ResetPassword from "./pages/ResetPassword";
-import ExpensasMp from "./pages/ExpensasMp";
 
 export default function App() {
   const isAdmin = storage.role === Role.ADMIN;
