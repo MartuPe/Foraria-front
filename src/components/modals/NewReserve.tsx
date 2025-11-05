@@ -91,8 +91,8 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
       description: description || "Sin descripción",
       createdAt, // formato local sin Z
       place_id: getPlaceId(area),
-      residence_id: 2,
-      user_id: 1,
+      residence_id: localStorage.getItem("residenceId"),
+      user_id: Number(localStorage.getItem("userId")),
     };
 
     try {

@@ -173,9 +173,11 @@ export default function Votes() {
     setIsVoting(true);
     setLoadingVote(selectedPoll.id);
     const vote: VoteDto = {
-      user_Id: 1, // reemplazar con usuario real
+
+      user_Id: Number(localStorage.getItem("userId")),
       poll_Id: selectedPoll.id,
       pollOption_Id: selectedOption,
+
     };
     
     try {

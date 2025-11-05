@@ -48,28 +48,29 @@ interface MenuItem {
 }
 
 const menuItems: MenuItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: <DashboardIcon />, path: '/admin/dashboard' },
-  { id: 'users', label: 'Gestión de Usuarios', icon: <UsersIcon />, path: '/admin/users' },
-  { id: 'expenses', label: 'Gastos y Facturas', icon: <ExpensesIcon />, path: '/admin/expensas' },
-  { id: 'suppliers', label: 'Proveedores', icon: <SuppliersIcon />, path: '/admin/suppliers' },
-  { id: 'votes', label: 'Crear Votaciones', icon: <CreateVotesIcon />, path: '/admin/votaciones' }, // CAMBIAR ruta
-  { id: 'meetings', label: 'Crear Reuniones', icon: <CreateMeetingsIcon />, path: '/admin/meetings' },
-  { id: 'events', label: 'Crear Eventos', icon: <CreateEventsIcon />, path: '/admin/events' },
-  { id: 'reclaims', label: 'Gestión Reclamos', icon: <ReclaimsIcon />, path: '/admin/reclaims' },
-  { id: 'stats', label: 'Estadísticas', icon: <StatsIcon />, path: '/admin/stats' },
-  { id: 'audit', label: 'Auditoría', icon: <AuditIcon />, path: '/admin/audit' },
+{ id: 'dashboard', label: 'Dashboard',            icon: <DashboardIcon />,      path: '/admin/dashboard' },
+{ id: 'users',     label: 'Gestión de Usuarios',  icon: <UsersIcon />,          path: '/admin/gestionUsuario' },
+{ id: 'expenses',  label: 'Gastos y Facturas',    icon: <ExpensesIcon />,       path: '/admin/expensas' },
+{ id: 'suppliers', label: 'Proveedores',          icon: <SuppliersIcon />,      path: '/admin/provedores' },   
+{ id: 'votes',     label: 'Crear Votaciones',     icon: <CreateVotesIcon />,    path: '/admin/votaciones' },
+{ id: 'meetings',  label: 'Crear Reuniones',      icon: <CreateMeetingsIcon />, path: '/admin/reuniones' },
+{ id: 'events',    label: 'Crear Eventos',        icon: <CreateEventsIcon />,   path: '/admin/eventos' }, 
+{ id: 'reclaims',  label: 'Gestión Reclamos',     icon: <ReclaimsIcon />,       path: '/admin/reclamos' },
+{ id: 'stats',     label: 'Estadísticas',         icon: <StatsIcon />,          path: '/admin/estadisticas' },
+{ id: 'audit',     label: 'Auditoría',            icon: <AuditIcon />,          path: '/admin/auditoria' },
 ];
 
-// Cambiar las rutas del submenu para incluir parámetros de categoría
 const forosSubMenu = [
-  { id: 'foros-todas', label: 'Todas', icon: <ForumsIcon />, path: '/admin/forums?category=Todas' },
-  { id: 'foros-general', label: 'General', icon: <ForumsIcon />, path: '/admin/forums?category=General' },
-  { id: 'foros-administracion', label: 'Administración', icon: <AdminPanelSettings />, path: '/admin/forums?category=Administración' },
-  { id: 'foros-seguridad', label: 'Seguridad', icon: <Security />, path: '/admin/forums?category=Seguridad' },
-  { id: 'foros-mantenimiento', label: 'Mantenimiento', icon: <Build />, path: '/admin/forums?category=Mantenimiento' },
-  { id: 'foros-espacios-comunes', label: 'Espacios Comunes', icon: <Park />, path: '/admin/forums?category=Espacios Comunes' },
-  { id: 'foros-garage-parking', label: 'Garage y Parking', icon: <DirectionsCar />, path: '/admin/forums?category=Garage y Parking' },
+{ id: 'foros-todas',            label: 'Todas',            icon: <ForumsIcon />,          path: '/admin/foros?category=Todas' },
+{ id: 'foros-general',          label: 'General',          icon: <ForumsIcon />,          path: '/admin/foros?category=General' },
+{ id: 'foros-administracion',   label: 'Administración',   icon: <AdminPanelSettings />,  path: '/admin/foros?category=Administración' },
+{ id: 'foros-seguridad',        label: 'Seguridad',        icon: <Security />,            path: '/admin/foros?category=Seguridad' },
+{ id: 'foros-mantenimiento',    label: 'Mantenimiento',    icon: <Build />,               path: '/admin/foros?category=Mantenimiento' },
+{ id: 'foros-espacios-comunes', label: 'Espacios Comunes', icon: <Park />,                path: '/admin/foros?category=Espacios Comunes' },
+{ id: 'foros-garage-parking',   label: 'Garage y Parking', icon: <DirectionsCar />,       path: '/admin/foros?category=Garage y Parking' },
 ];
+
+//const isForosActive = () => location.pathname.startsWith('/admin/foros');
 
 interface AdminSidebarProps {
   open?: boolean;
@@ -338,7 +339,6 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({ open = true, onClose
         </ListItemButton>
       </Box>
 
-      {/* Usuario Admin - EXACTAMENTE IGUAL */}
       <Box sx={{ 
         p: 1.5,
         borderTop: '1px solid rgba(255,255,255,0.1)',

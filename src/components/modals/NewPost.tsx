@@ -56,12 +56,14 @@ export default function NewPost({
       return;
     }
 
+
   const payloadForBackend = {
     Theme: title.trim(),        // Cambiado de 'theme' a 'Theme'
     Description: description.trim(), // Cambiado de 'description' a 'Description'
     ForumId: forumId,          // Cambiado de 'forumId' a 'ForumId'
     UserId: userId,            // Cambiado de 'userId' a 'UserId'
   };
+
 
     try {
       if (onSubmit) {
