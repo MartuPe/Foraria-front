@@ -31,6 +31,37 @@ export const storage = {
     else localStorage.removeItem("residenceId");
   },
 
+  get user(): any | null {
+    const raw = localStorage.getItem("user");
+    return raw ? JSON.parse(raw) : null;
+  },
+  set user(u: any | null) {
+    if (u) localStorage.setItem("user", JSON.stringify(u));
+    else localStorage.removeItem("user");
+  },
+
+  get userId(): number | null {
+    const v = localStorage.getItem("userId");
+    if (!v) return null;
+    const n = Number(v);
+    return Number.isNaN(n) ? null : n;
+  },
+  set userId(id: number | null) {
+    if (id && id > 0) localStorage.setItem("userId", String(id));
+    else localStorage.removeItem("userId");
+  },
+
+  get consortiumId(): number | null {
+    const v = localStorage.getItem("consortiumId");
+    if (!v) return null;
+    const n = Number(v);
+    return Number.isNaN(n) ? null : n;
+  },
+  set consortiumId(id: number | null) {
+    if (id && id > 0) localStorage.setItem("consortiumId", String(id));
+    else localStorage.removeItem("consortiumId");
+  },
+
   clear() {
     localStorage.clear();
     sessionStorage.clear();

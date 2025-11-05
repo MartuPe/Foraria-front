@@ -1,6 +1,7 @@
 import { api } from "../api/axios";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
+import { initSessionFromToken, getCurrentUser } from "./userService";
 
 export type LoginResponse = {
   success: boolean;
@@ -33,8 +34,39 @@ export const authService = {
     const role = data.user?.roleName ?? data.user?.role ?? storage.role;
     if (role) storage.role = role as Role;
 
-    if (data.user?.id) localStorage.setItem("userId", String(data.user.id));
-    if (data.user?.email) localStorage.setItem("email", data.user.email);
+        // 3) Guardar usuario/IDs (lo nuevo)
+    if (data.user) {
+      // user básico desde la respuesta
+      const u = {
+        id: data.user.id,
+        email: data.user.email,
+        firstName: data.user.firstName ?? "",
+        lastName: data.user.lastName ?? "",
+        role: (data.user.roleName ?? data.user.role ?? storage.role) || "",
+        // si el back ya manda consorcio/residencia, los usamos
+        consortiumId: data.user.consortiumId ?? null,
+        residences: data.user.residenceId
+          ? [{ id: data.user.residenceId, floor: null, number: null, consortiumId: data.user.consortiumId ?? 0 }]
+          : [],
+      };
+
+      // persistimos en storage de forma consistente
+      storage.user = u;
+      storage.userId = u.id ?? null;
+      storage.consortiumId = (u.consortiumId as number | null) ?? null;
+      storage.residenceId = data.user.residenceId ?? null;
+    }
+
+    // 3.b) Fallback: si no vino consortium/residence en la respuesta, intentar sacarlo del JWT
+    if (!storage.consortiumId || !storage.userId) {
+      const fromToken = initSessionFromToken(); // decodifica y persiste lo que encuentre
+      // si aún falta info y el rol lo permite, se puede enriquecer (opcional, no rompe)
+      if (fromToken?.id) {
+        try {
+          await getCurrentUser(); // intenta /User?id=... para completar datos de admin/consorcio
+        } catch {/* ignore */}
+      }
+    }
 
     const requires = data.requiresPasswordChange === true;
     if (requires && (role === Role.OWNER || role === Role.TENANT)) {
@@ -85,6 +117,7 @@ if (data.user?.consortiumId !== undefined && data.user?.consortiumId !== null) {
     const access = r.data?.accessToken ?? r.data?.token;
     if (access) storage.token = access;
     if (r.data?.refreshToken) storage.refresh = r.data.refreshToken;
+    try { initSessionFromToken(); } catch {}
     localStorage.setItem("requiresPasswordChange", "false");
     return r.data;
   },
