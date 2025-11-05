@@ -12,6 +12,8 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useDropzone } from "react-dropzone";
 import { useMutation } from "../../hooks/useMutation";
+import { storage } from "../../utils/storage";
+import { getEffectiveIds } from "../../services/userService";
 import axios from "axios";
 
 type InvoiceUploadFormProps = {
@@ -136,6 +138,18 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
     e.preventDefault();
     if (!isFormValid) return;
 
+     // Resolver consortiumId de forma robusta
+    let consortiumId = storage.consortiumId;
+    if (!consortiumId) {
+      try {
+        const ids = await getEffectiveIds(); // ya lo usás en el dashboard
+        consortiumId = ids.consortiumId;
+      } catch {
+        console.error("No pude resolver el consortiumId");
+        return; // o mostrás un toast
+      }
+    }
+
     try {
       const payload = {
         concept: concepto,
@@ -154,6 +168,7 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
         purchaseOrder: "",
         confidenceScore: 0,
         processedAt: new Date().toISOString(),
+        consortiumId,  
         items: ocrItems.length > 0 ? ocrItems : [
           {
             description: description || "Factura",
