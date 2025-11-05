@@ -148,14 +148,14 @@ export default function AdminCargaFactura() {
   const handleGenerateExpense = async () => {
     try {
       if (!selectedYear || !selectedMonth) {
-        alert("Seleccioná año y mes antes de continuar.");
+        
         return;
       }
 
       const input = `${selectedYear}-${selectedMonth}`;
       const consortiumId = getStoredConsortiumId();
       if (!consortiumId) {
-        alert("No hay consorcio activo en localStorage. Elegí un consorcio primero.");
+      
         return;
       }
 
@@ -174,7 +174,7 @@ export default function AdminCargaFactura() {
       console.log("Expense response:", expenseResp.status, expenseResp.data);
 
       if (expenseResp.status === 200 || expenseResp.status === 201) {
-        alert(`Expensa generada para ${input}. Procediendo a crear detalles...`);
+        
 
         const [yearStr, monthStr] = input.split("-");
         const year = Number(yearStr);
@@ -198,7 +198,7 @@ export default function AdminCargaFactura() {
         console.log("ExpenseDetail response:", detailResp.status, detailResp.data);
 
         if (detailResp.status === 200 || detailResp.status === 201) {
-          alert(`Detalle de expensa creado para ${nextMonth}.`);
+       
           fetchInvoices();
           fetchExpenses();
           setOpenMonthModal(false);
