@@ -1,6 +1,18 @@
-// AdminCargaFactura.tsx
 import { useState, useEffect } from "react";
-import { Button, Dialog, DialogContent, Box, Stack, Typography } from "@mui/material";
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogActions,
+  DialogTitle,
+  Box,
+  Stack,
+  Typography,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
+} from "@mui/material";
 import PageHeader from "../../components/SectionHeader";
 import InvoiceUploadForm from "../../components/modals/UploadInvoice";
 import InfoCard, { InfoFile } from "../../components/InfoCard";
@@ -57,6 +69,10 @@ type TabKey = "facturas" | "expensas";
 
 export default function AdminCargaFactura() {
   const [open, setOpen] = useState(false);
+  const [openMonthModal, setOpenMonthModal] = useState(false);
+  const [selectedYear, setSelectedYear] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
@@ -106,24 +122,40 @@ export default function AdminCargaFactura() {
     fetchExpenses();
   }, []);
 
-  /*const toInfoFiles = (filePath?: string | null): InfoFile[] =>
-    filePath ? filePath.split(",").map((name) => ({ url: name, type: name.split(".").pop() })) : [];
-*/
-  // Generar expensa (con JSON.stringify y Content-Type)
+  // --- NUEVO: modal para seleccionar año/mes antes de generar expensa ---
+  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
+  const months = [
+    { value: "01", label: "Enero" },
+    { value: "02", label: "Febrero" },
+    { value: "03", label: "Marzo" },
+    { value: "04", label: "Abril" },
+    { value: "05", label: "Mayo" },
+    { value: "06", label: "Junio" },
+    { value: "07", label: "Julio" },
+    { value: "08", label: "Agosto" },
+    { value: "09", label: "Septiembre" },
+    { value: "10", label: "Octubre" },
+    { value: "11", label: "Noviembre" },
+    { value: "12", label: "Diciembre" },
+  ];
+
+  const openExpenseModal = () => {
+    setSelectedMonth("");
+    setSelectedYear(String(new Date().getFullYear()));
+    setOpenMonthModal(true);
+  };
+
   const handleGenerateExpense = async () => {
     try {
-      const inputRaw = window.prompt("Indica el mes para generar la expensa en formato YYYY-MM (ej. 2025-11):");
-      if (!inputRaw) return;
-
-      const input = inputRaw.trim();
-      if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(input)) {
-        alert("Formato inválido. Usa YYYY-MM (por ejemplo 2025-11).");
+      if (!selectedYear || !selectedMonth) {
+        
         return;
       }
 
+      const input = `${selectedYear}-${selectedMonth}`;
       const consortiumId = getStoredConsortiumId();
       if (!consortiumId) {
-        alert("No hay consorcio activo en localStorage. Elegí un consorcio primero.");
+      
         return;
       }
 
@@ -142,7 +174,7 @@ export default function AdminCargaFactura() {
       console.log("Expense response:", expenseResp.status, expenseResp.data);
 
       if (expenseResp.status === 200 || expenseResp.status === 201) {
-        alert(`Expensa generada para ${input}. Procediendo a crear detalles...`);
+        
 
         const [yearStr, monthStr] = input.split("-");
         const year = Number(yearStr);
@@ -166,34 +198,29 @@ export default function AdminCargaFactura() {
         console.log("ExpenseDetail response:", detailResp.status, detailResp.data);
 
         if (detailResp.status === 200 || detailResp.status === 201) {
-          alert(`Detalle de expensa creado para ${nextMonth}.`);
+       
           fetchInvoices();
           fetchExpenses();
+          setOpenMonthModal(false);
         } else {
           console.error("Error en ExpenseDetail", detailResp);
-          alert(`Error al crear ExpenseDetail (status ${detailResp.status}). Revisa la consola.`);
+          alert(`Error al crear ExpenseDetail (status ${detailResp.status}).`);
         }
       } else {
         console.error("Error en Expense", expenseResp);
-        alert(`Error al generar expensa (status ${expenseResp.status}). Revisa la consola.`);
+        alert(`Error al generar expensa (status ${expenseResp.status}).`);
       }
     } catch (err) {
       console.error("Excepción en generar expensa", err);
-      alert("Ocurrió un error al generar la expensa. Revisa la consola para más detalles.");
+      alert("Ocurrió un error al generar la expensa. Revisá la consola para más detalles.");
     }
   };
 
-  // Wrapper para compatibilizar la firma del PageHeader y evitar errores de tipo
   const handleTabFromHeader = (value: string) => {
-    // forzamos a TabKey porque PageHeader probablemente pasa string
-    if (value === "facturas" || value === "expensas") {
-      setSelectedTab(value);
-    } else {
-      setSelectedTab("facturas");
-    }
+    if (value === "facturas" || value === "expensas") setSelectedTab(value);
+    else setSelectedTab("facturas");
   };
 
-  // Ordenar facturas por dateOfIssue descendente
   const sortedInvoices = invoices.slice().sort((a, b) => {
     const da = a.dateOfIssue ? new Date(a.dateOfIssue).getTime() : 0;
     const db = b.dateOfIssue ? new Date(b.dateOfIssue).getTime() : 0;
@@ -206,7 +233,7 @@ export default function AdminCargaFactura() {
         title="Carga de Facturas"
         actions={
           <>
-            <Button variant="outlined" color="primary" onClick={handleGenerateExpense} sx={{ mr: 1 }}>
+            <Button variant="outlined" color="primary" onClick={openExpenseModal} sx={{ mr: 1 }}>
               Generar expensa por mes
             </Button>
             <Button variant="contained" color="secondary" onClick={handleOpen}>
@@ -222,6 +249,7 @@ export default function AdminCargaFactura() {
         onTabChange={handleTabFromHeader}
       />
 
+      {/* Modal de carga de factura */}
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogContent>
           <InvoiceUploadForm
@@ -234,6 +262,56 @@ export default function AdminCargaFactura() {
         </DialogContent>
       </Dialog>
 
+      {/* 🔹 Nuevo Modal Año/Mes */}
+      <Dialog open={openMonthModal} onClose={() => setOpenMonthModal(false)}>
+        <DialogTitle>Generar Expensa</DialogTitle>
+        <DialogContent>
+          <Stack spacing={2} sx={{ mt: 1, minWidth: 300 }}>
+            <FormControl fullWidth>
+              <InputLabel>Año</InputLabel>
+              <Select
+                value={selectedYear}
+                label="Año"
+                onChange={(e) => setSelectedYear(e.target.value)}
+              >
+                {years.map((y) => (
+                  <MenuItem key={y} value={y}>
+                    {y}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl fullWidth>
+              <InputLabel>Mes</InputLabel>
+              <Select
+                value={selectedMonth}
+                label="Mes"
+                onChange={(e) => setSelectedMonth(e.target.value)}
+              >
+                {months.map((m) => (
+                  <MenuItem key={m.value} value={m.value}>
+                    {m.label}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenMonthModal(false)}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleGenerateExpense}
+            disabled={!selectedYear || !selectedMonth}
+          >
+            Generar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Contenido principal */}
       <Box sx={{ padding: 2 }}>
         <Stack spacing={2}>
           {selectedTab === "facturas" && (
@@ -260,8 +338,16 @@ export default function AdminCargaFactura() {
                       fields={[
                         { label: "Número de factura", value: inv.invoiceNumber },
                         { label: "Categoría", value: inv.category },
-                        { label: "Fecha emisión", value: inv.dateOfIssue ? new Date(inv.dateOfIssue).toLocaleDateString() : "" },
-                        { label: "Fecha vencimiento", value: inv.expirationDate ? new Date(inv.expirationDate).toLocaleDateString() : "" },
+                        {
+                          label: "Fecha emisión",
+                          value: inv.dateOfIssue ? new Date(inv.dateOfIssue).toLocaleDateString() : "",
+                        },
+                        {
+                          label: "Fecha vencimiento",
+                          value: inv.expirationDate
+                            ? new Date(inv.expirationDate).toLocaleDateString()
+                            : "",
+                        },
                       ]}
                       files={files}
                       filesCount={files.length}
@@ -288,12 +374,22 @@ export default function AdminCargaFactura() {
                       <InfoCard
                         key={exp.id}
                         title={exp.description}
-                        subtitle={`Total: $${exp.totalAmount.toFixed(2)} • Consorcio ${exp.consortiumId}`}
+                        subtitle={`Total: $${exp.totalAmount.toFixed(
+                          2
+                        )} • Consorcio ${exp.consortiumId}`}
                         description={`Facturas: ${exp.invoices?.length ?? 0}`}
                         price={exp.totalAmount.toFixed(2)}
                         fields={[
-                          { label: "Creada", value: exp.createdAt ? new Date(exp.createdAt).toLocaleString() : "" },
-                          { label: "Vencimiento", value: exp.expirationDate ? new Date(exp.expirationDate).toLocaleDateString() : "" },
+                          {
+                            label: "Creada",
+                            value: exp.createdAt ? new Date(exp.createdAt).toLocaleString() : "",
+                          },
+                          {
+                            label: "Vencimiento",
+                            value: exp.expirationDate
+                              ? new Date(exp.expirationDate).toLocaleDateString()
+                              : "",
+                          },
                         ]}
                         files={expFiles}
                         filesCount={expFiles.length}
