@@ -55,7 +55,7 @@ const menuItems: MenuItem[] = [
 interface ForumApiItem {
   id: number;
   category: number;
-  categoryName?: string; // Opcional ya que puede no venir de la API
+  categoryName?: string; 
   countThreads?: number;
   countResponses?: number;
   countUserActives?: number;
