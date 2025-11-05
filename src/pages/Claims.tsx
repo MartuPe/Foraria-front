@@ -8,6 +8,8 @@ import { useGet } from "../hooks/useGet";
 import NewClaim from "../components/modals/NewClaim";
 import AcceptClaimModal from "../components/modals/AcceptClaimModal";
 import RejectClaimModal from "../components/modals/RejectClaimModal";
+import { storage } from "../utils/storage";
+import { Role } from "../constants/roles";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 
@@ -58,6 +60,9 @@ const Claims: React.FC = () => {
   const [openRejectId, setOpenRejectId] = useState<number | null>(null);
 
   const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245";
+
+   const userRole = storage.role ?? "";
+    const canManageClaims = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
 
   const safeClaimData = useMemo(() => claimData ?? [], [claimData]);
 
@@ -225,21 +230,22 @@ const Claims: React.FC = () => {
                   ]
                 : [];
 
-              const actions = [
-                {
-                  label: "Aceptar",
-                  variant: "contained" as const,
-                  color: "primary" as const,
-                  onClick: () => setOpenAcceptId(id),
-                },
-                {
-                  label: "Rechazar",
-                  variant: "outlined" as const,
-                  color: "error" as const,
-                  onClick: () => setOpenRejectId(id),
-                },
-              ];
-
+              const actions = canManageClaims
+                ? [
+                    {
+                      label: "Aceptar",
+                      variant: "contained" as const,
+                      color: "primary" as const,
+                      onClick: () => setOpenAcceptId(id),
+                    },
+                    {
+                      label: "Rechazar",
+                      variant: "outlined" as const,
+                      color: "error" as const,
+                      onClick: () => setOpenRejectId(id),
+                    },
+                  ]
+                : [];
           
               const stateChip = stateChipFor(c.claim.state);
               const priorityChip = priorityChipFor(c.claim.priority);
