@@ -17,7 +17,7 @@ const sortByNewest = <T extends { id: number }>(arr: T[]) =>
   [...arr].sort((a, b) => b.id - a.id);
 
 // Hardcode momentáneo del consorcio
-const consortiumId = 1;
+const consortiumId = Number(localStorage.getItem("consortiumId"));
 
 export default function AdminUserManagment() {
   const [openNewUser, setOpenNewUser] = useState(false);

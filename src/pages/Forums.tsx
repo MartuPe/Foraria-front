@@ -104,7 +104,7 @@ const Forums: React.FC = () => {
   const [open, setOpen] = useState(false);
   const location = useLocation();
 
-  const currentUserId = 1; // reemplazar por auth real cuando esté disponible
+  const currentUserId = Number(localStorage.getItem("userId")); // reemplazar por auth real cuando esté disponible
 
   const { mutate: toggleMutate } =
     useMutation<
@@ -125,7 +125,7 @@ const Forums: React.FC = () => {
   }>>({});
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
-  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5205/api";
+  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:7245/api";
 
   // extrae slug actual desde la ruta /forums/:slug o /forums (fallback "general")
   const currentSlug = useMemo(() => {

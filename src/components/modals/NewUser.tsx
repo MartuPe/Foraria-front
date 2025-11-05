@@ -24,9 +24,10 @@ type Props = {
 };
 
 const ROLES = [
-  { id: 1, label: "Propietario" },
-  { id: 2, label: "Inquilino" },
-  { id: 3, label: "Admin" },
+  { id: 1, label: "Consorcio" },
+  { id: 2, label: "Administrador" },
+  { id: 3, label: "Propietario" },
+  { id: 4, label: "Inquilino" }
 ];
 
 export default function NewUser({ open, onClose, onCreated }: Props) {

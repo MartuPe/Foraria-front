@@ -45,7 +45,7 @@ interface Message {
 }
 
 const API_BASE = "https://localhost:7245/api";
-const currentUserId = 1;
+const currentUserId = Number(localStorage.getItem("userId"));
 
 const ThreadView: React.FC = () => {
   const location = useLocation();

@@ -19,7 +19,6 @@ import {
   HowToVote as VotacionesIcon,
   Groups as ReunionesIcon,
   Description as DocumentosIcon,
-  Chat as ChatbotIcon,
   Forum as ForosIcon,
   Settings,
   ChevronRight,
@@ -51,13 +50,12 @@ const menuItems: MenuItem[] = [
   { id: "votaciones", label: "Votaciones", icon: <VotacionesIcon />, path: "/votaciones" },
   { id: "reuniones", label: "Reuniones", icon: <ReunionesIcon />, path: "/reuniones" },
   { id: "documentos", label: "Documentos", icon: <DocumentosIcon />, path: "/documentos" },
-  { id: "chatbot", label: "Chatbot", icon: <ChatbotIcon />, path: "/chatbot" },
 ];
 
 interface ForumApiItem {
   id: number;
   category: number;
-  categoryName?: string; // Opcional ya que puede no venir de la API
+  categoryName?: string; 
   countThreads?: number;
   countResponses?: number;
   countUserActives?: number;
