@@ -5,42 +5,63 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { AdminSidebar } from "./AdminSidebar";
 
-const DRAWER_WIDTH = 0;
+const DRAWER_WIDTH = 240;
 
 export default function Layout() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  const isMobileOrTablet = useMediaQuery(theme.breakpoints.down("md")); // xs/sm/md -> overlay
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
 
-  const [open, setOpen] = React.useState(!isMobile);
-  React.useEffect(() => { setOpen(!isMobile); }, [isMobile, location.pathname]);
+  const [open, setOpen] = React.useState(false);
+  React.useEffect(() => {
+    // En desktop el sidebar queda siempre abierto; en mobile/tablet empieza cerrado
+    setOpen(!isMobileOrTablet);
+  }, [isMobileOrTablet, location.pathname]);
 
   const toggle = () => setOpen(s => !s);
-  const close  = () => { if (isMobile && !location.pathname.startsWith("/forums")) setOpen(false); };
+  const close  = () => { if (isMobileOrTablet && !location.pathname.startsWith("/forums")) setOpen(false); };
 
   const SidebarComp = isAdminRoute ? AdminSidebar : Sidebar;
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh" }}>
-      <SidebarComp open={open} onClose={close} />
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-          backgroundColor: theme.palette.background.default,
-          transition: theme.transitions.create(["margin"]),
-          ml: open && !isMobile ? `${DRAWER_WIDTH}px` : 0,
-        }}
-      >
-        {isMobile && (
+    <Box
+      sx={{
+        minHeight: "100vh",
+        // En desktop: dos columnas (sidebar fijo + contenido). En mobile: sólo contenido.
+        display: { xs: "block", md: "grid" },
+        gridTemplateColumns: { md: `${DRAWER_WIDTH}px 1fr` },
+        backgroundColor: theme.palette.background.default,
+      }}
+    >
+      {/* Sidebar: permanente en desktop, temporal (overlay) en mobile/tablet */}
+      <SidebarComp
+        open={open}
+        onClose={close}
+        variant={isMobileOrTablet ? "temporary" : "permanent"}
+        width={DRAWER_WIDTH}
+      />
+
+      {/* Contenido principal: SIN margin-left */}
+      <Box component="main" sx={{ minWidth: 0 }}>
+        {/* Botón hamburguesa sólo en mobile/tablet */}
+        {isMobileOrTablet && (
           <Box sx={{ position: "fixed", top: 16, left: 16, zIndex: theme.zIndex.drawer + 1 }}>
-            <IconButton onClick={toggle} sx={{ backgroundColor: theme.palette.primary.main, color: "white", "&:hover": { backgroundColor: theme.palette.primary.dark } }}>
+            <IconButton
+              onClick={toggle}
+              sx={{
+                backgroundColor: theme.palette.primary.main,
+                color: "white",
+                "&:hover": { backgroundColor: theme.palette.primary.dark },
+              }}
+              aria-label="Abrir menú"
+            >
               <MenuIcon />
             </IconButton>
           </Box>
         )}
-        <Box sx={{ p: 3 }}>
+
+        <Box sx={{ p: { xs: 2, md: 3 } }}>
           <Outlet />
         </Box>
       </Box>

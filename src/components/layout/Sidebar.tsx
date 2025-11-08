@@ -33,8 +33,6 @@ import {
 import { useLocation, useNavigate } from "react-router-dom";
 import logoForaria from "../../assets/Isotipo-Color.png";
 
-const DRAWER_WIDTH = 240;
-
 interface MenuItem {
   id: string;
   label: string;
@@ -55,7 +53,7 @@ const menuItems: MenuItem[] = [
 interface ForumApiItem {
   id: number;
   category: number;
-  categoryName?: string; 
+  categoryName?: string;
   countThreads?: number;
   countResponses?: number;
   countUserActives?: number;
@@ -65,6 +63,8 @@ interface ForumApiItem {
 interface SidebarProps {
   open?: boolean;
   onClose?: () => void;
+  variant?: "permanent" | "temporary";
+  width?: number;
 }
 
 const iconForCategoryName = (name: string) => {
@@ -77,19 +77,23 @@ const iconForCategoryName = (name: string) => {
   return <ForosIcon />;
 };
 
-export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
+export const Sidebar: React.FC<SidebarProps> = ({
+  open = true,
+  onClose,
+  variant = "permanent",
+  width = 240,
+}) => {
   const location = useLocation();
   const navigate = useNavigate();
   const [forosOpen, setForosOpen] = useState(false);
   const [foros, setForos] = useState<ForumApiItem[] | null>(null);
-  const [loadingForos, setLoadingForos] = useState(true); // Empezar en true
+  const [loadingForos, setLoadingForos] = useState(true);
   const [forosError, setForosError] = useState(false);
 
-  // Mapeo de números de categoría a nombres
   const getCategoryName = (categoryNumber: number): string => {
     switch (categoryNumber) {
       case 1: return "Administración";
-      case 2: return "Seguridad"; 
+      case 2: return "Seguridad";
       case 3: return "Mantenimiento";
       case 4: return "Espacios Comunes";
       case 5: return "Garage y Parking";
@@ -98,34 +102,22 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
   };
 
   useEffect(() => {
-    // Cargar foros solo una vez al montar
     let mounted = true;
-    
     const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
-    
-    console.log('Cargando foros desde:', API_BASE + '/Forum');
-    
+
     fetch(`${API_BASE}/Forum`)
       .then(async (res) => {
         if (!mounted) return;
         if (!res.ok) {
-          console.error("Error fetching forums", await res.text());
           setForos([]);
           setForosError(true);
           return;
         }
         const json = await res.json();
-        console.log('Foros cargados desde API (raw):', json);
-        
-        // Procesar los foros para agregar categoryName y filtrar duplicados
+
         if (Array.isArray(json)) {
-          // Filtrar solo los activos y eliminar duplicados por categoría
           const activeForos = json.filter((f: any) => f.isActive !== false);
-          console.log('Foros activos:', activeForos);
-          
-          // Agrupar por categoría y tomar uno por cada categoría
           const uniqueCategories = new Map<number, ForumApiItem>();
-          
           activeForos.forEach((f: any) => {
             if (!uniqueCategories.has(f.category)) {
               uniqueCategories.set(f.category, {
@@ -135,89 +127,74 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
                 countThreads: f.countThreads || 0,
                 countResponses: f.countResponses || 0,
                 countUserActives: f.countUserActives || 0,
-                isActive: f.isActive
+                isActive: f.isActive,
               });
             }
           });
-          
-          const processedForos = Array.from(uniqueCategories.values());
-          console.log('Foros procesados:', processedForos);
-          
-          setForos(processedForos);
+          setForos(Array.from(uniqueCategories.values()));
         } else {
           setForos([]);
         }
         setForosError(false);
       })
-      .catch((err) => {
-        console.error("Error fetching forums", err);
+      .catch(() => {
         if (mounted) {
           setForos([]);
           setForosError(true);
         }
       })
       .finally(() => {
-        if (mounted) {
-          setLoadingForos(false);
-        }
+        if (mounted) setLoadingForos(false);
       });
-      
+
     return () => {
       mounted = false;
     };
-  }, []); // Sin dependencias - solo cargar una vez
+  }, []);
 
-  // Auto-abrir foros si estamos en una ruta de foros
   useEffect(() => {
-    if (location.pathname.startsWith("/forums")) {
-      setForosOpen(true);
-    }
+    if (location.pathname.startsWith("/forums")) setForosOpen(true);
   }, [location.pathname]);
 
   const handleNavigation = (path: string) => {
     navigate(path);
-    // NO cerrar el sidebar cuando se navega entre categorías de foros
-    if (onClose && !path.startsWith("/forums")) {
-      onClose();
-    }
+    if (onClose && !path.startsWith("/forums")) onClose();
   };
 
   const isActiveRoute = (path: string) => location.pathname === path;
   const isForosActive = () => location.pathname.startsWith("/forums");
-
   const handleForosClick = () => setForosOpen((s) => !s);
 
-  // Función para crear slug de forma consistente
-  const createSlug = (text: string) => {
-    return text
+  const createSlug = (text: string) =>
+    text
       .toString()
       .toLowerCase()
       .normalize("NFD")
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
-  };
 
   return (
     <Drawer
-      variant="persistent"
+      variant={variant}
       anchor="left"
       open={open}
-      sx={{
-        width: DRAWER_WIDTH,
-        flexShrink: 0,
-        "& .MuiDrawer-paper": {
-          width: DRAWER_WIDTH,
+      onClose={onClose}
+      ModalProps={{ keepMounted: true }}
+      PaperProps={{
+        sx: {
+          width,
           boxSizing: "border-box",
           backgroundColor: "#083e77ff",
           color: "white",
           height: "100vh",
-          overflow: "hidden",
           display: "flex",
           flexDirection: "column",
+          overflowY: "auto",
         },
       }}
     >
+      {/* Header */}
       <Box
         sx={{
           p: 2,
@@ -240,6 +217,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
         </Box>
       </Box>
 
+      {/* Menú principal */}
       <List
         sx={{
           px: 1.5,
@@ -293,6 +271,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
           </ListItem>
         ))}
 
+        {/* Foros */}
         <ListItem disablePadding sx={{ mb: 0 }}>
           <ListItemButton
             onClick={handleForosClick}
@@ -326,29 +305,26 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
 
         <Collapse in={forosOpen} timeout="auto" unmountOnExit>
           <List component="div" disablePadding sx={{ pl: 2 }}>
-            {/* Mostrar loading solo mientras está cargando */}
             {loadingForos && (
               <ListItem disablePadding>
                 <ListItemButton disabled sx={{ minHeight: 36, px: 1.5, py: 0.5 }}>
-                  <ListItemText 
-                    primary="Cargando..." 
-                    primaryTypographyProps={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.7)" }} 
+                  <ListItemText
+                    primary="Cargando..."
+                    primaryTypographyProps={{ fontSize: "0.875rem", color: "rgba(255,255,255,0.7)" }}
                   />
                 </ListItemButton>
               </ListItem>
             )}
 
-            {/* Mostrar categorías si no está cargando */}
             {!loadingForos && (
               <>
-                {/* SI la API funcionó Y hay datos, mostrar SOLO los de la API */}
                 {!forosError && foros && foros.length > 0 ? (
                   foros.map((f) => {
                     const categoryName = f.categoryName || getCategoryName(f.category);
                     const slug = createSlug(categoryName);
                     const path = `/forums/${slug}`;
-                    const isActive = isActiveRoute(path);
-                    
+                    const active = isActiveRoute(path);
+
                     return (
                       <ListItem key={`api-forum-${f.id}`} disablePadding>
                         <ListItemButton
@@ -358,8 +334,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
                             minHeight: 36,
                             px: 1.5,
                             py: 0.5,
-                            backgroundColor: isActive ? "#f97316" : "transparent",
-                            "&:hover": { backgroundColor: isActive ? "#f97316" : "rgba(255,255,255,0.08)" },
+                            backgroundColor: active ? "#f97316" : "transparent",
+                            "&:hover": { backgroundColor: active ? "#f97316" : "rgba(255,255,255,0.08)" },
                             color: "white",
                           }}
                         >
@@ -368,87 +344,91 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
                           </ListItemIcon>
                           <ListItemText
                             primary={categoryName}
-                            primaryTypographyProps={{ 
-                              fontSize: "0.8rem", 
-                              fontWeight: isActive ? 600 : 500 
-                            }}
+                            primaryTypographyProps={{ fontSize: "0.8rem", fontWeight: active ? 600 : 500 }}
                           />
                         </ListItemButton>
                       </ListItem>
                     );
                   })
                 ) : (
-                  /* SI la API falló O no hay datos, mostrar SOLO categorías fallback */
                   <>
                     <ListItem disablePadding>
-                      <ListItemButton 
-                        onClick={() => handleNavigation("/forums/administracion")} 
-                        sx={{ 
+                      <ListItemButton
+                        onClick={() => handleNavigation("/forums/administracion")}
+                        sx={{
                           borderRadius: 1.5,
-                          minHeight: 36, 
-                          px: 1.5, 
+                          minHeight: 36,
+                          px: 1.5,
                           py: 0.5,
                           backgroundColor: isActiveRoute("/forums/administracion") ? "#f97316" : "transparent",
-                          "&:hover": { backgroundColor: isActiveRoute("/forums/administracion") ? "#f97316" : "rgba(255,255,255,0.08)" },
+                          "&:hover": {
+                            backgroundColor: isActiveRoute("/forums/administracion") ? "#f97316" : "rgba(255,255,255,0.08)",
+                          },
                         }}
                       >
                         <ListItemIcon sx={{ color: "white", minWidth: 16 }}>
                           <AdminPanelSettings />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary="Administración" 
-                          primaryTypographyProps={{ 
+                        <ListItemText
+                          primary="Administración"
+                          primaryTypographyProps={{
                             fontSize: "0.8rem",
-                            fontWeight: isActiveRoute("/forums/administracion") ? 600 : 500
-                          }} 
+                            fontWeight: isActiveRoute("/forums/administracion") ? 600 : 500,
+                          }}
                         />
                       </ListItemButton>
                     </ListItem>
+
                     <ListItem disablePadding>
-                      <ListItemButton 
-                        onClick={() => handleNavigation("/forums/seguridad")} 
-                        sx={{ 
+                      <ListItemButton
+                        onClick={() => handleNavigation("/forums/seguridad")}
+                        sx={{
                           borderRadius: 1.5,
-                          minHeight: 36, 
-                          px: 1.5, 
+                          minHeight: 36,
+                          px: 1.5,
                           py: 0.5,
                           backgroundColor: isActiveRoute("/forums/seguridad") ? "#f97316" : "transparent",
-                          "&:hover": { backgroundColor: isActiveRoute("/forums/seguridad") ? "#f97316" : "rgba(255,255,255,0.08)" },
+                          "&:hover": {
+                            backgroundColor: isActiveRoute("/forums/seguridad") ? "#f97316" : "rgba(255,255,255,0.08)",
+                          },
                         }}
                       >
                         <ListItemIcon sx={{ color: "white", minWidth: 16 }}>
                           <Security />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary="Seguridad" 
-                          primaryTypographyProps={{ 
+                        <ListItemText
+                          primary="Seguridad"
+                          primaryTypographyProps={{
                             fontSize: "0.8rem",
-                            fontWeight: isActiveRoute("/forums/seguridad") ? 600 : 500
-                          }} 
+                            fontWeight: isActiveRoute("/forums/seguridad") ? 600 : 500,
+                          }}
                         />
                       </ListItemButton>
                     </ListItem>
+
                     <ListItem disablePadding>
-                      <ListItemButton 
-                        onClick={() => handleNavigation("/forums/mantenimiento")} 
-                        sx={{ 
+                      <ListItemButton
+                        onClick={() => handleNavigation("/forums/mantenimiento")}
+                        sx={{
                           borderRadius: 1.5,
-                          minHeight: 36, 
-                          px: 1.5, 
+                          minHeight: 36,
+                          px: 1.5,
                           py: 0.5,
                           backgroundColor: isActiveRoute("/forums/mantenimiento") ? "#f97316" : "transparent",
-                          "&:hover": { backgroundColor: isActiveRoute("/forums/mantenimiento") ? "#f97316" : "rgba(255,255,255,0.08)" },
+                          "&:hover": {
+                            backgroundColor: isActiveRoute("/forums/mantenimiento") ? "#f97316" : "rgba(255,255,255,0.08)",
+                          },
                         }}
                       >
                         <ListItemIcon sx={{ color: "white", minWidth: 16 }}>
                           <Build />
                         </ListItemIcon>
-                        <ListItemText 
-                          primary="Mantenimiento" 
-                          primaryTypographyProps={{ 
+                        <ListItemText
+                          primary="Mantenimiento"
+                          primaryTypographyProps={{
                             fontSize: "0.8rem",
-                            fontWeight: isActiveRoute("/forums/mantenimiento") ? 600 : 500
-                          }} 
+                            fontWeight: isActiveRoute("/forums/mantenimiento") ? 600 : 500,
+                          }}
                         />
                       </ListItemButton>
                     </ListItem>
@@ -460,6 +440,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
         </Collapse>
       </List>
 
+      {/* Configuración */}
       <Box sx={{ px: 1.5, pb: 0.5, flexShrink: 0 }}>
         <ListItemButton
           onClick={() => handleNavigation("/configuracion")}
@@ -482,6 +463,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ open = true, onClose }) => {
         </ListItemButton>
       </Box>
 
+      {/* Perfil */}
       <Box sx={{ p: 1.5, borderTop: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}>
         <Box
           onClick={() => handleNavigation("/perfil")}
