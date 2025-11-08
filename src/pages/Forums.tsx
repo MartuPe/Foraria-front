@@ -71,11 +71,11 @@ function toSlug(text: string) {
 
 const ADMIN_TAB_COLORS: Record<string, string> = {
   Todas: "#666666",
-  General: "#1e88e5",
-  Administración: "#42a5f5",
+  General: "#1472c4ff",
+  Administración: "#5caeffff",
   Seguridad: "#ef5350",
   Mantenimiento: "#ff9800",
-  "Espacios Comunes": "#26a69a",
+  "Espacios Comunes": "#179e8cff",
   "Garage y Parking": "#7e57c2",
 };
 

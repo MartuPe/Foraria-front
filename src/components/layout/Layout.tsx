@@ -1,4 +1,3 @@
-// src/components/layout/Layout.tsx
 import React from "react";
 import { Box, IconButton, useTheme, useMediaQuery } from "@mui/material";
 import { Menu as MenuIcon } from "@mui/icons-material";
@@ -6,7 +5,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import { Sidebar } from "./Sidebar";
 import { AdminSidebar } from "./AdminSidebar";
 
-const DRAWER_WIDTH = 240;
+const DRAWER_WIDTH = 0;
 
 export default function Layout() {
   const theme = useTheme();
