@@ -15,7 +15,6 @@ export default function Layout() {
 
   const [open, setOpen] = React.useState(false);
   React.useEffect(() => {
-    // En desktop el sidebar queda siempre abierto; en mobile/tablet empieza cerrado
     setOpen(!isMobileOrTablet);
   }, [isMobileOrTablet, location.pathname]);
 
@@ -28,13 +27,11 @@ export default function Layout() {
     <Box
       sx={{
         minHeight: "100vh",
-        // En desktop: dos columnas (sidebar fijo + contenido). En mobile: sólo contenido.
         display: { xs: "block", md: "grid" },
         gridTemplateColumns: { md: `${DRAWER_WIDTH}px 1fr` },
         backgroundColor: theme.palette.background.default,
       }}
     >
-      {/* Sidebar: permanente en desktop, temporal (overlay) en mobile/tablet */}
       <SidebarComp
         open={open}
         onClose={close}
@@ -42,9 +39,7 @@ export default function Layout() {
         width={DRAWER_WIDTH}
       />
 
-      {/* Contenido principal: SIN margin-left */}
       <Box component="main" sx={{ minWidth: 0 }}>
-        {/* Botón hamburguesa sólo en mobile/tablet */}
         {isMobileOrTablet && (
           <Box sx={{ position: "fixed", top: 16, left: 16, zIndex: theme.zIndex.drawer + 1 }}>
             <IconButton

@@ -63,6 +63,7 @@ export default function App() {
             {["general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"].map(f => <Route key={f} path={`forums/${f}`} element={<Forums />} />)}
             <Route path="forums/comentarios" element={<Comentarios />} />
           </Route>
+
           <Route path="/admin" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><Layout /></RequireRoles></RequireAuth>}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="reclamos" element={<Claims />} />
@@ -75,6 +76,7 @@ export default function App() {
             <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
             <Route path="documents" element={<AdminDocuments />} />
+            <Route path="configuracion" element={<Configuration />} />
           </Route>
           <Route path="*" element={<Navigate to={isAdmin ? "/admin/dashboard" : "/dashboard"} replace />} />
         </Routes>
