@@ -1,91 +1,50 @@
-import React, { useState, useEffect } from 'react';
-import { Box, IconButton, useTheme, useMediaQuery } from '@mui/material';
-import { Menu as MenuIcon } from '@mui/icons-material';
-import { Sidebar } from './Sidebar';
-import { useLocation } from 'react-router-dom';
+// src/components/layout/Layout.tsx
+import React from "react";
+import { Box, IconButton, useTheme, useMediaQuery } from "@mui/material";
+import { Menu as MenuIcon } from "@mui/icons-material";
+import { Outlet, useLocation } from "react-router-dom";
+import { Sidebar } from "./Sidebar";
+import { AdminSidebar } from "./AdminSidebar";
 
-interface LayoutProps {
-  children: React.ReactNode;
-}
+const DRAWER_WIDTH = 240;
 
-export const Layout: React.FC<LayoutProps> = ({ children }) => {
+export default function Layout() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const [sidebarOpen, setSidebarOpen] = useState(!isMobile);
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
 
-  // Mantener el sidebar abierto en desktop, especialmente en rutas de foros
-  useEffect(() => {
-    if (!isMobile) {
-      setSidebarOpen(true);
-    }
-  }, [isMobile, location.pathname]);
+  const [open, setOpen] = React.useState(!isMobile);
+  React.useEffect(() => { setOpen(!isMobile); }, [isMobile, location.pathname]);
 
-  const handleSidebarToggle = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
+  const toggle = () => setOpen(s => !s);
+  const close  = () => { if (isMobile && !location.pathname.startsWith("/forums")) setOpen(false); };
 
-  const handleSidebarClose = () => {
-    // Solo cerrar en mobile Y si no estamos en una ruta de foros
-    if (isMobile && !location.pathname.startsWith('/forums')) {
-      setSidebarOpen(false);
-    }
-  };
+  const SidebarComp = isAdminRoute ? AdminSidebar : Sidebar;
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {/* Sidebar */}
-      <Sidebar 
-        open={sidebarOpen} 
-        onClose={handleSidebarClose}
-      />
-
-      {/* Main Content */}
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      <SidebarComp open={open} onClose={close} />
       <Box
         component="main"
         sx={{
           flexGrow: 1,
           backgroundColor: theme.palette.background.default,
-          transition: theme.transitions.create(['margin'], {
-            easing: theme.transitions.easing.sharp,
-            duration: theme.transitions.duration.leavingScreen,
-          }),
-          marginLeft: sidebarOpen ? 0 : '-240px', // Cambiado de -280px a -240px
-          ...(isMobile && {
-            marginLeft: 0,
-          }),
+          transition: theme.transitions.create(["margin"]),
+          ml: open && !isMobile ? `${DRAWER_WIDTH}px` : 0,
         }}
       >
-        {/* Mobile menu button */}
         {isMobile && (
-          <Box
-            sx={{
-              position: 'fixed',
-              top: 16,
-              left: 16,
-              zIndex: theme.zIndex.drawer + 1,
-            }}
-          >
-            <IconButton
-              onClick={handleSidebarToggle}
-              sx={{
-                backgroundColor: theme.palette.primary.main,
-                color: 'white',
-                '&:hover': {
-                  backgroundColor: theme.palette.primary.dark,
-                },
-              }}
-            >
+          <Box sx={{ position: "fixed", top: 16, left: 16, zIndex: theme.zIndex.drawer + 1 }}>
+            <IconButton onClick={toggle} sx={{ backgroundColor: theme.palette.primary.main, color: "white", "&:hover": { backgroundColor: theme.palette.primary.dark } }}>
               <MenuIcon />
             </IconButton>
           </Box>
         )}
-
-        {/* Page Content */}
         <Box sx={{ p: 3 }}>
-          {children}
+          <Outlet />
         </Box>
       </Box>
     </Box>
   );
-};
+}

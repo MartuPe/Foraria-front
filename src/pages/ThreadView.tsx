@@ -13,7 +13,6 @@ import ThumbDownOutlinedIcon from "@mui/icons-material/ThumbDownOutlined";
 import ChatBubbleOutlineOutlinedIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import InfoCard from "../components/InfoCard";
-import { Layout } from "../components/layout";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "../hooks/useMutation";
 
@@ -235,17 +234,14 @@ const ThreadView: React.FC = () => {
 
   if (loading) {
     return (
-      <Layout>
         <Box sx={{ py: 6, textAlign: "center" }}>
           <CircularProgress />
         </Box>
-      </Layout>
     );
   }
 
   if (!threadId) {
     return (
-      <Layout>
         <Box sx={{ py: 6, textAlign: "center" }}>
           <Typography variant="h6" color="error">
             No se recibió el ID del hilo
@@ -254,13 +250,11 @@ const ThreadView: React.FC = () => {
             Volver a foros
           </Button>
         </Box>
-      </Layout>
     );
   }
 
   if (!thread) {
     return (
-      <Layout>
         <Box sx={{ py: 6, textAlign: "center" }}>
           <Typography variant="h6" color="error">
             No se encontró el hilo
@@ -269,12 +263,10 @@ const ThreadView: React.FC = () => {
             Volver
           </Button>
         </Box>
-      </Layout>
     );
   }
 
   return (
-    <Layout>
       <Box sx={{ px: 2, py: 3, display: "grid", gap: 2 }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <Button variant="outlined" onClick={goBackToForum}>
@@ -369,7 +361,6 @@ const ThreadView: React.FC = () => {
           })}
         </Box>
       </Box>
-    </Layout>
   );
 };
 

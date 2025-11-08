@@ -12,7 +12,6 @@ import {
   VisibilityOutlined,
 } from "@mui/icons-material";
 
-import { AdminLayout } from "../../components/layout/AdminLayout";
 import PageHeader from "../../components/SectionHeader";
 import QuickAction from "../../components/QuickAction";
 import { authService } from "../../services/authService";
@@ -72,11 +71,9 @@ const navigate = useNavigate();
 
   if (!data) {
     return (
-      <AdminLayout>
         <Box className="foraria-page-container">
           <div className="page-loading">Cargando dashboard…</div>
         </Box>
-      </AdminLayout>
     );
   }
   

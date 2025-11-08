@@ -7,7 +7,6 @@ import DonutChart from "../components/charts/Donut";
 import BarsChart from "../components/charts/Bar";
 import QuickAction from "../components/QuickAction";
 import { fetchDashboard } from "../services/dashboardService";
-import { Layout } from "../components/layout";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import EventIcon from "@mui/icons-material/Event";
@@ -27,11 +26,9 @@ export default function DashboardPage() {
 
   if (!data) {
     return (
-      <Layout>
         <Box className="foraria-page-container">
           <div className="page-loading">Cargando dashboard…</div>
         </Box>
-      </Layout>
     );
   }
 
@@ -52,7 +49,6 @@ export default function DashboardPage() {
       : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }];
 
   return (
-    <Layout>
       <Box className="foraria-page-container">
         <PageHeader
           title={header.welcomeTitle}
@@ -245,6 +241,5 @@ export default function DashboardPage() {
           </Grid>
         </Grid>
       </Box>
-    </Layout>
   );
 }

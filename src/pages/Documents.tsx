@@ -17,7 +17,6 @@ import {
   formatSize,
 } from "../services/documentService";
 import NewDocument from "../components/modals/NewDocument";
-import { Layout } from "../components/layout";
 import { useGet } from "../hooks/useGet";
 import "../styles/documents.css";
 
@@ -273,7 +272,6 @@ export default function Documents() {
   };
 
   return (
-    <Layout>
       <Box className="foraria-page-container">
         <PageHeader
           title="Documentos"
@@ -480,7 +478,6 @@ export default function Documents() {
           </Alert>
         </Snackbar>
       </Box>
-    </Layout>
   );
 }
 

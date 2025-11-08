@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
-  Container,
   Stack,
   Typography,
   Button,
@@ -24,7 +23,6 @@ import PaymentsIcon from "@mui/icons-material/Payments";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import PageHeader from "../components/SectionHeader";
-import { Layout } from "../components/layout";
 import axios from "axios";
 import DownloadIcon from "@mui/icons-material/Download";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -176,7 +174,6 @@ export default function ExpensesPage() {
     }
   };
 
-  // 🔹 Nuevo: lógica para crear preferencia de pago (MercadoPago)
   const handleMercadoPago = async (detail: ExpenseDetail) => {
     const residenceId = detail.residenceId;
     const expenseId = detail.id;
@@ -187,17 +184,13 @@ export default function ExpensesPage() {
         `https://localhost:7245/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
         { method: "POST" }
       );
-
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-
       const json = await res.json();
-      console.log("create-preference response:", json);
       const initPoint = json.initPoint ?? json.data?.initPoint ?? null;
       if (!initPoint) throw new Error("initPoint no recibido del backend");
-
       window.location.href = String(initPoint);
     } catch (e: any) {
       console.error("Error iniciando pago:", e);
@@ -209,42 +202,23 @@ export default function ExpensesPage() {
 
   if (loading) {
     return (
-      <Layout>
-        <Box className="foraria-page-container">
-          <Container maxWidth="lg" sx={{ py: 3 }}>
-            Cargando expensas…
-          </Container>
-        </Box>
-      </Layout>
+      <Box className="foraria-page-container">
+        Cargando expensas…
+      </Box>
     );
   }
 
   if (!header || !statValues) return null;
 
   return (
-    <Layout>
-      <Box className="foraria-page-container">
+    <>
+      <Box className="foraria-page-container" sx={{ ml: 0 }}>
         <PageHeader
           title="Expensas"
           stats={[
-            {
-              icon: <PaymentsIcon color="action" />,
-              title: "Total Pendiente",
-              value: <Money value={statValues.totalPendiente} /> as unknown as string,
-              color: "warning",
-            },
-            {
-              icon: <CheckCircleOutlineIcon color="action" />,
-              title: "Última Expensa",
-              value: statValues.ultima,
-              color: "success",
-            },
-            {
-              icon: <EventAvailableIcon color="action" />,
-              title: "Próximo Vencimiento",
-              value: statValues.proximo,
-              color: "secondary",
-            },
+            { icon: <PaymentsIcon color="action" />, title: "Total Pendiente", value: <Money value={statValues.totalPendiente} /> as unknown as string, color: "warning" },
+            { icon: <CheckCircleOutlineIcon color="action" />, title: "Última Expensa", value: statValues.ultima, color: "success" },
+            { icon: <EventAvailableIcon color="action" />, title: "Próximo Vencimiento", value: statValues.proximo, color: "secondary" },
           ]}
         />
 
@@ -272,6 +246,7 @@ export default function ExpensesPage() {
                   "&:hover": { boxShadow: 4, transform: "translateY(-2px)" },
                   display: "flex",
                   flexDirection: "column",
+                  mb: 2,
                 }}
               >
                 <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -283,11 +258,7 @@ export default function ExpensesPage() {
                       icon={icon}
                       label={detail.state}
                       size="small"
-                      sx={{
-                        bgcolor: color + "20",
-                        color: color,
-                        fontWeight: 600,
-                      }}
+                      sx={{ bgcolor: color + "20", color, fontWeight: 600 }}
                     />
                   </Stack>
 
@@ -307,11 +278,7 @@ export default function ExpensesPage() {
                       {downloadingPdfFor === detail.id ? "Descargando..." : "PDF"}
                     </Button>
 
-                    <Button
-                      size="small"
-                      startIcon={<VisibilityIcon />}
-                      onClick={() => setDetailsOpenFor(detail)}
-                    >
+                    <Button size="small" startIcon={<VisibilityIcon />} onClick={() => setDetailsOpenFor(detail)}>
                       Ver
                     </Button>
 
@@ -352,11 +319,7 @@ export default function ExpensesPage() {
                 Estado:{" "}
                 <Chip
                   label={detailsOpenFor.state}
-                  sx={{
-                    color: "#fff",
-                    bgcolor: stateColor(detailsOpenFor.state),
-                    fontWeight: 600,
-                  }}
+                  sx={{ color: "#fff", bgcolor: stateColor(detailsOpenFor.state), fontWeight: 600 }}
                   size="small"
                 />
                 {"  "} Total unidad: <Money value={detailsOpenFor.total} />
@@ -377,7 +340,9 @@ export default function ExpensesPage() {
                           {inv.supplierName || "-"} • {inv.category || "-"}
                         </Typography>
                       </Box>
-                      <Typography variant="subtitle2">${inv.amount?.toFixed(2) ?? "0.00"}</Typography>
+                      <Typography variant="subtitle2">
+                        ${inv.amount?.toFixed(2) ?? "0.00"}
+                      </Typography>
                       {inv.filePath && (
                         <IconButton size="small" onClick={() => window.open(inv.filePath!, "_blank")}>
                           <DownloadIcon fontSize="small" />
@@ -394,6 +359,6 @@ export default function ExpensesPage() {
           <Button onClick={() => setDetailsOpenFor(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
-    </Layout>
+    </>
   );
 }
