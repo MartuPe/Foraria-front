@@ -12,10 +12,17 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Divider,
+  Chip,
 } from "@mui/material";
 import PageHeader from "../../components/SectionHeader";
 import InvoiceUploadForm from "../../components/modals/UploadInvoice";
 import InfoCard, { InfoFile } from "../../components/InfoCard";
+import DownloadIcon from "@mui/icons-material/Download";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import Money from "../../components/Money";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
+import IconButton from "@mui/material/IconButton";
 import axios from "axios";
 
 interface InvoiceItem {
@@ -78,7 +85,23 @@ export default function AdminCargaFactura() {
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [loadingExpenses, setLoadingExpenses] = useState(false);
   const [selectedTab, setSelectedTab] = useState<TabKey>("facturas");
+const [detailsOpen, setDetailsOpen] = useState(false);
+const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
 
+const handleViewExpense = (exp: any) => {
+  setSelectedExpense(exp);
+  setDetailsOpen(true);
+};
+
+const handleCloseDetails = () => {
+  setSelectedExpense(null);
+  setDetailsOpen(false);
+};
+
+const handleDownloadPdf = (exp: any) => {
+  const url = `https://localhost:7245/api/Expense/pdf?id=${exp.id}`;
+  window.open(url, "_blank");
+};
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
@@ -358,48 +381,131 @@ export default function AdminCargaFactura() {
             </>
           )}
 
-          {selectedTab === "expensas" && (
-            <>
-              <Typography variant="h6">Expensas</Typography>
-              {loadingExpenses && <div>Cargando expensas...</div>}
-              {!loadingExpenses && expenses.length === 0 && <div>No hay expensas.</div>}
-              {!loadingExpenses &&
-                expenses.map((exp) => {
-                  const expFiles: InfoFile[] = (exp.invoices || [])
-                    .flatMap((inv) => (inv.filePath ? inv.filePath.split(",") : []))
-                    .map((name) => ({ url: name, type: name.split(".").pop() }));
+    {selectedTab === "expensas" && (
+  <>
+    <Typography variant="h6" sx={{ mb: 2 }}>
+      Expensas
+    </Typography>
 
-                  return (
-                    <Box key={`exp-${exp.id}`}>
-                      <InfoCard
-                        key={exp.id}
-                        title={exp.description}
-                        subtitle={`Total: $${exp.totalAmount.toFixed(
-                          2
-                        )} • Consorcio ${exp.consortiumId}`}
-                        description={`Facturas: ${exp.invoices?.length ?? 0}`}
-                        price={exp.totalAmount.toFixed(2)}
-                        fields={[
-                          {
-                            label: "Creada",
-                            value: exp.createdAt ? new Date(exp.createdAt).toLocaleString() : "",
-                          },
-                          {
-                            label: "Vencimiento",
-                            value: exp.expirationDate
-                              ? new Date(exp.expirationDate).toLocaleDateString()
-                              : "",
-                          },
-                        ]}
-                        files={expFiles}
-                        filesCount={expFiles.length}
-                        showDivider
-                      />
-                    </Box>
-                  );
-                })}
-            </>
+    {loadingExpenses && <div>Cargando expensas...</div>}
+    {!loadingExpenses && expenses.length === 0 && <div>No hay expensas.</div>}
+
+    {!loadingExpenses &&
+      expenses.map((exp) => {
+        const expFiles: InfoFile[] = (exp.invoices || [])
+          .flatMap((inv) => (inv.filePath ? inv.filePath.split(",") : []))
+          .map((name) => ({ url: name, type: name.split(".").pop() }));
+
+        return (
+          <InfoCard
+            key={exp.id}
+            title={exp.description || `Expensa ${exp.id}`}
+            subtitle={
+              <span style={{ fontSize: "1.8rem", fontWeight: "bold" }}>
+                <span style={{ color: "rgb(249 115 22)" }}>
+                  ${exp.totalAmount.toLocaleString("es-AR")}
+                </span>
+              </span>
+            }
+            chips={[
+              {
+                label: "Generada",
+                color: "info",
+                variant: "outlined",
+              },
+            ]}
+            fields={[
+              {
+                label: "Creada:",
+                value: exp.createdAt
+                  ? new Date(exp.createdAt).toLocaleDateString("es-AR")
+                  : "-",
+              },
+              {
+                label: "Vence:",
+                value: exp.expirationDate
+                  ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
+                  : "-",
+              },
+            ]}
+            showDivider
+            extraActions={[
+              {
+                label: "PDF",
+                icon: <DownloadIcon />,
+                onClick: () => handleDownloadPdf(exp),
+              },
+              {
+                label: "Ver",
+                icon: <VisibilityIcon />,
+                onClick: () => handleViewExpense(exp),
+              },
+            ]}
+            sx={{ mb: 2 }}
+          />
+        );
+      })}
+
+<Dialog open={!!detailsOpen} onClose={handleCloseDetails} maxWidth="md" fullWidth>
+  <DialogTitle>Detalle de expensa</DialogTitle>
+  <DialogContent dividers>
+    {selectedExpense && (
+      <>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          {selectedExpense.description || `Expensa ${selectedExpense.id}`}
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 2 }}>
+          {"  "} Total unidad: <Money value={selectedExpense.totalAmount} />
+        </Typography>
+
+        <Divider sx={{ mb: 2 }} />
+
+        <Stack spacing={1}>
+          {selectedExpense.invoices.length === 0 && (
+            <Typography>No hay facturas.</Typography>
           )}
+          {selectedExpense.invoices.map((inv: any) => (
+            <Box
+              key={`dlg-inv-${inv.id}`}
+              sx={{ borderRadius: 1, p: 1.25, bgcolor: "background.paper" }}
+            >
+              <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                <Box sx={{ flex: 1 }}>
+                  <Typography variant="subtitle2" noWrap>
+                    {inv.concept || inv.description || `Factura ${inv.id}`}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    noWrap
+                  >
+                    {inv.supplierName || "-"} • {inv.category || "-"}
+                  </Typography>
+                </Box>
+                <Typography variant="subtitle2">
+                  ${inv.amount?.toFixed(2) ?? "0.00"}
+                </Typography>
+                {inv.filePath && (
+                  <IconButton
+                    size="small"
+                    onClick={() => window.open(inv.filePath!, "_blank")}
+                  >
+                    <DownloadIcon fontSize="small" />
+                  </IconButton>
+                )}
+              </Box>
+            </Box>
+          ))}
+        </Stack>
+      </>
+    )}
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseDetails}>Cerrar</Button>
+  </DialogActions>
+</Dialog>
+  </>
+)}
         </Stack>
       </Box>
     </div>
