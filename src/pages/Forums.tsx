@@ -170,19 +170,25 @@ const Forums: React.FC = () => {
   } = useGet<Thread[]>("/Thread");
 
   const forumsStatus = (errorForums as any)?.response?.status as
-    | number
-    | undefined;
-  const threadsStatus = (errorThreads as any)?.response?.status as
-    | number
-    | undefined;
+  | number
+  | undefined;
+const threadsStatus = (errorThreads as any)?.response?.status as
+  | number
+  | undefined;
 
-  const safeForums = forumsStatus === 404 ? [] : forumsRaw;
-  const safeThreads = threadsStatus === 404 ? [] : threadsRaw;
+const safeForums = useMemo(() => {
+  return forumsStatus === 404 ? [] : forumsRaw;
+}, [forumsStatus, forumsRaw]);
 
-  const loading = loadingForums || loadingThreads;
-  const hasHardError =
-    (!!errorForums && forumsStatus !== 404) ||
-    (!!errorThreads && threadsStatus !== 404);
+const safeThreads = useMemo(() => {
+  return threadsStatus === 404 ? [] : threadsRaw;
+}, [threadsStatus, threadsRaw]);
+
+const loading = loadingForums || loadingThreads;
+const hasHardError =
+  (!!errorForums && forumsStatus !== 404) ||
+  (!!errorThreads && threadsStatus !== 404);
+
 
   const location = useLocation();
   const navigate = useNavigate();
