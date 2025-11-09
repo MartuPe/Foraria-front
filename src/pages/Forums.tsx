@@ -42,6 +42,7 @@ import {
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
 import NewPost from "../components/modals/NewPost";
+import EditThread from "../components/modals/EditThread";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
@@ -170,25 +171,24 @@ const Forums: React.FC = () => {
   } = useGet<Thread[]>("/Thread");
 
   const forumsStatus = (errorForums as any)?.response?.status as
-  | number
-  | undefined;
-const threadsStatus = (errorThreads as any)?.response?.status as
-  | number
-  | undefined;
+    | number
+    | undefined;
+  const threadsStatus = (errorThreads as any)?.response?.status as
+    | number
+    | undefined;
 
-const safeForums = useMemo(() => {
-  return forumsStatus === 404 ? [] : forumsRaw;
-}, [forumsStatus, forumsRaw]);
+  const safeForums = useMemo(() => {
+    return forumsStatus === 404 ? [] : forumsRaw;
+  }, [forumsStatus, forumsRaw]);
 
-const safeThreads = useMemo(() => {
-  return threadsStatus === 404 ? [] : threadsRaw;
-}, [threadsStatus, threadsRaw]);
+  const safeThreads = useMemo(() => {
+    return threadsStatus === 404 ? [] : threadsRaw;
+  }, [threadsStatus, threadsRaw]);
 
-const loading = loadingForums || loadingThreads;
-const hasHardError =
-  (!!errorForums && forumsStatus !== 404) ||
-  (!!errorThreads && threadsStatus !== 404);
-
+  const loading = loadingForums || loadingThreads;
+  const hasHardError =
+    (!!errorForums && forumsStatus !== 404) ||
+    (!!errorThreads && threadsStatus !== 404);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -203,12 +203,23 @@ const hasHardError =
   const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [threadBeingEdited, setThreadBeingEdited] = useState<{
+    id: number;
+    title: string;
+    description: string;
+  } | null>(null);
   const currentUserId = Number(localStorage.getItem("userId") || 0);
 
   const { mutate: toggleMutate } =
     useMutation<
       ReactionResponse,
-      { user_id: number; thread_id?: number; message_id?: number; reactionType: number }
+      {
+        user_id: number;
+        thread_id?: number;
+        message_id?: number;
+        reactionType: number;
+      }
     >("/Reactions/toggle", "post");
 
   const [enriched, setEnriched] = useState<
@@ -760,6 +771,21 @@ const hasHardError =
     }
   };
 
+  // ====== abrir modal de edición ======
+  const openEditDialog = (thread: {
+    threadId: number;
+    title: string;
+    description: string;
+  }) => {
+    if (!isAdmin) return;
+    setThreadBeingEdited({
+      id: thread.threadId,
+      title: thread.title,
+      description: thread.description,
+    });
+    setEditOpen(true);
+  };
+
   // ====== Render thread ======
   const renderThread = (thread: any) => {
     const key = String(thread.threadId);
@@ -848,7 +874,7 @@ const hasHardError =
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={() => {}}
+                    onClick={() => openEditDialog(thread)}
                     sx={{ color: "info.main" }}
                   >
                     <EditOutlined fontSize="small" />
@@ -1481,6 +1507,40 @@ const hasHardError =
                 setOpen(false);
               }}
             />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para editar post */}
+      <Dialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogContent>
+          {threadBeingEdited ? (
+            <EditThread
+  onClose={() => setEditOpen(false)}
+  threadId={threadBeingEdited.id}
+  initialTitle={threadBeingEdited.title}
+  initialDescription={threadBeingEdited.description}
+  userId={currentUserId}          // 👈 AQUÍ
+  onUpdated={() => {
+    refetchThreads();
+    setEditOpen(false);
+  }}
+/>
+
+          ) : (
+            <Box sx={{ py: 4, textAlign: "center" }}>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+              >
+                No se encontró el post a editar.
+              </Typography>
+            </Box>
           )}
         </DialogContent>
       </Dialog>
