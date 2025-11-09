@@ -1,15 +1,36 @@
-import React, { useEffect, useState } from "react";
-import { TextField, Button, Typography } from "@mui/material";
+// src/components/modals/NewPost.tsx
+import React, { useState, useMemo } from "react";
+import {
+  Box,
+  DialogTitle,
+  DialogActions,
+  Button,
+  TextField,
+  Stack,
+  MenuItem,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { useMutation } from "../../hooks/useMutation";
 
-export interface NewPostProps {
-  onClose?: () => void;
-  forumId?: number;
-  userId?: number;
-  onCreated?: (post: any) => void;
-  onSubmit?: (data: { theme: string; description: string; forumId: number }) => Promise<void>;
-  loading?: boolean;
-  error?: string | null;
+const CATEGORY_LABELS = [
+  "General",
+  "Administración",
+  "Seguridad",
+  "Mantenimiento",
+  "Espacios Comunes",
+  "Garage y Parking",
+] as const;
+
+interface NewPostProps {
+  onClose: () => void;
+  forumId: number; // foro actual (fallback)
+  userId: number;
+  onCreated: () => void;
+  // mapa etiqueta -> forumId (solo se usa en admin / Todas)
+  forumIdByLabel?: Partial<Record<(typeof CATEGORY_LABELS)[number], number>>;
+  // categoría inicial que se ve en el combo
+  initialCategoryLabel?: (typeof CATEGORY_LABELS)[number];
 }
 
 export default function NewPost({
@@ -17,138 +38,132 @@ export default function NewPost({
   forumId,
   userId,
   onCreated,
-  onSubmit,
-  loading = false,
-  error = null,
+  forumIdByLabel,
+  initialCategoryLabel,
 }: NewPostProps) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [localError, setLocalError] = useState<string | null>(null);
 
- 
-  const { mutate, loading: mutLoading, error: mutError } = useMutation("/Thread", "post");
+  // categoría que se muestra en el select
+  const [categoryLabel, setCategoryLabel] =
+    useState<(typeof CATEGORY_LABELS)[number]>(
+      initialCategoryLabel ?? "General"
+    );
 
+  const { mutate, loading, error } = useMutation("/Thread", "post");
 
-  const isLoading = loading || mutLoading;
-  const effectiveError = localError ?? error ?? mutError ?? null;
+  const MIN_TITLE = 5;
+  const MIN_DESC = 10;
 
-  useEffect(() => {
-   
-    if (title || description) setLocalError(null);
-  }, [title, description]);
+  const titleError =
+    title.trim().length > 0 && title.trim().length < MIN_TITLE;
+  const descError =
+    description.trim().length > 0 && description.trim().length < MIN_DESC;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLocalError(null);
+  const canSubmit =
+    !loading &&
+    title.trim().length >= MIN_TITLE &&
+    description.trim().length >= MIN_DESC &&
+    forumId > 0 &&
+    userId > 0;
 
-    if (!title.trim()) {
-      setLocalError("El título es obligatorio");
-      return;
-    }
+  // decide el forumId según la categoría elegida (si hay mapa)
+  const forumIdToSend = useMemo(() => {
+    const fromMap = forumIdByLabel?.[categoryLabel];
+    return fromMap ?? forumId;
+  }, [forumId, forumIdByLabel, categoryLabel]);
 
-    if (!forumId) {
-      setLocalError("No se detectó el foro destino");
-      return;
-    }
+  const handleSubmit = async () => {
+    if (!canSubmit) return;
 
-    if (!userId || userId === 0) {
-      setLocalError("Usuario no identificado. Iniciá sesión antes de crear un post.");
-      return;
-    }
-
-
-  const payloadForBackend = {
-    Theme: title.trim(),        // Cambiado de 'theme' a 'Theme'
-    Description: description.trim(), // Cambiado de 'description' a 'Description'
-    ForumId: forumId,          // Cambiado de 'forumId' a 'ForumId'
-    UserId: userId,            // Cambiado de 'userId' a 'UserId'
-  };
-
+    const payload = {
+      theme: title.trim(),
+      description: description.trim(),
+      forumId: forumIdToSend,
+      userId,
+    };
 
     try {
-      if (onSubmit) {
-        await onSubmit({
-          theme: payloadForBackend.Theme,         // Ajustar aquí también
-          description: payloadForBackend.Description,
-          forumId: payloadForBackend.ForumId,
-        });
-        onCreated?.(payloadForBackend);
-      } else {
-        const created = await mutate(payloadForBackend);
-        onCreated?.(created ?? payloadForBackend);
-      }
-      onClose?.();
-    } catch (err) {
-    
-      if (!(err as any)?.response) {
-        setLocalError("Error inesperado al crear el post");
-      }
-      console.error("Error creando post", err);
+      await mutate(payload);
+      onCreated();
+    } catch {
+      // el error ya se muestra abajo
     }
-  };
-
-  const handleCancel = () => {
-    onClose?.();
   };
 
   return (
-    <form className="foraria-form" onSubmit={handleSubmit}>
-      <h2 className="foraria-form-title">Crear Nuevo Post</h2>
+    <Box>
+      <DialogTitle>Crear nuevo post</DialogTitle>
 
-      <div className="foraria-form-group">
-        <label className="foraria-form-label">Titulo del post</label>
-        <TextField
-          fullWidth
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titulo del post..."
-          variant="outlined"
-          className="foraria-form-input"
-          disabled={isLoading}
-        />
-      </div>
+      <Box sx={{ px: 3, pt: 1, pb: 2 }}>
+        <Stack spacing={2}>
+          <TextField
+            label="Título"
+            fullWidth
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            error={titleError}
+            helperText={titleError ? `Mínimo ${MIN_TITLE} caracteres` : " "}
+            autoFocus
+          />
 
-      <div className="foraria-form-group">
-        <label className="foraria-form-label">Descripción</label>
-        <TextField
-          fullWidth
-          multiline
-          minRows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="¿Qué querés compartir con la comunidad?"
-          className="foraria-form-textarea"
-          disabled={isLoading}
-        />
-      </div>
+          <TextField
+            label="Descripción"
+            fullWidth
+            multiline
+            minRows={3}
+            maxRows={8}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            error={descError}
+            helperText={descError ? `Mínimo ${MIN_DESC} caracteres` : " "}
+          />
 
-      {effectiveError && (
-        <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-          {effectiveError}
-        </Typography>
-      )}
+          {/* Solo mostramos el selector de categoría si el admin está en "Todas"
+              (o sea, si hay más de un foro posible en el mapa) */}
+          {forumIdByLabel && Object.keys(forumIdByLabel).length > 1 && (
+            <TextField
+              select
+              label="Categoría"
+              fullWidth
+              value={categoryLabel}
+              onChange={(e) =>
+                setCategoryLabel(
+                  e.target.value as (typeof CATEGORY_LABELS)[number]
+                )
+              }
+            >
+              {CATEGORY_LABELS.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
 
-      <div className="foraria-form-actions">
-        <Button
-          type="submit"
-          className="foraria-gradient-button boton-crear-reclamo"
-          disabled={isLoading}
-          variant="contained"
-          color="primary"
-        >
-          {isLoading ? "Publicando..." : "Publicar"}
-        </Button>
+          {error && (
+            <Typography variant="body2" color="error">
+              {typeof error === "string"
+                ? error
+                : "No se pudo crear el post. Probá de nuevo."}
+            </Typography>
+          )}
+        </Stack>
+      </Box>
 
-        <Button
-          className="foraria-outlined-white-button"
-          disabled={isLoading}
-          onClick={handleCancel}
-          variant="outlined"
-          sx={{ ml: 1 }}
-        >
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} disabled={loading}>
           Cancelar
         </Button>
-      </div>
-    </form>
+        <Button
+          variant="contained"
+          onClick={handleSubmit}
+          disabled={!canSubmit}
+          startIcon={loading ? <CircularProgress size={16} /> : undefined}
+        >
+          {loading ? "Creando..." : "Crear post"}
+        </Button>
+      </DialogActions>
+    </Box>
   );
 }
