@@ -125,24 +125,27 @@ export default function NewPost({
             }
           />
 
-          {/* Selector de categoría que ahora SÍ impacta en el forumId */}
-          <TextField
-            select
-            label="Categoría"
-            fullWidth
-            value={categoryLabel}
-            onChange={(e) =>
-              setCategoryLabel(
-                e.target.value as (typeof CATEGORY_LABELS)[number]
-              )
-            }
-          >
-            {CATEGORY_LABELS.map((c) => (
-              <MenuItem key={c} value={c}>
-                {c}
-              </MenuItem>
-            ))}
-          </TextField>
+          {/* Solo mostramos el selector si hay más de un foro posible (modo admin / Todas) */}
+{forumIdByLabel && Object.keys(forumIdByLabel).length > 1 && (
+  <TextField
+    select
+    label="Categoría"
+    fullWidth
+    value={categoryLabel}
+    onChange={(e) =>
+      setCategoryLabel(
+        e.target.value as (typeof CATEGORY_LABELS)[number]
+      )
+    }
+  >
+    {CATEGORY_LABELS.map((c) => (
+      <MenuItem key={c} value={c}>
+        {c}
+      </MenuItem>
+    ))}
+  </TextField>
+)}
+
 
           {error && (
             <Typography variant="body2" color="error">
