@@ -13,7 +13,7 @@ import {
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
 import NewPost from "../components/modals/NewPost";
-import { useLocation, useSearchParams } from "react-router-dom";
+import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { storage } from "../utils/storage";
@@ -79,6 +79,8 @@ const ADMIN_TAB_COLORS: Record<string, string> = {
   "Garage y Parking": "#7e57c2",
 };
 
+const CATEGORY_LABELS = ["General","Administración","Seguridad","Mantenimiento","Espacios Comunes","Garage y Parking"] as const;
+
 const Forums: React.FC = () => {
   const { data: forumsRaw, loading: loadingForums, error: errorForums, refetch: refetchForums } = useGet<Forum[]>("/Forum");
   const { data: threadsRaw, loading: loadingThreads, error: errorThreads, refetch: refetchThreads } = useGet<Thread[]>("/Thread");
@@ -86,6 +88,7 @@ const Forums: React.FC = () => {
   const error = !!errorForums || !!errorThreads;
 
   const location = useLocation();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isAdminRole = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
@@ -136,6 +139,7 @@ const Forums: React.FC = () => {
   // ids de foros para la categoría actual
   const forumIdsForCategory = useMemo(() => {
     if (!forumsRaw) return new Set<number>();
+    // Para admin "Todas" = todos. Para usuario nunca usamos "Todas".
     if (isAdmin && adminCategory === "Todas") {
       return new Set(forumsRaw.map(f => f.id));
     }
@@ -149,10 +153,10 @@ const Forums: React.FC = () => {
   const resolvedForumId = useMemo(() => {
     if (!forumsRaw) return null;
     if (isAdmin && adminCategory === "Todas") return forumsRaw[0]?.id ?? null;
-    const key = isAdmin ? adminCategory : slugFromPath;
+    const key = isAdmin ? adminCategory : currentCategoryName;
     const found = forumsRaw.find((f) => toSlug(f.categoryName) === toSlug(key));
     return found ? found.id : null;
-  }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
+  }, [forumsRaw, isAdmin, adminCategory, currentCategoryName]);
 
   // threads filtrados por categoría actual
   const postsRaw = useMemo(() => {
@@ -401,6 +405,7 @@ const Forums: React.FC = () => {
                 <Typography variant="body1" sx={{ mb: 2 }}>{thread.description}</Typography>
               </Box>
 
+              {/* Herramientas SOLO admin */}
               {isAdmin && (
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
                   <IconButton size="small" onClick={() => {/* vista detalle */}} sx={{ color: "primary.main" }}>
@@ -528,17 +533,13 @@ const Forums: React.FC = () => {
   };
 
   // ====== UI ======
+  const currentTabKey = isAdmin ? adminCategory : currentCategoryName;
+
   return (
     <Box className="foraria-page-container" sx={{ ml: 0 }}>
       <PageHeader
         title={`Foro ${currentCategoryName !== "Todas" ? `- ${currentCategoryName}` : ""}`}
-        tabs={!isAdmin ? [
-          { label: "Todos", value: "todos" },
-          { label: "Populares", value: "populares" },
-          { label: "Recientes", value: "recientes" },
-        ] : undefined}
-        selectedTab={!isAdmin ? "todos" : undefined}
-        onTabChange={!isAdmin ? () => {} : undefined}
+        // Unificamos estética: quitamos tabs "Todos/Populares/Recientes" para usuarios
         actions={
           <Button variant="contained" color="secondary" startIcon={<AddIcon />} onClick={() => setOpen(true)} sx={{ borderRadius: 999, fontWeight: 600 }}>
             Nuevo Post
@@ -546,53 +547,71 @@ const Forums: React.FC = () => {
         }
       />
 
-      {/* KPIs (solo admin) */}
-      {isAdmin && (
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
-          <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-            <CardContent><Stack direction="row" alignItems="center" spacing={1}>
-              <ChatIcon color="primary" /><Box><Typography variant="overline" color="text.secondary">Posts Totales</Typography><Typography variant="h6">{headerStats.totalPosts}</Typography></Box>
-            </Stack></CardContent>
-          </Card>
-          <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-            <CardContent><Stack direction="row" alignItems="center" spacing={1}>
-              <GroupsIcon color="success" /><Box><Typography variant="overline" color="text.secondary">Participantes</Typography><Typography variant="h6" color="success.main">{headerStats.activeUsers}</Typography></Box>
-            </Stack></CardContent>
-          </Card>
-          <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-            <CardContent><Stack direction="row" alignItems="center" spacing={1}>
-              <TrendingIcon color="secondary" /><Box><Typography variant="overline" color="text.secondary">Respuestas</Typography><Typography variant="h6" color="secondary.main">{headerStats.totalResponses}</Typography></Box>
-            </Stack></CardContent>
-          </Card>
-        </Stack>
-      )}
+      {/* KPIs (ahora para TODOS los roles) */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent><Stack direction="row" alignItems="center" spacing={1}>
+            <ChatIcon color="primary" /><Box><Typography variant="overline" color="text.secondary">Posts Totales</Typography><Typography variant="h6">{headerStats.totalPosts}</Typography></Box>
+          </Stack></CardContent>
+        </Card>
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent><Stack direction="row" alignItems="center" spacing={1}>
+            <GroupsIcon color="success" /><Box><Typography variant="overline" color="text.secondary">Participantes</Typography><Typography variant="h6" color="success.main">{headerStats.activeUsers}</Typography></Box>
+          </Stack></CardContent>
+        </Card>
+        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
+          <CardContent><Stack direction="row" alignItems="center" spacing={1}>
+            <TrendingIcon color="secondary" /><Box><Typography variant="overline" color="text.secondary">Respuestas</Typography><Typography variant="h6" color="secondary.main">{headerStats.totalResponses}</Typography></Box>
+          </Stack></CardContent>
+        </Card>
+      </Stack>
 
-      {/* Filtros (solo admin) */}
-      {isAdmin && (
-        <Paper elevation={0} variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2 }}>
-          <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
-            <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
-            <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>Filtros</Typography>
-          </Stack>
-          <Tabs
-            value={adminCategory}
-            onChange={(_, v) => setAdminCategory(v)}
-            variant="scrollable" scrollButtons="auto"
-            sx={{
-              "& .MuiTab-root": { textTransform: "none", fontWeight: 600, minHeight: 36, px: 2, mr: 1, border: "1px solid", borderColor: "divider", borderRadius: 2, color: "text.primary",
-                "&:hover": { backgroundColor: "action.hover" } },
-              "& .Mui-selected": { color: "white !important", backgroundColor: (t) => ADMIN_TAB_COLORS[adminCategory] || t.palette.primary.main,
-                borderColor: (t) => ADMIN_TAB_COLORS[adminCategory] || t.palette.primary.main, boxShadow: "0 2px 8px rgba(8,61,119,0.25)" },
-              "& .MuiTabs-indicator": { display: "none" },
-            }}
-          >
-            <Tab label="Todas" value="Todas" />
-            {["General","Administración","Seguridad","Mantenimiento","Espacios Comunes","Garage y Parking"].map((c) => (
-              <Tab key={c} label={c} value={c} />
-            ))}
-          </Tabs>
-        </Paper>
-      )}
+      {/* Filtros (para TODOS). Admin tendrá además la pestaña "Todas". */}
+      <Paper elevation={0} variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2 }}>
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
+          <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
+          <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>Filtros</Typography>
+        </Stack>
+        <Tabs
+          value={currentTabKey}
+          onChange={(_, v) => {
+            if (isAdmin) setAdminCategory(v);
+            else {
+              // navegar al slug correspondiente
+              const slug = toSlug(v);
+              navigate(`/forums/${slug}`);
+            }
+          }}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{
+            "& .MuiTab-root": {
+              textTransform: "none",
+              fontWeight: 600,
+              minHeight: 36,
+              px: 2,
+              mr: 1,
+              border: "1px solid",
+              borderColor: "divider",
+              borderRadius: 2,
+              color: "text.primary",
+              "&:hover": { backgroundColor: "action.hover" }
+            },
+            "& .Mui-selected": {
+              color: "white !important",
+              backgroundColor: (t) => ADMIN_TAB_COLORS[currentTabKey] || t.palette.primary.main,
+              borderColor:     (t) => ADMIN_TAB_COLORS[currentTabKey] || t.palette.primary.main,
+              boxShadow: "0 2px 8px rgba(8,61,119,0.25)"
+            },
+            "& .MuiTabs-indicator": { display: "none" },
+          }}
+        >
+          {isAdmin && <Tab label="Todas" value="Todas" />}
+          {CATEGORY_LABELS.map((c) => (
+            <Tab key={c} label={c} value={c} />
+          ))}
+        </Tabs>
+      </Paper>
 
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>

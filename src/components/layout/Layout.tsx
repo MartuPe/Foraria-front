@@ -9,7 +9,7 @@ const DRAWER_WIDTH = 240;
 
 export default function Layout() {
   const theme = useTheme();
-  const isMobileOrTablet = useMediaQuery(theme.breakpoints.down("md")); // xs/sm/md -> overlay
+  const isMobileOrTablet = useMediaQuery(theme.breakpoints.down("md"));
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Drawer,
   List,
@@ -74,22 +74,27 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [forosOpen, setForosOpen] = useState(false);
+
+  const isActiveRoute = (path: string) => location.pathname === path;
+  const inAdminForums = location.pathname.startsWith("/admin/foros");
+
+// ⬇ colapsable de Foros sincronizado con la URL (sin warnings)
+const [forosOpen, setForosOpen] = useState<boolean>(() => inAdminForums);
+useEffect(() => {
+  setForosOpen(location.pathname.startsWith("/admin/foros"));
+}, [location.pathname, location.search]);
+
 
   const handleNavigation = (path: string) => {
     navigate(path);
     if (onClose) onClose();
   };
 
-  const isActiveRoute = (path: string) => location.pathname === path;
-
-  const isForosActive = () => location.pathname.startsWith("/admin/foros");
-
   const isForosCategoryActive = (path: string) => {
-    if (!isForosActive()) return false;
+    if (!inAdminForums) return false;
     const currentParams = new URLSearchParams(location.search);
     const pathParams = new URLSearchParams(path.split("?")[1] || "");
-    return currentParams.get("category") === pathParams.get("category");
+    return (currentParams.get("category") || "") === (pathParams.get("category") || "");
   };
 
   const handleForosClick = () => setForosOpen((s) => !s);
@@ -200,8 +205,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               minHeight: 42,
               px: 1.5,
               py: 1,
-              backgroundColor: isForosActive() ? "#F59E0B" : "transparent",
-              "&:hover": { backgroundColor: isForosActive() ? "#F59E0B" : "rgba(255,255,255,0.08)" },
+              backgroundColor: inAdminForums ? "#F59E0B" : "transparent",
+              "&:hover": { backgroundColor: inAdminForums ? "#F59E0B" : "rgba(255,255,255,0.08)" },
               color: "white",
               justifyContent: "space-between",
             }}
@@ -220,7 +225,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 primary="Foros"
                 primaryTypographyProps={{
                   fontSize: "0.875rem",
-                  fontWeight: isForosActive() ? 600 : 500,
+                  fontWeight: inAdminForums ? 600 : 500,
                   lineHeight: 1.2,
                 }}
               />

@@ -60,7 +60,8 @@ export default function App() {
             <Route path="nuevaReserva" element={<NewReserve />} />
             <Route path="configuracion" element={<Configuration />} />
             <Route path="select-consortium" element={<SelectConsortium />} />
-            {["general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"].map(f => <Route key={f} path={`forums/${f}`} element={<Forums />} />)}
+            {["todas","general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"]
+            .map(f => <Route key={f} path={`forums/${f}`} element={<Forums />} />)}
             <Route path="forums/comentarios" element={<Comentarios />} />
           </Route>
 
