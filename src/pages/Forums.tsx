@@ -9,7 +9,9 @@ import {
   Button,
   Stack,
   Dialog,
+  DialogTitle,
   DialogContent,
+  DialogActions,
   CircularProgress,
   Avatar,
   TextField,
@@ -192,18 +194,15 @@ const Forums: React.FC = () => {
   const isAdmin = isAdminRole || isAdminRoute;
 
   const [open, setOpen] = useState(false);
-  const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null); // <<< NUEVO
+  const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
   const currentUserId = Number(localStorage.getItem("userId") || 0);
 
   const { mutate: toggleMutate } =
     useMutation<
       ReactionResponse,
-      {
-        user_id: number;
-        thread_id?: number;
-        message_id?: number;
-        reactionType: number;
-      }
+      { user_id: number; thread_id?: number; message_id?: number; reactionType: number }
     >("/Reactions/toggle", "post");
 
   const [enriched, setEnriched] = useState<
@@ -699,12 +698,19 @@ const Forums: React.FC = () => {
     }
   };
 
-  // ====== BORRAR THREAD ======
-  const handleDeleteThread = async (threadId: number) => {
-    const confirmed = window.confirm(
-      "¿Seguro que querés borrar este post? Esta acción no se puede deshacer."
-    );
-    if (!confirmed) return;
+  // ====== abrir diálogo de borrado ======
+  const openDeleteDialog = (threadId: number) => {
+    if (!isAdmin) return;
+    setThreadToDelete(threadId);
+    setDeleteDialogOpen(true);
+  };
+
+  // ====== borrar thread (confirmado desde el diálogo) ======
+  const handleDeleteThread = async () => {
+    if (!isAdmin) return;
+    if (threadToDelete == null) return;
+
+    const threadId = threadToDelete;
 
     try {
       setDeletingThreadId(threadId);
@@ -730,23 +736,21 @@ const Forums: React.FC = () => {
         });
 
         refetchThreads();
-        return;
-      }
-
-      if (res.status === 404) {
+      } else if (res.status === 404) {
         alert("El post ya no existe o fue borrado.");
         refetchThreads();
-        return;
+      } else {
+        const text = await res.text();
+        console.error("Error al borrar el post:", text);
+        alert("No se pudo borrar el post. Probá de nuevo.");
       }
-
-      const text = await res.text();
-      console.error("Error al borrar el post:", text);
-      alert("No se pudo borrar el post. Probá de nuevo.");
     } catch (e) {
       console.error(e);
       alert("Ocurrió un error al borrar el post.");
     } finally {
       setDeletingThreadId(null);
+      setDeleteDialogOpen(false);
+      setThreadToDelete(null);
     }
   };
 
@@ -845,7 +849,7 @@ const Forums: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={() => handleDeleteThread(thread.threadId)}
+                    onClick={() => openDeleteDialog(thread.threadId)}
                     sx={{ color: "error.main" }}
                     disabled={deletingThreadId === thread.threadId}
                   >
@@ -1433,6 +1437,7 @@ const Forums: React.FC = () => {
         <Stack spacing={2}>{posts.map(renderThread)}</Stack>
       )}
 
+      {/* Dialog para crear nuevo post */}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -1472,6 +1477,55 @@ const Forums: React.FC = () => {
             />
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmación de borrado */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          if (!deletingThreadId) {
+            setDeleteDialogOpen(false);
+            setThreadToDelete(null);
+          }
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Eliminar post</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            ¿Seguro que querés eliminar este post?
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Esta acción no se puede deshacer.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+              setThreadToDelete(null);
+            }}
+            disabled={!!deletingThreadId}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteThread}
+            disabled={!!deletingThreadId}
+            startIcon={
+              deletingThreadId ? (
+                <CircularProgress size={16} />
+              ) : (
+                <DeleteOutline />
+              )
+            }
+          >
+            {deletingThreadId ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
