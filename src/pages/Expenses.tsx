@@ -143,6 +143,38 @@ export default function ExpensesPage() {
     };
   }, [header]);
 
+
+  const translateState = (state: string) => {
+  const normalized = state.toLowerCase();
+
+  switch (normalized) {
+    case "pending":
+      return "Pendiente";
+    case "paid":
+      return "Pagada";
+    case "overdue":
+    case "defeated":  // por si viene así
+      return "Vencida";
+    default:
+      return state;
+  }
+};
+const stateChipColor = (state: string) => {
+  const normalized = state.toLowerCase();
+
+  switch (normalized) {
+    case "pending":
+      return "warning"; // Amarillo
+    case "paid":
+      return "success"; // Verde
+    case "overdue":
+    case "defeated":
+      return "error"; // Rojo
+    default:
+      return "default";
+  }
+};
+
   const stateColor = (state: string) => {
     switch (state.toLowerCase()) {
       case "paid":
@@ -326,18 +358,11 @@ const generatePdf = (detail: ExpenseDetail) => {
     <span style={{ color: 'rgb(249 115 22)' }}>${detail.total.toLocaleString('es-AR')}</span>
   </span>} 
    
-        chips={[
-          {
-            label: detail.state,
-            color:
-              detail.state.toLowerCase() === "paid"
-                ? "success"
-                : detail.state.toLowerCase() === "pending"
-                ? "warning"
-                : "error",
-            variant: "outlined",
-          },
-        ]}
+       chips={[{
+  label: translateState(detail.state),
+  color: stateChipColor(detail.state),
+  variant: "outlined",
+}]}
         
         fields={[
           {
@@ -395,14 +420,11 @@ const generatePdf = (detail: ExpenseDetail) => {
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Estado:{" "}
                 <Chip
-                  label={detailsOpenFor.state}
-                  sx={{
-                    color: "#fff",
-                    bgcolor: stateColor(detailsOpenFor.state),
-                    fontWeight: 600,
-                  }}
-                  size="small"
-                />
+  label={translateState(detailsOpenFor.state)}
+  color={stateChipColor(detailsOpenFor.state)}
+  sx={{ fontWeight: 600 }}
+  size="small"
+/>
                 {"  "} Total unidad: <Money value={detailsOpenFor.total} />
               </Typography>
 
