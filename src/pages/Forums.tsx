@@ -192,12 +192,18 @@ const Forums: React.FC = () => {
   const isAdmin = isAdminRole || isAdminRoute;
 
   const [open, setOpen] = useState(false);
+  const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null); // <<< NUEVO
   const currentUserId = Number(localStorage.getItem("userId") || 0);
 
   const { mutate: toggleMutate } =
     useMutation<
       ReactionResponse,
-      { user_id: number; thread_id?: number; message_id?: number; reactionType: number }
+      {
+        user_id: number;
+        thread_id?: number;
+        message_id?: number;
+        reactionType: number;
+      }
     >("/Reactions/toggle", "post");
 
   const [enriched, setEnriched] = useState<
@@ -468,7 +474,8 @@ const Forums: React.FC = () => {
     () => ({
       totalPosts: forumStats?.countThreads ?? computedStats.totalPosts,
       activeUsers: forumStats?.countUserActives ?? computedStats.activeUsers,
-      totalResponses: forumStats?.countResponses ?? computedStats.totalResponses,
+      totalResponses:
+        forumStats?.countResponses ?? computedStats.totalResponses,
       pinned: computedStats.pinned,
     }),
     [forumStats, computedStats]
@@ -692,6 +699,57 @@ const Forums: React.FC = () => {
     }
   };
 
+  // ====== BORRAR THREAD ======
+  const handleDeleteThread = async (threadId: number) => {
+    const confirmed = window.confirm(
+      "¿Seguro que querés borrar este post? Esta acción no se puede deshacer."
+    );
+    if (!confirmed) return;
+
+    try {
+      setDeletingThreadId(threadId);
+
+      const res = await fetch(`${API_BASE}/Thread/${threadId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (res.status === 204) {
+        const key = String(threadId);
+
+        setEnriched((prev) => {
+          const copy = { ...prev };
+          delete copy[key];
+          return copy;
+        });
+
+        setExpandedThreads((prev) => {
+          const s = new Set(prev);
+          s.delete(threadId);
+          return s;
+        });
+
+        refetchThreads();
+        return;
+      }
+
+      if (res.status === 404) {
+        alert("El post ya no existe o fue borrado.");
+        refetchThreads();
+        return;
+      }
+
+      const text = await res.text();
+      console.error("Error al borrar el post:", text);
+      alert("No se pudo borrar el post. Probá de nuevo.");
+    } catch (e) {
+      console.error(e);
+      alert("Ocurrió un error al borrar el post.");
+    } finally {
+      setDeletingThreadId(null);
+    }
+  };
+
   // ====== Render thread ======
   const renderThread = (thread: any) => {
     const key = String(thread.threadId);
@@ -787,8 +845,9 @@ const Forums: React.FC = () => {
                   </IconButton>
                   <IconButton
                     size="small"
-                    onClick={() => {}}
+                    onClick={() => handleDeleteThread(thread.threadId)}
                     sx={{ color: "error.main" }}
+                    disabled={deletingThreadId === thread.threadId}
                   >
                     <DeleteOutline fontSize="small" />
                   </IconButton>
