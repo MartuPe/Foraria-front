@@ -1,148 +1,174 @@
-import React, { useState } from "react";
+// src/components/modals/NewPost.tsx
+import React, { useState, useMemo } from "react";
 import {
   Box,
-  Button,
-  DialogActions,
   DialogTitle,
-  DialogContent,
-  Stack,
+  DialogActions,
+  Button,
   TextField,
+  Stack,
   MenuItem,
   Typography,
-  Alert,
+  CircularProgress,
 } from "@mui/material";
 import { useMutation } from "../../hooks/useMutation";
 
+const CATEGORY_LABELS = [
+  "General",
+  "Administración",
+  "Seguridad",
+  "Mantenimiento",
+  "Espacios Comunes",
+  "Garage y Parking",
+] as const;
+
 interface NewPostProps {
-  forumId: number | null;
-  userId: number;
   onClose: () => void;
+  forumId: number; // foro actual (por si no matchea nada)
+  userId: number;
   onCreated: () => void;
+  forumIdByLabel?: Partial<Record<(typeof CATEGORY_LABELS)[number], number>>; 
+  initialCategoryLabel?: (typeof CATEGORY_LABELS)[number];
 }
 
-const MIN_TITLE = 5;
-const MIN_DESC = 10;
 
-const categories = [
-  { id: 1, label: "General" },
-  { id: 2, label: "Administración" },
-  { id: 3, label: "Seguridad" },
-  { id: 4, label: "Mantenimiento" },
-  { id: 5, label: "Espacios Comunes" },
-  { id: 6, label: "Garage y Parking" },
-];
-
-export default function NewPost({ forumId, userId, onClose, onCreated }: NewPostProps) {
-  const { mutate, loading, error } = useMutation("/Thread", "post");
+export default function NewPost({
+  onClose,
+  forumId,
+  userId,
+  onCreated,
+  forumIdByLabel,
+  initialCategoryLabel,
+}: NewPostProps) {
   const [title, setTitle] = useState("");
-  const [desc, setDesc] = useState("");
-  const [category, setCategory] = useState<number | "">("");
+  const [description, setDescription] = useState("");
 
-  const isTitleValid = title.trim().length >= MIN_TITLE;
-  const isDescValid = desc.trim().length >= MIN_DESC;
-  const isCategoryValid = category !== "";
+  // categoría que se muestra en el select
+  const [categoryLabel, setCategoryLabel] =
+    useState<(typeof CATEGORY_LABELS)[number]>(
+      initialCategoryLabel ?? "General"
+    );
+
+  const { mutate, loading, error } = useMutation("/Thread", "post");
+
+  const MIN_TITLE = 5;
+  const MIN_DESC = 10;
+
+  const titleError =
+    title.trim().length > 0 && title.trim().length < MIN_TITLE;
+  const descError =
+    description.trim().length > 0 && description.trim().length < MIN_DESC;
+
+  const canSubmit =
+    !loading &&
+    title.trim().length >= MIN_TITLE &&
+    description.trim().length >= MIN_DESC &&
+    forumId > 0 &&
+    userId > 0;
+
+  // 🔹 Acá está la magia:
+  //   si el usuario cambia la categoría, buscamos el forumId para esa categoría.
+  //   Si no lo encontramos, usamos el forumId que vino de Forums.tsx.
+  const forumIdToSend = useMemo(() => {
+    const fromMap = forumIdByLabel?.[categoryLabel];
+
+    return fromMap ?? forumId;
+  }, [forumId, forumIdByLabel, categoryLabel]);
 
   const handleSubmit = async () => {
-    if (!isTitleValid || !isDescValid || !isCategoryValid) return;
-    try {
-      const payload = {
-        theme: title.trim(),
-        description: desc.trim(),
-        forumId: category,  // y listo, sin fallback
+    if (!canSubmit) return;
 
-        userId,
-      };
+    const payload = {
+      theme: title.trim(),
+      description: description.trim(),
+      forumId: forumIdToSend,
+      userId,
+    };
+
+    try {
       await mutate(payload);
       onCreated();
-    } catch (e) {
-      console.error("Error creando post:", e);
+    } catch {
+      // el error ya se muestra abajo si viene de useMutation
     }
   };
 
   return (
-    <>
+    <Box>
       <DialogTitle>Crear nuevo post</DialogTitle>
-      <DialogContent dividers>
-        <Stack spacing={2} sx={{ mt: 1 }}>
+
+      <Box sx={{ px: 3, pt: 1, pb: 2 }}>
+        <Stack spacing={2}>
           <TextField
             label="Título"
+            fullWidth
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            fullWidth
-            required
-            inputProps={{ minLength: MIN_TITLE }}
+            error={titleError}
             helperText={
-              !isTitleValid
-                ? `Debe tener al menos ${MIN_TITLE} caracteres`
-                : " "
+              titleError ? `Mínimo ${MIN_TITLE} caracteres` : " "
             }
-            error={!isTitleValid && title.length > 0}
+            autoFocus
           />
 
+          <TextField
+            label="Descripción"
+            fullWidth
+            multiline
+            minRows={3}
+            maxRows={8}
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            error={descError}
+            helperText={
+              descError ? `Mínimo ${MIN_DESC} caracteres` : " "
+            }
+          />
+
+          {/* Selector de categoría que ahora SÍ impacta en el forumId */}
           <TextField
             select
             label="Categoría"
             fullWidth
-            required
-            value={category}
-            onChange={(e) => setCategory(Number(e.target.value))}
-            helperText={!isCategoryValid ? "Seleccioná una categoría" : " "}
-            error={!isCategoryValid && category === ""}
+            value={categoryLabel}
+            onChange={(e) =>
+              setCategoryLabel(
+                e.target.value as (typeof CATEGORY_LABELS)[number]
+              )
+            }
           >
-            <MenuItem value="">Seleccionar...</MenuItem>
-            {categories.map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.label}
+            {CATEGORY_LABELS.map((c) => (
+              <MenuItem key={c} value={c}>
+                {c}
               </MenuItem>
             ))}
           </TextField>
 
-          <TextField
-            label="Descripción"
-            value={desc}
-            onChange={(e) => setDesc(e.target.value)}
-            fullWidth
-            multiline
-            minRows={4}
-            inputProps={{ minLength: MIN_DESC }}
-            helperText={
-              !isDescValid
-                ? `Debe tener al menos ${MIN_DESC} caracteres`
-                : " "
-            }
-            error={!isDescValid && desc.length > 0}
-          />
           {error && (
-            <Alert severity="error" sx={{ mt: 1 }}>
-          {typeof error === "string"
-            ? error
-          : (error as any)?.response?.data?.error || "Ocurrió un error al crear el post."}
-          </Alert>
-              )}
-
-
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            ⚙️ Requisitos del post:
-            <ul style={{ marginTop: 4, marginBottom: 0 }}>
-              <li>Título con mínimo {MIN_TITLE} caracteres</li>
-              <li>Descripción con mínimo {MIN_DESC} caracteres</li>
-              <li>Seleccionar una categoría válida</li>
-            </ul>
-          </Typography>
+            <Typography variant="body2" color="error">
+              {typeof error === "string"
+                ? error
+                : "No se pudo crear el post. Probá de nuevo."}
+            </Typography>
+          )}
         </Stack>
-      </DialogContent>
+      </Box>
 
-      <DialogActions>
-        <Button onClick={onClose}>Cancelar</Button>
+      <DialogActions sx={{ px: 3, pb: 2 }}>
+        <Button onClick={onClose} disabled={loading}>
+          Cancelar
+        </Button>
         <Button
           variant="contained"
-          color="secondary"
-          disabled={!isTitleValid || !isDescValid || !isCategoryValid || loading}
           onClick={handleSubmit}
+          disabled={!canSubmit}
+          startIcon={
+            loading ? <CircularProgress size={16} /> : undefined
+          }
         >
           {loading ? "Creando..." : "Crear post"}
         </Button>
       </DialogActions>
-    </>
+    </Box>
   );
 }

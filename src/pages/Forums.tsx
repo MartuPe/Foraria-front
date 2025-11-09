@@ -19,7 +19,6 @@ import {
   IconButton,
   Tabs,
   Tab,
-  Alert,
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -59,7 +58,7 @@ interface Thread {
 
 interface Forum {
   id: number;
-  category: number;
+  category: number; // 0 = General, 1..5 = resto
   categoryName: string | null;
   countThreads: number;
   countResponses: number;
@@ -123,6 +122,38 @@ const CATEGORY_LABELS = [
   "Garage y Parking",
 ] as const;
 
+type CategoryLabel = (typeof CATEGORY_LABELS)[number];
+
+// Traduce la key (slug o label) a una de nuestras etiquetas visibles
+function resolveCategoryLabel(key: string): CategoryLabel {
+  const slug = toSlug(key);
+  switch (slug) {
+    case "administracion":
+      return "Administración";
+    case "seguridad":
+      return "Seguridad";
+    case "mantenimiento":
+      return "Mantenimiento";
+    case "espacios-comunes":
+    case "espacioscomunes":
+      return "Espacios Comunes";
+    case "garage-parking":
+    case "garageyparking":
+    case "garage-y-parking":
+      return "Garage y Parking";
+    default:
+      return "General";
+  }
+}
+
+// Mapea la etiqueta a número de categoría del backend
+// General => 0, Administración => 1, ..., Garage y Parking => 5
+function resolveNumericCategory(key: string): number | null {
+  const label = resolveCategoryLabel(key);
+  const idx = CATEGORY_LABELS.indexOf(label as CategoryLabel); // 0..5
+  return idx === -1 ? null : idx; // 0..5 (0 = General)
+}
+
 const Forums: React.FC = () => {
   // ====== FETCH DE FOROS Y HILOS ======
   const {
@@ -139,7 +170,6 @@ const Forums: React.FC = () => {
     refetch: refetchThreads,
   } = useGet<Thread[]>("/Thread");
 
-  // Si el backend devuelve 404 lo tratamos como "sin datos", no como error fatal
   const forumsStatus = (errorForums as any)?.response?.status as
     | number
     | undefined;
@@ -206,37 +236,11 @@ const Forums: React.FC = () => {
     "Todas";
   const setAdminCategory = (cat: string) => setSearchParams({ category: cat });
 
-  const currentCategoryName = useMemo(() => {
-    if (!safeForums) {
-      switch (isAdmin ? adminCategory : slugFromPath) {
-        case "administracion":
-        case "Administración":
-          return "Administración";
-        case "seguridad":
-        case "Seguridad":
-          return "Seguridad";
-        case "mantenimiento":
-        case "Mantenimiento":
-          return "Mantenimiento";
-        case "espacios-comunes":
-        case "Espacios Comunes":
-          return "Espacios Comunes";
-        case "garage-parking":
-        case "Garage y Parking":
-          return "Garage y Parking";
-        case "Todas":
-          return "Todas";
-        default:
-          return "General";
-      }
-    }
+  const currentCategoryName = useMemo<CategoryLabel | "Todas">(() => {
+    if (isAdmin && adminCategory === "Todas") return "Todas";
     const key = isAdmin ? adminCategory : slugFromPath;
-    if (key === "Todas") return "Todas";
-    const found = safeForums?.find(
-      (f) => toSlug(f.categoryName ?? "") === toSlug(key)
-    );
-    return found?.categoryName ?? "General";
-  }, [safeForums, isAdmin, adminCategory, slugFromPath]);
+    return resolveCategoryLabel(key);
+  }, [isAdmin, adminCategory, slugFromPath]);
 
   // ids de foros para la categoría actual
   const forumIdsForCategory = useMemo(() => {
@@ -244,26 +248,17 @@ const Forums: React.FC = () => {
     if (isAdmin && adminCategory === "Todas") {
       return new Set(safeForums.map((f) => f.id));
     }
-    const key = isAdmin ? adminCategory : slugFromPath;
-    // intentamos por categoryName si existiera
-    const byName = safeForums.filter(
-      (f) => toSlug(f.categoryName ?? "") === toSlug(key)
-    );
-    if (byName.length > 0) {
-      return new Set(byName.map((f) => f.id));
-    }
 
-    // fallback: mapear nombre de pestaña a category numérico
-    const categoryIndex = CATEGORY_LABELS.indexOf(
-      (isAdmin ? adminCategory : currentCategoryName) as any
-    ); // 0..5
-    if (categoryIndex === -1) return new Set<number>();
-    const numericCategory = categoryIndex + 1; // 1..6
+    const key = isAdmin ? adminCategory : slugFromPath;
+    const numericCategory = resolveNumericCategory(key);
+    if (numericCategory === null) return new Set<number>();
 
     return new Set(
-      safeForums.filter((f) => f.category === numericCategory).map((f) => f.id)
+      safeForums
+        .filter((f) => f.category === numericCategory)
+        .map((f) => f.id)
     );
-  }, [safeForums, isAdmin, adminCategory, slugFromPath, currentCategoryName]);
+  }, [safeForums, isAdmin, adminCategory, slugFromPath]);
 
   // resolved forumId (para crear post): foro de la categoría actual
   const resolvedForumId = useMemo(() => {
@@ -271,22 +266,13 @@ const Forums: React.FC = () => {
 
     if (isAdmin && adminCategory === "Todas") return safeForums[0].id;
 
-    const key = isAdmin ? adminCategory : currentCategoryName;
+    const key = isAdmin ? adminCategory : slugFromPath;
+    const numericCategory = resolveNumericCategory(key);
+    if (numericCategory === null) return null;
 
-    // 1) intentar por categoryName si estuviera cargado
-    const byName = safeForums.find(
-      (f) => toSlug(f.categoryName ?? "") === toSlug(key)
-    );
-    if (byName) return byName.id;
-
-    // 2) mapear nombre de pestaña a category numérico
-    const categoryIndex = CATEGORY_LABELS.indexOf(key as any); // 0..5
-    if (categoryIndex === -1) return null;
-    const numericCategory = categoryIndex + 1; // 1..6
-
-    const byCategory = safeForums.find((f) => f.category === numericCategory);
-    return byCategory ? byCategory.id : null;
-  }, [safeForums, isAdmin, adminCategory, currentCategoryName]);
+    const forum = safeForums.find((f) => f.category === numericCategory);
+    return forum ? forum.id : null;
+  }, [safeForums, isAdmin, adminCategory, slugFromPath]);
 
   // threads filtrados por categoría actual
   const postsRaw = useMemo(() => {
@@ -412,7 +398,7 @@ const Forums: React.FC = () => {
         {
           label:
             safeForums?.find((f) => f.id === p.forumId)?.categoryName ??
-            String(p.forumId ?? "-"),
+            (p.forumId === 0 ? "General" : String(p.forumId ?? "-")),
           color:
             p.state === "Activo"
               ? "success"
@@ -731,7 +717,7 @@ const Forums: React.FC = () => {
                 </Typography>
               </Box>
 
-              {isAdmin && (
+              {isAdmin &&
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
                   <IconButton
                     size="small"
@@ -766,7 +752,7 @@ const Forums: React.FC = () => {
                     <DeleteOutline fontSize="small" />
                   </IconButton>
                 </Stack>
-              )}
+              }
             </Stack>
 
             <Stack
@@ -1302,10 +1288,10 @@ const Forums: React.FC = () => {
             "& .Mui-selected": {
               color: "white !important",
               backgroundColor: (t) =>
-                ADMIN_TAB_COLORS[currentTabKey] ||
+                ADMIN_TAB_COLORS[currentTabKey as string] ||
                 t.palette.primary.main,
               borderColor: (t) =>
-                ADMIN_TAB_COLORS[currentTabKey] ||
+                ADMIN_TAB_COLORS[currentTabKey as string] ||
                 t.palette.primary.main,
               boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
             },
@@ -1398,13 +1384,13 @@ const Forums: React.FC = () => {
             </Box>
           ) : (
             <NewPost
-        onClose={() => setOpen(false)}
-        forumId={resolvedForumId}   
-        userId={currentUserId}
-        onCreated={() => {
-          refetchThreads();
-          setOpen(false);
-        }}
+              onClose={() => setOpen(false)}
+              forumId={resolvedForumId} // siempre number acá
+              userId={currentUserId}
+              onCreated={() => {
+                refetchThreads();
+                setOpen(false);
+              }}
             />
           )}
         </DialogContent>
