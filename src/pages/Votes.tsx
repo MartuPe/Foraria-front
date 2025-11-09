@@ -33,7 +33,6 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ShareIcon from "@mui/icons-material/Share";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import PageHeader from "../components/SectionHeader";
-import { Layout } from "../components/layout";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
@@ -657,7 +656,6 @@ export default function Votes() {
   if (error) return <p>Error al cargar: {error}</p>;
 
   return (
-    <Layout>
       <Box className="foraria-page-container">
         <PageHeader
           title="Votaciones del Consorcio"
@@ -841,6 +839,5 @@ export default function Votes() {
           onClose={() => setShowSuccessModal(false)}
         />
       </Box>
-    </Layout>
   );
 }

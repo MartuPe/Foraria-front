@@ -14,7 +14,6 @@ import QueryBuilderIcon from "@mui/icons-material/QueryBuilder";
 import PersonIcon from "@mui/icons-material/Person";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { Meeting } from "../services/meetingService";
-import { Layout } from "../components/layout";
 
 export default function Meetings() {
   const [selected, setSelected] = useState<Meeting | null>(null);
@@ -28,7 +27,6 @@ export default function Meetings() {
   };
 
   return (
-    <Layout>
       <Box className="foraria-page-container">
         <PageHeader
           title="Reuniones"
@@ -101,6 +99,5 @@ export default function Meetings() {
           </DialogActions>
         </Dialog>
       </Box>
-    </Layout>
   );
 }
