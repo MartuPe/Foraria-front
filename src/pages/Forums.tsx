@@ -58,7 +58,7 @@ interface Thread {
 
 interface Forum {
   id: number;
-  category: number; // 0 = General, 1..5 = resto
+  category: number; // 0 = General, 1..5 resto
   categoryName: string | null;
   countThreads: number;
   countResponses: number;
@@ -124,7 +124,6 @@ const CATEGORY_LABELS = [
 
 type CategoryLabel = (typeof CATEGORY_LABELS)[number];
 
-// Traduce la key (slug o label) a una de nuestras etiquetas visibles
 function resolveCategoryLabel(key: string): CategoryLabel {
   const slug = toSlug(key);
   switch (slug) {
@@ -146,16 +145,14 @@ function resolveCategoryLabel(key: string): CategoryLabel {
   }
 }
 
-// Mapea la etiqueta a número de categoría del backend
-// General => 0, Administración => 1, ..., Garage y Parking => 5
+// General => 0, Administración => 1, ..., Garage => 5
 function resolveNumericCategory(key: string): number | null {
   const label = resolveCategoryLabel(key);
   const idx = CATEGORY_LABELS.indexOf(label as CategoryLabel); // 0..5
-  return idx === -1 ? null : idx; // 0..5 (0 = General)
+  return idx === -1 ? null : idx;
 }
 
 const Forums: React.FC = () => {
-  // ====== FETCH DE FOROS Y HILOS ======
   const {
     data: forumsRaw,
     loading: loadingForums,
@@ -225,7 +222,7 @@ const Forums: React.FC = () => {
   const API_BASE =
     process.env.REACT_APP_API_URL || "http://localhost:5205/api";
 
-  // ====== CATEGORÍA por URL (usuario) o por tabs (admin) ======
+  // ====== categoría actual (url o tab) ======
   const slugFromPath = useMemo(() => {
     const match = location.pathname.match(/\/forums\/([^/]+)/);
     return match ? match[1] : "general";
@@ -242,7 +239,7 @@ const Forums: React.FC = () => {
     return resolveCategoryLabel(key);
   }, [isAdmin, adminCategory, slugFromPath]);
 
-  // ids de foros para la categoría actual
+  // ====== ids de foros para la categoría actual ======
   const forumIdsForCategory = useMemo(() => {
     if (!safeForums) return new Set<number>();
     if (isAdmin && adminCategory === "Todas") {
@@ -260,11 +257,15 @@ const Forums: React.FC = () => {
     );
   }, [safeForums, isAdmin, adminCategory, slugFromPath]);
 
-  // resolved forumId (para crear post): foro de la categoría actual
+  // ====== forumId resuelto para crear post ======
   const resolvedForumId = useMemo(() => {
     if (!safeForums || safeForums.length === 0) return null;
 
-    if (isAdmin && adminCategory === "Todas") return safeForums[0].id;
+    // en admin + Todas: usamos General si existe, si no el primero
+    if (isAdmin && adminCategory === "Todas") {
+      const generalForum = safeForums.find((f) => f.category === 0);
+      return generalForum ? generalForum.id : safeForums[0].id;
+    }
 
     const key = isAdmin ? adminCategory : slugFromPath;
     const numericCategory = resolveNumericCategory(key);
@@ -274,14 +275,54 @@ const Forums: React.FC = () => {
     return forum ? forum.id : null;
   }, [safeForums, isAdmin, adminCategory, slugFromPath]);
 
-  // threads filtrados por categoría actual
+  // ====== mapa etiqueta -> forumId para el modal ======
+  const forumIdByLabel = useMemo(() => {
+    const map: Partial<Record<CategoryLabel, number>> = {};
+    if (!safeForums) return map;
+
+    if (isAdmin && adminCategory === "Todas") {
+      // admin en Todas: todas las categorías disponibles
+      safeForums.forEach((f) => {
+        const idx = f.category; // 0..5
+        if (idx >= 0 && idx < CATEGORY_LABELS.length) {
+          const label = CATEGORY_LABELS[idx];
+          map[label] = f.id;
+        }
+      });
+      return map;
+    }
+
+    // resto de vistas: solo la categoría actual
+    const key = isAdmin ? adminCategory : slugFromPath;
+    const numericCategory = resolveNumericCategory(key);
+    if (numericCategory === null) return map;
+
+    const forum = safeForums.find((f) => f.category === numericCategory);
+    if (forum) {
+      const label = CATEGORY_LABELS[numericCategory];
+      map[label] = forum.id;
+    }
+
+    return map;
+  }, [safeForums, isAdmin, adminCategory, slugFromPath]);
+
+  // categoría inicial que muestra el modal
+  const initialCategoryLabel: CategoryLabel = useMemo(() => {
+    if (isAdmin) {
+      if (adminCategory === "Todas") return "General";
+      return resolveCategoryLabel(adminCategory);
+    }
+    return resolveCategoryLabel(slugFromPath);
+  }, [isAdmin, adminCategory, slugFromPath]);
+
+  // ====== threads filtrados por categoría actual ======
   const postsRaw = useMemo(() => {
     if (!safeThreads) return [];
     if (!safeForums) return safeThreads;
     return safeThreads.filter((t) => forumIdsForCategory.has(t.forumId ?? -1));
   }, [safeThreads, safeForums, forumIdsForCategory]);
 
-  // ====== Stats del foro (si hay forum resuelto) ======
+  // ====== Stats del foro ======
   useEffect(() => {
     let mounted = true;
     if (!resolvedForumId) {
@@ -383,7 +424,7 @@ const Forums: React.FC = () => {
     };
   }, [postsRaw, API_BASE]);
 
-  // ====== Proyección de posts para UI ======
+  // ====== Proyección de posts ======
   const posts = useMemo(() => {
     if (!postsRaw) return [];
     return postsRaw.map((p) => ({
@@ -651,7 +692,7 @@ const Forums: React.FC = () => {
     }
   };
 
-  // ====== Render de cada thread ======
+  // ====== Render thread ======
   const renderThread = (thread: any) => {
     const key = String(thread.threadId);
     const meta =
@@ -717,7 +758,7 @@ const Forums: React.FC = () => {
                 </Typography>
               </Box>
 
-              {isAdmin &&
+              {isAdmin && (
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
                   <IconButton
                     size="small"
@@ -752,7 +793,7 @@ const Forums: React.FC = () => {
                     <DeleteOutline fontSize="small" />
                   </IconButton>
                 </Stack>
-              }
+              )}
             </Stack>
 
             <Stack
@@ -957,30 +998,6 @@ const Forums: React.FC = () => {
                                           comment.createdAt
                                         )}
                                       </Typography>
-                                      {comment.user_id ===
-                                        currentUserId && (
-                                        <Chip
-                                          label="Tú"
-                                          size="small"
-                                          color="secondary"
-                                          sx={{
-                                            height: 20,
-                                            fontSize: ".7rem",
-                                          }}
-                                        />
-                                      )}
-                                      {index === 0 && (
-                                        <Chip
-                                          label="OP"
-                                          size="small"
-                                          color="primary"
-                                          variant="outlined"
-                                          sx={{
-                                            height: 20,
-                                            fontSize: ".7rem",
-                                          }}
-                                        />
-                                      )}
                                     </Stack>
                                     <Typography
                                       variant="body2"
@@ -1385,8 +1402,10 @@ const Forums: React.FC = () => {
           ) : (
             <NewPost
               onClose={() => setOpen(false)}
-              forumId={resolvedForumId} // siempre number acá
+              forumId={resolvedForumId}
               userId={currentUserId}
+              forumIdByLabel={forumIdByLabel}
+              initialCategoryLabel={initialCategoryLabel}
               onCreated={() => {
                 refetchThreads();
                 setOpen(false);

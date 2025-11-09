@@ -24,13 +24,14 @@ const CATEGORY_LABELS = [
 
 interface NewPostProps {
   onClose: () => void;
-  forumId: number; // foro actual (por si no matchea nada)
+  forumId: number; // foro actual (fallback)
   userId: number;
   onCreated: () => void;
-  forumIdByLabel?: Partial<Record<(typeof CATEGORY_LABELS)[number], number>>; 
+  // mapa etiqueta -> forumId (solo se usa en admin / Todas)
+  forumIdByLabel?: Partial<Record<(typeof CATEGORY_LABELS)[number], number>>;
+  // categoría inicial que se ve en el combo
   initialCategoryLabel?: (typeof CATEGORY_LABELS)[number];
 }
-
 
 export default function NewPost({
   onClose,
@@ -66,12 +67,9 @@ export default function NewPost({
     forumId > 0 &&
     userId > 0;
 
-  // 🔹 Acá está la magia:
-  //   si el usuario cambia la categoría, buscamos el forumId para esa categoría.
-  //   Si no lo encontramos, usamos el forumId que vino de Forums.tsx.
+  // decide el forumId según la categoría elegida (si hay mapa)
   const forumIdToSend = useMemo(() => {
     const fromMap = forumIdByLabel?.[categoryLabel];
-
     return fromMap ?? forumId;
   }, [forumId, forumIdByLabel, categoryLabel]);
 
@@ -89,7 +87,7 @@ export default function NewPost({
       await mutate(payload);
       onCreated();
     } catch {
-      // el error ya se muestra abajo si viene de useMutation
+      // el error ya se muestra abajo
     }
   };
 
@@ -105,9 +103,7 @@ export default function NewPost({
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             error={titleError}
-            helperText={
-              titleError ? `Mínimo ${MIN_TITLE} caracteres` : " "
-            }
+            helperText={titleError ? `Mínimo ${MIN_TITLE} caracteres` : " "}
             autoFocus
           />
 
@@ -120,32 +116,30 @@ export default function NewPost({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             error={descError}
-            helperText={
-              descError ? `Mínimo ${MIN_DESC} caracteres` : " "
-            }
+            helperText={descError ? `Mínimo ${MIN_DESC} caracteres` : " "}
           />
 
-          {/* Solo mostramos el selector si hay más de un foro posible (modo admin / Todas) */}
-{forumIdByLabel && Object.keys(forumIdByLabel).length > 1 && (
-  <TextField
-    select
-    label="Categoría"
-    fullWidth
-    value={categoryLabel}
-    onChange={(e) =>
-      setCategoryLabel(
-        e.target.value as (typeof CATEGORY_LABELS)[number]
-      )
-    }
-  >
-    {CATEGORY_LABELS.map((c) => (
-      <MenuItem key={c} value={c}>
-        {c}
-      </MenuItem>
-    ))}
-  </TextField>
-)}
-
+          {/* Solo mostramos el selector de categoría si el admin está en "Todas"
+              (o sea, si hay más de un foro posible en el mapa) */}
+          {forumIdByLabel && Object.keys(forumIdByLabel).length > 1 && (
+            <TextField
+              select
+              label="Categoría"
+              fullWidth
+              value={categoryLabel}
+              onChange={(e) =>
+                setCategoryLabel(
+                  e.target.value as (typeof CATEGORY_LABELS)[number]
+                )
+              }
+            >
+              {CATEGORY_LABELS.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
 
           {error && (
             <Typography variant="body2" color="error">
@@ -165,9 +159,7 @@ export default function NewPost({
           variant="contained"
           onClick={handleSubmit}
           disabled={!canSubmit}
-          startIcon={
-            loading ? <CircularProgress size={16} /> : undefined
-          }
+          startIcon={loading ? <CircularProgress size={16} /> : undefined}
         >
           {loading ? "Creando..." : "Crear post"}
         </Button>
