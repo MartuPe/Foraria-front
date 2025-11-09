@@ -1,154 +1,148 @@
-import React, { useEffect, useState } from "react";
-import { TextField, Button, Typography } from "@mui/material";
+import React, { useState } from "react";
+import {
+  Box,
+  Button,
+  DialogActions,
+  DialogTitle,
+  DialogContent,
+  Stack,
+  TextField,
+  MenuItem,
+  Typography,
+  Alert,
+} from "@mui/material";
 import { useMutation } from "../../hooks/useMutation";
 
-export interface NewPostProps {
-  onClose?: () => void;
-  forumId?: number;
-  userId?: number;
-  onCreated?: (post: any) => void;
-  onSubmit?: (data: { theme: string; description: string; forumId: number }) => Promise<void>;
-  loading?: boolean;
-  error?: string | null;
+interface NewPostProps {
+  forumId: number | null;
+  userId: number;
+  onClose: () => void;
+  onCreated: () => void;
 }
 
-export default function NewPost({
-  onClose,
-  forumId,
-  userId,
-  onCreated,
-  onSubmit,
-  loading = false,
-  error = null,
-}: NewPostProps) {
+const MIN_TITLE = 5;
+const MIN_DESC = 10;
+
+const categories = [
+  { id: 1, label: "General" },
+  { id: 2, label: "Administración" },
+  { id: 3, label: "Seguridad" },
+  { id: 4, label: "Mantenimiento" },
+  { id: 5, label: "Espacios Comunes" },
+  { id: 6, label: "Garage y Parking" },
+];
+
+export default function NewPost({ forumId, userId, onClose, onCreated }: NewPostProps) {
+  const { mutate, loading, error } = useMutation("/Thread", "post");
   const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [localError, setLocalError] = useState<string | null>(null);
+  const [desc, setDesc] = useState("");
+  const [category, setCategory] = useState<number | "">("");
 
- 
-  const { mutate, loading: mutLoading, error: mutError } = useMutation("/Thread", "post");
+  const isTitleValid = title.trim().length >= MIN_TITLE;
+  const isDescValid = desc.trim().length >= MIN_DESC;
+  const isCategoryValid = category !== "";
 
-
-  const isLoading = loading || mutLoading;
-  const effectiveError = localError ?? error ?? mutError ?? null;
-
-  useEffect(() => {
-   
-    if (title || description) setLocalError(null);
-  }, [title, description]);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLocalError(null);
-
-    if (!title.trim()) {
-      setLocalError("El título es obligatorio");
-      return;
-    }
-
-    if (!forumId) {
-      setLocalError("No se detectó el foro destino");
-      return;
-    }
-
-    if (!userId || userId === 0) {
-      setLocalError("Usuario no identificado. Iniciá sesión antes de crear un post.");
-      return;
-    }
-
-
-  const payloadForBackend = {
-    Theme: title.trim(),        // Cambiado de 'theme' a 'Theme'
-    Description: description.trim(), // Cambiado de 'description' a 'Description'
-    ForumId: forumId,          // Cambiado de 'forumId' a 'ForumId'
-    UserId: userId,            // Cambiado de 'userId' a 'UserId'
-  };
-
-
+  const handleSubmit = async () => {
+    if (!isTitleValid || !isDescValid || !isCategoryValid) return;
     try {
-      if (onSubmit) {
-        await onSubmit({
-          theme: payloadForBackend.Theme,         // Ajustar aquí también
-          description: payloadForBackend.Description,
-          forumId: payloadForBackend.ForumId,
-        });
-        onCreated?.(payloadForBackend);
-      } else {
-        const created = await mutate(payloadForBackend);
-        onCreated?.(created ?? payloadForBackend);
-      }
-      onClose?.();
-    } catch (err) {
-    
-      if (!(err as any)?.response) {
-        setLocalError("Error inesperado al crear el post");
-      }
-      console.error("Error creando post", err);
-    }
-  };
+      const payload = {
+        theme: title.trim(),
+        description: desc.trim(),
+        forumId: category,  // y listo, sin fallback
 
-  const handleCancel = () => {
-    onClose?.();
+        userId,
+      };
+      await mutate(payload);
+      onCreated();
+    } catch (e) {
+      console.error("Error creando post:", e);
+    }
   };
 
   return (
-    <form className="foraria-form" onSubmit={handleSubmit}>
-      <h2 className="foraria-form-title">Crear Nuevo Post</h2>
+    <>
+      <DialogTitle>Crear nuevo post</DialogTitle>
+      <DialogContent dividers>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <TextField
+            label="Título"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            fullWidth
+            required
+            inputProps={{ minLength: MIN_TITLE }}
+            helperText={
+              !isTitleValid
+                ? `Debe tener al menos ${MIN_TITLE} caracteres`
+                : " "
+            }
+            error={!isTitleValid && title.length > 0}
+          />
 
-      <div className="foraria-form-group">
-        <label className="foraria-form-label">Titulo del post</label>
-        <TextField
-          fullWidth
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Titulo del post..."
-          variant="outlined"
-          className="foraria-form-input"
-          disabled={isLoading}
-        />
-      </div>
+          <TextField
+            select
+            label="Categoría"
+            fullWidth
+            required
+            value={category}
+            onChange={(e) => setCategory(Number(e.target.value))}
+            helperText={!isCategoryValid ? "Seleccioná una categoría" : " "}
+            error={!isCategoryValid && category === ""}
+          >
+            <MenuItem value="">Seleccionar...</MenuItem>
+            {categories.map((c) => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.label}
+              </MenuItem>
+            ))}
+          </TextField>
 
-      <div className="foraria-form-group">
-        <label className="foraria-form-label">Descripción</label>
-        <TextField
-          fullWidth
-          multiline
-          minRows={4}
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          placeholder="¿Qué querés compartir con la comunidad?"
-          className="foraria-form-textarea"
-          disabled={isLoading}
-        />
-      </div>
+          <TextField
+            label="Descripción"
+            value={desc}
+            onChange={(e) => setDesc(e.target.value)}
+            fullWidth
+            multiline
+            minRows={4}
+            inputProps={{ minLength: MIN_DESC }}
+            helperText={
+              !isDescValid
+                ? `Debe tener al menos ${MIN_DESC} caracteres`
+                : " "
+            }
+            error={!isDescValid && desc.length > 0}
+          />
+          {error && (
+            <Alert severity="error" sx={{ mt: 1 }}>
+          {typeof error === "string"
+            ? error
+          : (error as any)?.response?.data?.error || "Ocurrió un error al crear el post."}
+          </Alert>
+              )}
 
-      {effectiveError && (
-        <Typography color="error" variant="body2" sx={{ mb: 1 }}>
-          {effectiveError}
-        </Typography>
-      )}
 
-      <div className="foraria-form-actions">
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            ⚙️ Requisitos del post:
+            <ul style={{ marginTop: 4, marginBottom: 0 }}>
+              <li>Título con mínimo {MIN_TITLE} caracteres</li>
+              <li>Descripción con mínimo {MIN_DESC} caracteres</li>
+              <li>Seleccionar una categoría válida</li>
+            </ul>
+          </Typography>
+        </Stack>
+      </DialogContent>
+
+      <DialogActions>
+        <Button onClick={onClose}>Cancelar</Button>
         <Button
-          type="submit"
-          className="foraria-gradient-button boton-crear-reclamo"
-          disabled={isLoading}
           variant="contained"
-          color="primary"
+          color="secondary"
+          disabled={!isTitleValid || !isDescValid || !isCategoryValid || loading}
+          onClick={handleSubmit}
         >
-          {isLoading ? "Publicando..." : "Publicar"}
+          {loading ? "Creando..." : "Crear post"}
         </Button>
-
-        <Button
-          className="foraria-outlined-white-button"
-          disabled={isLoading}
-          onClick={handleCancel}
-          variant="outlined"
-          sx={{ ml: 1 }}
-        >
-          Cancelar
-        </Button>
-      </div>
-    </form>
+      </DialogActions>
+    </>
   );
 }
