@@ -223,7 +223,7 @@ const generatePdf = (detail: ExpenseDetail) => {
   pdf.setFontSize(14);
   pdf.setTextColor(0, 0, 0);
   pdf.text(
-    `DESCRIPCIÓN: ${exp.description || `Expensa ${exp.id}`}`,
+    `${exp.description || `Expensa ${exp.id}`}`,
     pageWidth / 2,
     130,
     { align: "center" }

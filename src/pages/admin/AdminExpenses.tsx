@@ -24,6 +24,9 @@ import Money from "../../components/Money";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import IconButton from "@mui/material/IconButton";
 import axios from "axios";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
+import logoForaria from "../../assets/Isotipo-Color.png";
 
 interface InvoiceItem {
   description: string;
@@ -98,10 +101,6 @@ const handleCloseDetails = () => {
   setDetailsOpen(false);
 };
 
-const handleDownloadPdf = (exp: any) => {
-  const url = `https://localhost:7245/api/Expense/pdf?id=${exp.id}`;
-  window.open(url, "_blank");
-};
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
@@ -249,6 +248,80 @@ const handleDownloadPdf = (exp: any) => {
     const db = b.dateOfIssue ? new Date(b.dateOfIssue).getTime() : 0;
     return db - da;
   });
+const generateAdminPdf = (exp: Expense) => {
+  const pdf = new jsPDF("p", "pt", "a4");
+
+  const pageWidth = pdf.internal.pageSize.getWidth();
+
+  pdf.setFillColor(13, 52, 102);
+  pdf.rect(0, 0, pageWidth, 90, "F");
+
+  const logoWidth = 80;
+  const logoHeight = 80;
+  const logoX = pageWidth / 2 - logoWidth / 2;
+  const logoY = 0;
+  pdf.addImage(logoForaria, "PNG", logoX, logoY, logoWidth, logoHeight);
+
+  pdf.setFontSize(22);
+  pdf.setTextColor(255, 255, 255);
+  pdf.text("FORARIA", pageWidth / 2, 80, { align: "center" });
+
+  const created = exp.createdAt ? new Date(exp.createdAt).toLocaleDateString("es-AR") : "-";
+  const venc = exp.expirationDate
+    ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
+    : "-";
+
+  pdf.setFontSize(10);
+  const rightX = pageWidth - 20;
+  pdf.text(`CREADA: ${created}`, rightX, 25, { align: "right" });
+  pdf.text(`VENCIMIENTO: ${venc}`, rightX, 40, { align: "right" });
+
+  pdf.setFontSize(14);
+  pdf.setTextColor(0, 0, 0);
+  pdf.text(
+    `${exp.description || `Expensa ${exp.id}`}`,
+    pageWidth / 2,
+    130,
+    { align: "center" }
+  );
+
+  const rows = exp.invoices.map((inv) => [
+    inv.dateOfIssue ? new Date(inv.dateOfIssue).toLocaleDateString("es-AR") : "-",
+    inv.description || inv.description || "-",
+    inv.category || "-",
+    "$" + inv.amount?.toLocaleString("es-AR"),
+  ]);
+
+  autoTable(pdf, {
+    startY: 160,
+    head: [["FECHA", "CONCEPTO", "CATEGORIA", "MONTO"]],
+    body: rows,
+    styles: { fontSize: 10, halign: "center", valign: "middle" },
+    headStyles: {
+      fillColor: [255, 255, 255],
+      textColor: [0, 0, 0],
+      lineWidth: 0.5,
+      lineColor: [180, 180, 180],
+      fontStyle: "bold",
+    },
+    bodyStyles: {
+      lineColor: [180, 180, 180],
+      lineWidth: 0.3,
+      cellPadding: 8,
+    },
+  });
+
+  const finalY = (pdf as any).lastAutoTable.finalY + 30;
+  pdf.setFontSize(20);
+  pdf.text(
+    `TOTAL: $${exp.totalAmount.toLocaleString("es-AR")}`,
+    pageWidth / 2,
+    finalY,
+    { align: "center" }
+  );
+
+  pdf.save(`expensa_${exp.id}.pdf`);
+};
 
   return (
     <div className="page">
@@ -430,11 +503,11 @@ const handleDownloadPdf = (exp: any) => {
             ]}
             showDivider
             extraActions={[
-              {
-                label: "PDF",
-                icon: <DownloadIcon />,
-                onClick: () => handleDownloadPdf(exp),
-              },
+            {
+            label: "PDF",
+            icon: <DownloadIcon />,
+            onClick: () => generateAdminPdf(exp),
+            },
               {
                 label: "Ver",
                 icon: <VisibilityIcon />,
