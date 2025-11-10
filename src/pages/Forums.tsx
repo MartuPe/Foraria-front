@@ -39,9 +39,11 @@ import {
   EditOutlined,
   DeleteOutline,
   FilterList as FilterListIcon,
+  LockOutlined,
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
 import NewPost from "../components/modals/NewPost";
+import EditThread from "../components/modals/EditThread";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
@@ -170,32 +172,31 @@ const Forums: React.FC = () => {
   } = useGet<Thread[]>("/Thread");
 
   const forumsStatus = (errorForums as any)?.response?.status as
-  | number
-  | undefined;
-const threadsStatus = (errorThreads as any)?.response?.status as
-  | number
-  | undefined;
+    | number
+    | undefined;
+  const threadsStatus = (errorThreads as any)?.response?.status as
+    | number
+    | undefined;
 
-const safeForums = useMemo(() => {
-  return forumsStatus === 404 ? [] : forumsRaw;
-}, [forumsStatus, forumsRaw]);
+  const safeForums = useMemo(() => {
+    return forumsStatus === 404 ? [] : forumsRaw;
+  }, [forumsStatus, forumsRaw]);
 
-const safeThreads = useMemo(() => {
-  return threadsStatus === 404 ? [] : threadsRaw;
-}, [threadsStatus, threadsRaw]);
+  const safeThreads = useMemo(() => {
+    return threadsStatus === 404 ? [] : threadsRaw;
+  }, [threadsStatus, threadsRaw]);
 
-const loading = loadingForums || loadingThreads;
-const hasHardError =
-  (!!errorForums && forumsStatus !== 404) ||
-  (!!errorThreads && threadsStatus !== 404);
+  const loading = loadingForums || loadingThreads;
 
+  const hasHardError =
+    (!!errorForums && forumsStatus !== 404) ||
+    (!!errorThreads && threadsStatus !== 404);
 
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const isAdminRole =
-    storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
+  const isAdminRole = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
   const isAdminRoute = location.pathname.startsWith("/admin");
   const isAdmin = isAdminRole || isAdminRoute;
 
@@ -203,13 +204,24 @@ const hasHardError =
   const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [threadBeingEdited, setThreadBeingEdited] = useState<{
+    id: number;
+    title: string;
+    description: string;
+  } | null>(null);
+
+  const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [statusDialogMessage, setStatusDialogMessage] = useState("");
+
   const currentUserId = Number(localStorage.getItem("userId") || 0);
 
-  const { mutate: toggleMutate } =
-    useMutation<
-      ReactionResponse,
-      { user_id: number; thread_id?: number; message_id?: number; reactionType: number }
-    >("/Reactions/toggle", "post");
+  const { mutate: toggleMutate } = useMutation<
+    ReactionResponse,
+    { user_id: number; thread_id?: number; message_id?: number; reactionType: number }
+  >("/Reactions/toggle", "post");
 
   const [enriched, setEnriched] = useState<
     Record<
@@ -230,8 +242,8 @@ const hasHardError =
   >({});
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
-  const API_BASE =
-    process.env.REACT_APP_API_URL || "http://localhost:5205/api";
+
+  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5205/api";
 
   // ====== categoría actual (url o tab) ======
   const slugFromPath = useMemo(() => {
@@ -242,6 +254,7 @@ const hasHardError =
   const adminCategory =
     (searchParams.get("category") as keyof typeof ADMIN_TAB_COLORS | null) ||
     "Todas";
+
   const setAdminCategory = (cat: string) => setSearchParams({ category: cat });
 
   const currentCategoryName = useMemo<CategoryLabel | "Todas">(() => {
@@ -253,6 +266,7 @@ const hasHardError =
   // ====== ids de foros para la categoría actual ======
   const forumIdsForCategory = useMemo(() => {
     if (!safeForums) return new Set<number>();
+
     if (isAdmin && adminCategory === "Todas") {
       return new Set(safeForums.map((f) => f.id));
     }
@@ -336,26 +350,32 @@ const hasHardError =
   // ====== Stats del foro ======
   useEffect(() => {
     let mounted = true;
+
     if (!resolvedForumId) {
       setForumStats(null);
       return;
     }
+
     const controller = new AbortController();
+
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, {
           signal: controller.signal,
         });
+
         if (!res.ok) {
           setForumStats(null);
           return;
         }
+
         const json: Forum = await res.json();
         if (mounted) setForumStats(json);
       } catch {
         if (mounted) setForumStats(null);
       }
     })();
+
     return () => {
       mounted = false;
       controller.abort();
@@ -368,15 +388,22 @@ const hasHardError =
       setEnriched({});
       return;
     }
+
     let mounted = true;
     const controllers: AbortController[] = [];
 
     const fetchForThread = async (threadId: number) => {
       const key = String(threadId);
+
       setEnriched((p) => ({
         ...p,
-        [key]: { ...(p[key] ?? {}), loading: true, error: false },
+        [key]: {
+          ...(p[key] ?? {}),
+          loading: true,
+          error: false,
+        },
       }));
+
       const ctl = new AbortController();
       controllers.push(ctl);
 
@@ -386,24 +413,34 @@ const hasHardError =
         dislikes: 0,
         userReaction: 0,
       };
+
       try {
         const r = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, {
           signal: ctl.signal,
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
         });
         if (r.ok) reactions = await r.json();
-      } catch {}
+      } catch {
+        // ignore
+      }
 
       let messages: Message[] = [];
       try {
         const m = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
           signal: ctl.signal,
-          headers: { "Content-Type": "application/json" },
+          headers: {
+            "Content-Type": "application/json",
+          },
         });
         if (m.ok) messages = await m.json();
-      } catch {}
+      } catch {
+        // ignore
+      }
 
       if (!mounted) return;
+
       setEnriched((prev) => ({
         ...prev,
         [key]: {
@@ -438,19 +475,19 @@ const hasHardError =
   // ====== Proyección de posts ======
   const posts = useMemo(() => {
     if (!postsRaw) return [];
-    return postsRaw.map((p) => ({
-      id: String(p.id),
-      threadId: p.id,
-      title: p.theme ?? "Sin título",
-      subtitle: `Usuario ${p.userId ?? "-"} · ${formatDateNumeric(
-        p.createdAt
-      )}`,
-      description: p.description ?? "",
-      chips: [
+
+    return postsRaw.map((p) => {
+      const categoryLabel =
+        safeForums?.find((f) => f.id === p.forumId)?.categoryName ??
+        (p.forumId === 0 ? "General" : String(p.forumId ?? "-"));
+
+      const isClosed =
+        typeof p.state === "string" &&
+        p.state.toLowerCase() === "cerrado";
+
+      const chips: any[] = [
         {
-          label:
-            safeForums?.find((f) => f.id === p.forumId)?.categoryName ??
-            (p.forumId === 0 ? "General" : String(p.forumId ?? "-")),
+          label: categoryLabel,
           color:
             p.state === "Activo"
               ? "success"
@@ -458,8 +495,27 @@ const hasHardError =
               ? "warning"
               : "default",
         },
-      ],
-    }));
+      ];
+
+      if (isClosed) {
+        chips.push({
+          label: "Cerrado",
+          color: "default",
+        });
+      }
+
+      return {
+        id: String(p.id),
+        threadId: p.id,
+        title: p.theme ?? "Sin título",
+        subtitle: `Usuario ${p.userId ?? "-"} · ${formatDateNumeric(
+          p.createdAt
+        )}`,
+        description: p.description ?? "",
+        state: p.state,
+        chips,
+      };
+    });
   }, [postsRaw, safeForums]);
 
   // ====== KPIs ======
@@ -467,18 +523,27 @@ const hasHardError =
     const totalPosts = posts.length;
     const activeUsers =
       new Set(postsRaw?.map((p) => p.userId).filter(Boolean)).size || 0;
+
     const totalResponses = Object.values(enriched).reduce(
       (acc, e) => acc + (e?.commentsCount ?? 0),
       0
     );
+
     const pinned = Object.values(enriched).filter((e) => e?.pinned).length;
-    return { totalPosts, activeUsers, totalResponses, pinned };
+
+    return {
+      totalPosts,
+      activeUsers,
+      totalResponses,
+      pinned,
+    };
   }, [posts, postsRaw, enriched]);
 
   const headerStats = useMemo(
     () => ({
       totalPosts: forumStats?.countThreads ?? computedStats.totalPosts,
-      activeUsers: forumStats?.countUserActives ?? computedStats.activeUsers,
+      activeUsers:
+        forumStats?.countUserActives ?? computedStats.activeUsers,
       totalResponses:
         forumStats?.countResponses ?? computedStats.totalResponses,
       pinned: computedStats.pinned,
@@ -506,7 +571,10 @@ const hasHardError =
     const key = String(threadId);
     setEnriched((prev) => ({
       ...prev,
-      [key]: { ...(prev[key] ?? {}), pinned: !prev[key]?.pinned },
+      [key]: {
+        ...(prev[key] ?? {}),
+        pinned: !prev[key]?.pinned,
+      },
     }));
   };
 
@@ -523,11 +591,15 @@ const hasHardError =
         reacting: false,
         userReaction: 0,
       };
+
     if (current.reacting) return;
 
     setEnriched((p) => ({
       ...p,
-      [key]: { ...(p[key] ?? {}), reacting: true },
+      [key]: {
+        ...(p[key] ?? {}),
+        reacting: true,
+      },
     }));
 
     const prevUser = current.userReaction ?? 0;
@@ -547,7 +619,10 @@ const hasHardError =
 
     setEnriched((p) => ({
       ...p,
-      [key]: { ...(p[key] ?? {}), ...optimistic },
+      [key]: {
+        ...(p[key] ?? {}),
+        ...optimistic,
+      },
     }));
 
     try {
@@ -556,7 +631,9 @@ const hasHardError =
         thread_id: threadId,
         reactionType,
       };
+
       const result = await toggleMutate(payload);
+
       if (result && typeof result.likes === "number") {
         setEnriched((p) => ({
           ...p,
@@ -581,7 +658,9 @@ const hasHardError =
         `${API_BASE}/Reactions/thread/${threadId}`
       );
       if (!reacRes.ok) throw new Error("Reactions fallback failed");
+
       const reacJson: ReactionResponse = await reacRes.json();
+
       setEnriched((p) => ({
         ...p,
         [key]: {
@@ -651,26 +730,43 @@ const hasHardError =
   const handleSendReply = async (threadId: number) => {
     const text = replyText[threadId]?.trim();
     if (!text || sendingReply === threadId) return;
+
     setSendingReply(threadId);
+
     try {
       const messageData = {
         Content: text,
         Thread_id: threadId,
         User_id: currentUserId,
       };
+
       await sendReply(messageData);
-      setReplyText((p) => ({ ...p, [threadId]: "" }));
+
+      setReplyText((p) => ({
+        ...p,
+        [threadId]: "",
+      }));
+
       const key = String(threadId);
       setEnriched((p) => ({
         ...p,
-        [key]: { ...(p[key] ?? {}), loading: true },
+        [key]: {
+          ...(p[key] ?? {}),
+          loading: true,
+        },
       }));
+
       setTimeout(async () => {
         try {
           const res = await fetch(
             `${API_BASE}/Message/thread/${threadId}`,
-            { headers: { "Content-Type": "application/json" } }
+            {
+              headers: {
+                "Content-Type": "application/json",
+              },
+            }
           );
+
           if (res.ok) {
             const messages: Message[] = await res.json();
             setEnriched((p) => ({
@@ -685,20 +781,24 @@ const hasHardError =
           } else {
             setEnriched((p) => ({
               ...p,
-              [key]: { ...(p[key] ?? {}), loading: false },
+              [key]: {
+                ...(p[key] ?? {}),
+                loading: false,
+              },
             }));
           }
         } catch {
           setEnriched((p) => ({
             ...p,
-            [key]: { ...(p[key] ?? {}), loading: false },
+            [key]: {
+              ...(p[key] ?? {}),
+              loading: false,
+            },
           }));
         }
       }, 800);
     } catch (e: any) {
-      alert(
-        `Error al enviar la respuesta: ${e?.message || "desconocido"}`
-      );
+      alert(`Error al enviar la respuesta: ${e?.message || "desconocido"}`);
     } finally {
       setSendingReply(null);
     }
@@ -723,7 +823,9 @@ const hasHardError =
 
       const res = await fetch(`${API_BASE}/Thread/${threadId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
       });
 
       if (res.status === 204) {
@@ -760,6 +862,74 @@ const hasHardError =
     }
   };
 
+  // ====== cerrar hilo (PATCH /Thread/{id}/close) ======
+  const handleCloseThread = async (threadId: number) => {
+    if (!isAdmin) return;
+
+    try {
+      setClosingThreadId(threadId);
+
+      const res = await fetch(`${API_BASE}/Thread/${threadId}/close`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      // 409: ya estaba cerrado
+      if (res.status === 409) {
+        let msg = "El hilo ya se encuentra cerrado.";
+        try {
+          const json = await res.json();
+          if (json?.error) msg = json.error;
+        } catch {
+          // si no viene JSON, usamos el mensaje por defecto
+        }
+
+        setStatusDialogMessage(msg);
+        setStatusDialogOpen(true);
+
+        await refetchThreads();
+        return;
+      }
+
+      // cualquier otro error
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Error al cerrar el hilo:", text);
+        setStatusDialogMessage("No se pudo cerrar el hilo. Probá de nuevo.");
+        setStatusDialogOpen(true);
+        return;
+      }
+
+      // éxito
+      setStatusDialogMessage("El hilo se cerró correctamente.");
+      setStatusDialogOpen(true);
+      await refetchThreads();
+    } catch (e) {
+      console.error(e);
+      setStatusDialogMessage("Ocurrió un error al cerrar el hilo.");
+      setStatusDialogOpen(true);
+    } finally {
+      setClosingThreadId(null);
+    }
+  };
+
+  // ====== abrir modal de edición ======
+  const openEditDialog = (thread: {
+    threadId: number;
+    title: string;
+    description: string;
+  }) => {
+    if (!isAdmin) return;
+    setThreadBeingEdited({
+      id: thread.threadId,
+      title: thread.title,
+      description: thread.description,
+    });
+    setEditOpen(true);
+  };
+
   // ====== Render thread ======
   const renderThread = (thread: any) => {
     const key = String(thread.threadId);
@@ -772,7 +942,12 @@ const hasHardError =
         comments: [],
         userReaction: 0,
       };
+
     const isExpanded = expandedThreads.has(thread.threadId);
+
+    const isClosed =
+      typeof thread.state === "string" &&
+      thread.state.toLowerCase() === "cerrado";
 
     return (
       <Card
@@ -801,6 +976,7 @@ const hasHardError =
                   <Typography variant="h6" color="primary">
                     {thread.title}
                   </Typography>
+
                   {thread.chips.map((chip: any, i: number) => (
                     <Chip
                       key={`${chip.label}-${i}`}
@@ -809,11 +985,16 @@ const hasHardError =
                       size="small"
                     />
                   ))}
-                  {isAdmin &&
-                    (meta.pinned ? (
-                      <Chip label="Fijado" size="small" color="warning" />
-                    ) : null)}
+
+                  {isAdmin && meta.pinned && (
+                    <Chip
+                      label="Fijado"
+                      size="small"
+                      color="warning"
+                    />
+                  )}
                 </Stack>
+
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -821,6 +1002,7 @@ const hasHardError =
                 >
                   {thread.subtitle}
                 </Typography>
+
                 <Typography variant="body1" sx={{ mb: 2 }}>
                   {thread.description}
                 </Typography>
@@ -835,6 +1017,8 @@ const hasHardError =
                   >
                     <VisibilityOutlined fontSize="small" />
                   </IconButton>
+
+                  {/* Fijar / Desfijar */}
                   <IconButton
                     size="small"
                     onClick={() => togglePinLocal(thread.threadId)}
@@ -846,13 +1030,32 @@ const hasHardError =
                       <PushPinOutlined fontSize="small" />
                     )}
                   </IconButton>
+
+                  {/* Cerrar hilo */} <IconButton
+          size="small"
+                onClick={() => handleCloseThread(thread.threadId)}
+                  sx={{
+                  color: isClosed ? "text.secondary" : "warning.main",
+                                    }}
+                      disabled={closingThreadId === thread.threadId || isClosed}
+>
+                       <LockOutlined fontSize="small" />
+                          </IconButton>
+
+                  
+                   
+                   
+
+                  {/* Editar */}
                   <IconButton
                     size="small"
-                    onClick={() => {}}
+                    onClick={() => openEditDialog(thread)}
                     sx={{ color: "info.main" }}
                   >
                     <EditOutlined fontSize="small" />
                   </IconButton>
+
+                  {/* Eliminar */}
                   <IconButton
                     size="small"
                     onClick={() => openDeleteDialog(thread.threadId)}
@@ -893,6 +1096,7 @@ const hasHardError =
                 >
                   {meta.likes}
                 </Button>
+
                 <Button
                   size="small"
                   startIcon={
@@ -914,33 +1118,44 @@ const hasHardError =
                 >
                   {meta.dislikes}
                 </Button>
+
                 <Button
                   size="small"
                   startIcon={<ChatIcon />}
                   endIcon={
-                    isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />
+                    isExpanded ? (
+                      <ExpandLessIcon />
+                    ) : (
+                      <ExpandMoreIcon />
+                    )
                   }
                   onClick={() => toggleThread(thread.threadId)}
                   sx={{ textTransform: "none" }}
                 >
                   {meta.commentsCount}{" "}
-                  {meta.commentsCount === 1 ? "respuesta" : "respuestas"}
+                  {meta.commentsCount === 1
+                    ? "respuesta"
+                    : "respuestas"}
                 </Button>
               </Stack>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ReplyIcon />}
-                onClick={() => toggleThread(thread.threadId)}
-                sx={{ textTransform: "none" }}
-              >
-                Responder
-              </Button>
+
+              {!isClosed && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<ReplyIcon />}
+                  onClick={() => toggleThread(thread.threadId)}
+                  sx={{ textTransform: "none" }}
+                >
+                  Responder
+                </Button>
+              )}
             </Stack>
 
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
               <Box sx={{ mt: 2 }}>
                 <Divider sx={{ mb: 2 }} />
+
                 {meta.loading ? (
                   <Box
                     sx={{
@@ -950,7 +1165,10 @@ const hasHardError =
                     }}
                   >
                     <CircularProgress size={24} />
-                    <Typography variant="body2" sx={{ ml: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ ml: 1 }}
+                    >
                       Cargando mensajes...
                     </Typography>
                   </Box>
@@ -964,7 +1182,9 @@ const hasHardError =
                             left: 20,
                             top: 40,
                             bottom:
-                              meta.comments.length > 1 ? 60 : 40,
+                              meta.comments.length > 1
+                                ? 60
+                                : 40,
                             width: 3,
                             bgcolor: "primary.main",
                             opacity: 0.4,
@@ -1009,6 +1229,7 @@ const hasHardError =
                                   }}
                                 />
                               )}
+
                               <Paper
                                 variant="outlined"
                                 sx={{
@@ -1045,6 +1266,7 @@ const hasHardError =
                                   >
                                     U{comment.user_id}
                                   </Avatar>
+
                                   <Box sx={{ flex: 1 }}>
                                     <Stack
                                       direction="row"
@@ -1059,6 +1281,7 @@ const hasHardError =
                                       >
                                         Usuario {comment.user_id}
                                       </Typography>
+
                                       <Typography
                                         variant="caption"
                                         color="text.secondary"
@@ -1068,6 +1291,7 @@ const hasHardError =
                                         )}
                                       </Typography>
                                     </Stack>
+
                                     <Typography
                                       variant="body2"
                                       sx={{ lineHeight: 1.6 }}
@@ -1085,149 +1309,182 @@ const hasHardError =
                       <Typography
                         variant="body2"
                         color="text.secondary"
-                        sx={{ textAlign: "center", py: 4 }}
+                        sx={{
+                          textAlign: "center",
+                          py: 4,
+                        }}
                       >
                         No hay respuestas aún. ¡Sé el primero en
                         comentar!
                       </Typography>
                     )}
 
-                    <Box
-                      sx={{
-                        mt: 3,
-                        ml: 5,
-                        position: "relative",
-                      }}
-                    >
-                      {meta.comments &&
-                        meta.comments.length > 0 && (
-                          <>
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                left: -28,
-                                top: 24,
-                                width: 24,
-                                height: 3,
-                                bgcolor: "success.main",
-                                opacity: 0.7,
-                                borderRadius: 1.5,
-                              }}
-                            />
-                            <Box
-                              sx={{
-                                position: "absolute",
-                                left: -30,
-                                top: 22,
-                                width: 8,
-                                height: 8,
-                                bgcolor: "success.main",
-                                borderRadius: "50%",
-                                border: "2px solid white",
-                              }}
-                            />
-                          </>
-                        )}
-                      <Paper
-                        variant="outlined"
+                    {isClosed ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ textAlign: "center", py: 3 }}
+                      >
+                        Este hilo está cerrado. No se pueden agregar
+                        nuevas respuestas.
+                      </Typography>
+                    ) : (
+                      <Box
                         sx={{
-                          p: 2,
-                          borderRadius: 2,
-                          borderLeft: "3px solid",
-                          borderLeftColor: "success.main",
+                          mt: 3,
+                          ml: 5,
+                          position: "relative",
                         }}
                       >
-                        <Stack
-                          direction="row"
-                          spacing={2}
-                          alignItems="flex-start"
+                        {meta.comments &&
+                          meta.comments.length > 0 && (
+                            <>
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  left: -28,
+                                  top: 24,
+                                  width: 24,
+                                  height: 3,
+                                  bgcolor: "success.main",
+                                  opacity: 0.7,
+                                  borderRadius: 1.5,
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  left: -30,
+                                  top: 22,
+                                  width: 8,
+                                  height: 8,
+                                  bgcolor: "success.main",
+                                  borderRadius: "50%",
+                                  border: "2px solid white",
+                                }}
+                              />
+                            </>
+                          )}
+
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            borderLeft: "3px solid",
+                            borderLeftColor: "success.main",
+                          }}
                         >
-                          <Avatar
-                            sx={{
-                              width: 36,
-                              height: 36,
-                              bgcolor: "success.main",
-                            }}
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            alignItems="flex-start"
                           >
-                            U{currentUserId}
-                          </Avatar>
-                          <Box sx={{ flex: 1 }}>
-                            <TextField
-                              fullWidth
-                              multiline
-                              minRows={2}
-                              maxRows={6}
-                              placeholder="Escribe tu respuesta..."
-                              value={replyText[thread.threadId] || ""}
-                              onChange={(e) =>
-                                setReplyText((p) => ({
-                                  ...p,
-                                  [thread.threadId]: e.target.value,
-                                }))
-                              }
-                              variant="outlined"
-                              size="small"
-                              disabled={
-                                sendingReply === thread.threadId
-                              }
-                              onKeyDown={(e) => {
-                                if (
-                                  e.key === "Enter" &&
-                                  (e.ctrlKey || e.metaKey)
-                                ) {
-                                  e.preventDefault();
-                                  handleSendReply(thread.threadId);
-                                }
-                              }}
+                            <Avatar
                               sx={{
-                                "& .MuiOutlinedInput-root": {
-                                  borderRadius: 2,
-                                },
+                                width: 36,
+                                height: 36,
+                                bgcolor: "success.main",
                               }}
-                            />
-                            <Stack
-                              direction="row"
-                              justifyContent="space-between"
-                              alignItems="center"
-                              sx={{ mt: 1 }}
                             >
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                Tip: Ctrl + Enter para enviar
-                              </Typography>
-                              <Button
-                                variant="contained"
-                                color="success"
-                                endIcon={
-                                  sendingReply === thread.threadId ? (
-                                    <CircularProgress size={16} />
-                                  ) : (
-                                    <SendIcon />
-                                  )
+                              U{currentUserId}
+                            </Avatar>
+
+                            <Box sx={{ flex: 1 }}>
+                              <TextField
+                                fullWidth
+                                multiline
+                                minRows={2}
+                                maxRows={6}
+                                placeholder="Escribe tu respuesta..."
+                                value={
+                                  replyText[thread.threadId] ||
+                                  ""
                                 }
-                                onClick={() =>
-                                  handleSendReply(thread.threadId)
+                                onChange={(e) =>
+                                  setReplyText((p) => ({
+                                    ...p,
+                                    [thread.threadId]:
+                                      e.target.value,
+                                  }))
                                 }
+                                variant="outlined"
+                                size="small"
                                 disabled={
-                                  !replyText[thread.threadId]?.trim() ||
                                   sendingReply === thread.threadId
                                 }
-                                sx={{
-                                  borderRadius: 999,
-                                  px: 3,
+                                onKeyDown={(e) => {
+                                  if (
+                                    e.key === "Enter" &&
+                                    (e.ctrlKey || e.metaKey)
+                                  ) {
+                                    e.preventDefault();
+                                    handleSendReply(
+                                      thread.threadId
+                                    );
+                                  }
                                 }}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    borderRadius: 2,
+                                  },
+                                }}
+                              />
+
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                                sx={{ mt: 1 }}
                               >
-                                {sendingReply === thread.threadId
-                                  ? "Enviando..."
-                                  : "Enviar"}
-                              </Button>
-                            </Stack>
-                          </Box>
-                        </Stack>
-                      </Paper>
-                    </Box>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                >
+                                  Tip: Ctrl + Enter para enviar
+                                </Typography>
+
+                                <Button
+                                  variant="contained"
+                                  color="success"
+                                  endIcon={
+                                    sendingReply ===
+                                    thread.threadId ? (
+                                      <CircularProgress
+                                        size={16}
+                                      />
+                                    ) : (
+                                      <SendIcon />
+                                    )
+                                  }
+                                  onClick={() =>
+                                    handleSendReply(
+                                      thread.threadId
+                                    )
+                                  }
+                                  disabled={
+                                    !replyText[
+                                      thread.threadId
+                                    ]?.trim() ||
+                                    sendingReply ===
+                                      thread.threadId
+                                  }
+                                  sx={{
+                                    borderRadius: 999,
+                                    px: 3,
+                                  }}
+                                >
+                                  {sendingReply ===
+                                  thread.threadId
+                                    ? "Enviando..."
+                                    : "Enviar"}
+                                </Button>
+                              </Stack>
+                            </Box>
+                          </Stack>
+                        </Paper>
+                      </Box>
+                    )}
                   </Stack>
                 )}
               </Box>
@@ -1283,6 +1540,7 @@ const hasHardError =
             </Stack>
           </CardContent>
         </Card>
+
         <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
           <CardContent>
             <Stack direction="row" alignItems="center" spacing={1}>
@@ -1304,6 +1562,7 @@ const hasHardError =
             </Stack>
           </CardContent>
         </Card>
+
         <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
           <CardContent>
             <Stack direction="row" alignItems="center" spacing={1}>
@@ -1347,6 +1606,7 @@ const hasHardError =
             Filtros
           </Typography>
         </Stack>
+
         <Tabs
           value={currentTabKey}
           onChange={(_, v) => {
@@ -1381,7 +1641,9 @@ const hasHardError =
                 t.palette.primary.main,
               boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
             },
-            "& .MuiTabs-indicator": { display: "none" },
+            "& .MuiTabs-indicator": {
+              display: "none",
+            },
           }}
         >
           {isAdmin && <Tab label="Todas" value="Todas" />}
@@ -1485,6 +1747,36 @@ const hasHardError =
         </DialogContent>
       </Dialog>
 
+      {/* Dialog para editar post */}
+      <Dialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogContent>
+          {threadBeingEdited ? (
+            <EditThread
+              onClose={() => setEditOpen(false)}
+              threadId={threadBeingEdited.id}
+              initialTitle={threadBeingEdited.title}
+              initialDescription={threadBeingEdited.description}
+              userId={currentUserId}
+              onUpdated={() => {
+                refetchThreads();
+                setEditOpen(false);
+              }}
+            />
+          ) : (
+            <Box sx={{ py: 4, textAlign: "center" }}>
+              <Typography variant="body1" color="text.secondary">
+                No se encontró el post a editar.
+              </Typography>
+            </Box>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {/* Dialog de confirmación de borrado */}
       <Dialog
         open={deleteDialogOpen}
@@ -1530,6 +1822,26 @@ const hasHardError =
             }
           >
             {deletingThreadId ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog informativo de estado de hilo */}
+      <Dialog
+        open={statusDialogOpen}
+        onClose={() => setStatusDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Estado del hilo</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            {statusDialogMessage}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStatusDialogOpen(false)} autoFocus>
+            Aceptar
           </Button>
         </DialogActions>
       </Dialog>
