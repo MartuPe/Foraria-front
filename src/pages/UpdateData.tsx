@@ -56,12 +56,6 @@ const UpdateData: React.FC = () => {
       return;
     }
 
-    if (isNaN(Number(dni)) || !/^\d+$/.test(dni)) {
-      setMsg({ emptyInputError : "El DNI es inválido." });
-      setErrorFields({ dni: true });
-      return;
-    }
-
     if (newPassword !== confirmNewPassword) {
       setMsg({ emptyInputError : "Las contraseñas nuevas no coinciden." });
       setErrorFields({ newPassword: true, confirmNewPassword: true });
@@ -71,10 +65,23 @@ const UpdateData: React.FC = () => {
     const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.,;:\-_])[A-Za-z\d@$!%*?&.,;:\-_]{8,}$/;
 
     if (!strongPasswordRegex.test(newPassword)) {
-      setMsg({
-        emptyInputError : "La nueva contraseña debe tener al menos una mayúscula, una minúscula, un número y un caracter especial.",
-      });
+      setMsg({ emptyInputError : "La nueva contraseña debe tener al menos una mayúscula, una minúscula, un número y un caracter especial.", });
       setErrorFields({ newPassword: true, confirmNewPassword: true });
+      return;
+    }
+
+    if (firstName.trim().length < 3 || lastName.trim().length < 3) {
+      setMsg({ emptyInputError: "El nombre y el apellido deben tener al menos 3 letras." });
+      const err: Record<string, boolean> = {};
+      if (firstName.trim().length < 3) err.firstName = true;
+      if (lastName.trim().length < 3) err.lastName = true;
+      setErrorFields(err);
+      return;
+    }
+
+    if (isNaN(Number(dni)) || !/^\d+$/.test(dni)) {
+      setMsg({ emptyInputError : "El DNI es inválido." });
+      setErrorFields({ dni: true });
       return;
     }
 
@@ -101,12 +108,10 @@ const UpdateData: React.FC = () => {
       const low = (raw || "").toString().toLowerCase();
 
       if (low.includes("contraseña") || low.includes("password")) {
-        setMsg({ emptyInputError
-    : "La contraseña actual es incorrecta." });
+        setMsg({ emptyInputError : "La contraseña actual es incorrecta." });
         setErrorFields({ currentPassword: true });
       } else {
-        setMsg({ emptyInputError
-    : "No se pudo actualizar la información." });
+        setMsg({ emptyInputError : "No se pudo actualizar la información." });
       }
     } finally {
       setLoading(false);
