@@ -1,0 +1,58 @@
+:root{
+  --msg-radius: 6px;
+  --msg-shadow: 0 1px 2px rgba(0,0,0,0.06);
+
+  --msg-error-color: #d32f2f;
+  --msg-error-bg: #fdc5c5;
+
+  --msg-success-color: #2e7d32;
+  --msg-success-bg: #f0fff4;
+
+  --msg-info-color: #1565c0;
+  --msg-info-bg: #eef6ff;
+
+  --msg-warning-color: #ed6c02;
+  --msg-warning-bg: #fff7ed;
+}
+
+.field-message{
+  margin-top: 4px;
+  padding: 8px 10px;
+  border-radius: var(--msg-radius);
+  font-size: 1rem;
+  font-weight: bold;
+  line-height: 1.35;
+  box-shadow: var(--msg-shadow);
+  opacity: 0;
+  transform: translateY(-2px);
+  animation: fieldMsgIn 140ms ease-out forwards;
+}
+
+@keyframes fieldMsgIn{
+  to{ opacity:1; transform: translateY(0); }
+}
+
+.field-message--error{
+  border: 1px solid var(--msg-error-color);
+  background: var(--msg-error-bg);
+  color: var(--msg-error-color);
+}
+.field-message--success{
+  border: 1px solid var(--msg-success-color);
+  background: var(--msg-success-bg);
+  color: var(--msg-success-color);
+}
+.field-message--info{
+  border: 1px solid var(--msg-info-color);
+  background: var(--msg-info-bg);
+  color: var(--msg-info-color);
+}
+.field-message--warning{
+  border: 1px solid var(--msg-warning-color);
+  background: var(--msg-warning-bg);
+  color: var(--msg-warning-color);
+}
+
+.field-message--general{
+  margin-top: 8px;
+}
