@@ -6,13 +6,13 @@
   --msg-error-bg: #fdc5c5;
 
   --msg-success-color: #2e7d32;
-  --msg-success-bg: #f0fff4;
+  --msg-success-bg: #d2ffde;
 
   --msg-info-color: #1565c0;
-  --msg-info-bg: #eef6ff;
+  --msg-info-bg: #c7e1ff;
 
   --msg-warning-color: #ed6c02;
-  --msg-warning-bg: #fff7ed;
+  --msg-warning-bg: #fee3c1;
 }
 
 .field-message{

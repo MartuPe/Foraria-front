@@ -142,7 +142,7 @@ export default function Calendar() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDay(null)}>Cerrar</Button>
-          <Button variant="contained" onClick={() => { setReserveDate(openDay ? new Date(openDay) : null); setOpenReserve(true); setOpenDay(null); }}>Reservar este día</Button>
+          <Button color="secondary" variant="contained" onClick={() => { setReserveDate(openDay ? new Date(openDay) : null); setOpenReserve(true); setOpenDay(null); }}>Reservar este día</Button>
         </DialogActions>
       </Dialog>
     </Box>

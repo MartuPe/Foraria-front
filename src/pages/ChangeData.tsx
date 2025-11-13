@@ -25,6 +25,7 @@ const ChangeData: React.FC = () => {
 
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const phoneRegex = /^[+\d][\d\s-]{5,}$/;
+  const nameRegex = /^[A-Za-zÁÉÍÓÚáéíóúÑñ\s]+$/;
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -43,11 +44,14 @@ const ChangeData: React.FC = () => {
       return;
     }
 
-    if (firstName.trim().length < 3 || lastName.trim().length < 3) {
-      setMsg({ emptyInputError: "El nombre y el apellido deben tener al menos 3 letras." });
+    if (
+      firstName.trim().length < 3 || lastName.trim().length < 3 || !nameRegex.test(firstName.trim()) || !nameRegex.test(lastName.trim()) ) {
+      let generalMsg = "El nombre y el apellido deben tener al menos 3 caracteres y solo contener letras.";
+      setMsg({ emptyInputError : generalMsg });
+
       const err: Record<string, boolean> = {};
-      if (firstName.trim().length < 3) err.firstName = true;
-      if (lastName.trim().length < 3) err.lastName = true;
+      if (firstName.trim().length < 3 || !nameRegex.test(firstName.trim())) err.firstName = true;
+      if (lastName.trim().length < 3 || !nameRegex.test(lastName.trim())) err.lastName = true;
       setErrorFields(err);
       return;
     }
