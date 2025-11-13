@@ -85,6 +85,7 @@ export const ForariaStatusModal: React.FC<ForariaStatusModalProps> = ({
       <DialogActions sx={{ p: 2 }}>
         <Button
           onClick={handlePrimary}
+          color="secondary"
           variant="contained"
           className="foraria-gradient-button"
         >
