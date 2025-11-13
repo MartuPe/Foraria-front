@@ -129,11 +129,7 @@ export default function NewResidence({ onSuccess }: Props) {
             error={Boolean(fieldErrors.tower)}
           />
           {fieldErrors.tower && (
-            <div
-              className="field-message field-message--error"
-              role="alert"
-              aria-live="polite"
-            >
+            <div className="field-message field-message--error" role="alert" aria-live="polite" >
               {fieldErrors.tower}
             </div>
           )}
@@ -147,11 +143,7 @@ export default function NewResidence({ onSuccess }: Props) {
             error={Boolean(fieldErrors.floor)}
           />
           {fieldErrors.floor && (
-            <div
-              className="field-message field-message--error"
-              role="alert"
-              aria-live="polite"
-            >
+            <div className="field-message field-message--error" role="alert" aria-live="polite" >
               {fieldErrors.floor}
             </div>
           )}
@@ -165,11 +157,7 @@ export default function NewResidence({ onSuccess }: Props) {
             error={Boolean(fieldErrors.number)}
           />
           {fieldErrors.number && (
-            <div
-              className="field-message field-message--error"
-              role="alert"
-              aria-live="polite"
-            >
+            <div className="field-message field-message--error" role="alert" aria-live="polite" >
               {fieldErrors.number}
             </div>
           )}
@@ -183,11 +171,7 @@ export default function NewResidence({ onSuccess }: Props) {
             error={Boolean(fieldErrors.consortiumId)}
           />
           {fieldErrors.consortiumId && (
-            <div
-              className="field-message field-message--error"
-              role="alert"
-              aria-live="polite"
-            >
+            <div className="field-message field-message--error" role="alert" aria-live="polite" >
               {fieldErrors.consortiumId}
             </div>
           )}
