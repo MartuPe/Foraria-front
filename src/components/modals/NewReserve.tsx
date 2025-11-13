@@ -172,16 +172,9 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
               fullWidth
               InputLabelProps={{ shrink: true }}
               error={Boolean(errors.day) || isPastDate}
-              helperText={
-                errors.day
-                  ? errors.day
-                  : isPastDate
-                  ? "No se pueden reservar fechas pasadas"
-                  : " "
-              }
+              helperText={ errors.day ? errors.day : isPastDate ? "No se pueden reservar fechas pasadas" : " " }
             />
 
-            {/* Espacio */}
             <TextField
               label="Espacio a reservar"
               select
@@ -209,7 +202,6 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
             </div>
           )}
 
-          {/* Horarios */}
           <div>
             <Typography variant="subtitle2" sx={{ mb: 1 }}>
               Horarios disponibles
@@ -317,7 +309,6 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
             )}
           </div>
 
-          {/* Descripción opcional */}
           <TextField
             label="Descripción (opcional)"
             fullWidth
@@ -328,7 +319,6 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
             placeholder="Detalles de tu reserva…"
           />
 
-          {/* Botones */}
           <Stack direction="row" spacing={1} justifyContent="flex-end">
             <Button
               onClick={onCancel}
@@ -355,7 +345,6 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
         </Stack>
       </form>
 
-      {/* Popup de confirmación / error */}
       <ForariaStatusModal
         open={dialog.open}
         onClose={handleDialogClose}
