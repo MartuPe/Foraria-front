@@ -14,7 +14,6 @@ import {
 } from "@mui/material";
 import { useLocation } from "react-router-dom";
 
-import { Layout } from "../components/layout";
 import PageHeader from "../components/SectionHeader";
 import NewSupplier from "../components/modals/NewSupplier";
 
@@ -324,5 +323,5 @@ export default function Suppliers() {
   }
 
   // Si no está en admin, usar Layout normal
-  return <Layout>{content}</Layout>;
+  return {content};
 }

@@ -1,7 +1,6 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
   Box,
-  Container,
   Stack,
   Typography,
   Button,
@@ -25,7 +24,6 @@ import PaymentsIcon from "@mui/icons-material/Payments";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import EventAvailableIcon from "@mui/icons-material/EventAvailable";
 import PageHeader from "../components/SectionHeader";
-import { Layout } from "../components/layout";
 import axios from "axios";
 import DownloadIcon from "@mui/icons-material/Download";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -265,7 +263,6 @@ const generatePdf = (detail: ExpenseDetail) => {
 };
 
 
-  // 🔹 Nuevo: lógica para crear preferencia de pago (MercadoPago)
   const handleMercadoPago = async (detail: ExpenseDetail) => {
     const residenceId = detail.residenceId;
     const expenseId = detail.id;
@@ -276,17 +273,13 @@ const generatePdf = (detail: ExpenseDetail) => {
         `https://localhost:7245/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
         { method: "POST" }
       );
-
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
       }
-
       const json = await res.json();
-      console.log("create-preference response:", json);
       const initPoint = json.initPoint ?? json.data?.initPoint ?? null;
       if (!initPoint) throw new Error("initPoint no recibido del backend");
-
       window.location.href = String(initPoint);
     } catch (e: any) {
       console.error("Error iniciando pago:", e);
@@ -298,42 +291,23 @@ const generatePdf = (detail: ExpenseDetail) => {
 
   if (loading) {
     return (
-      <Layout>
-        <Box className="foraria-page-container">
-          <Container maxWidth="lg" sx={{ py: 3 }}>
-            Cargando expensas…
-          </Container>
-        </Box>
-      </Layout>
+      <Box className="foraria-page-container">
+        Cargando expensas…
+      </Box>
     );
   }
 
   if (!header || !statValues) return null;
 
   return (
-    <Layout>
-      <Box className="foraria-page-container">
+    <>
+      <Box className="foraria-page-container" sx={{ ml: 0 }}>
         <PageHeader
           title="Expensas"
           stats={[
-            {
-              icon: <PaymentsIcon color="action" />,
-              title: "Total Pendiente",
-              value: <Money value={statValues.totalPendiente} /> as unknown as string,
-              color: "warning",
-            },
-            {
-              icon: <CheckCircleOutlineIcon color="action" />,
-              title: "Última Expensa",
-              value: statValues.ultima,
-              color: "success",
-            },
-            {
-              icon: <EventAvailableIcon color="action" />,
-              title: "Próximo Vencimiento",
-              value: statValues.proximo,
-              color: "secondary",
-            },
+            { icon: <PaymentsIcon color="action" />, title: "Total Pendiente", value: <Money value={statValues.totalPendiente} /> as unknown as string, color: "warning" },
+            { icon: <CheckCircleOutlineIcon color="action" />, title: "Última Expensa", value: statValues.ultima, color: "success" },
+            { icon: <EventAvailableIcon color="action" />, title: "Próximo Vencimiento", value: statValues.proximo, color: "secondary" },
           ]}
         />
 
@@ -349,6 +323,7 @@ const generatePdf = (detail: ExpenseDetail) => {
       ) : (
         <AttachMoneyIcon />
       );
+
 
     return (
       <InfoCard
@@ -407,6 +382,7 @@ const generatePdf = (detail: ExpenseDetail) => {
     );
   })}
 </Box>
+
       </Box>
 
       <Dialog open={!!detailsOpenFor} onClose={() => setDetailsOpenFor(null)} maxWidth="md" fullWidth>
@@ -420,11 +396,13 @@ const generatePdf = (detail: ExpenseDetail) => {
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Estado:{" "}
                 <Chip
+
   label={translateState(detailsOpenFor.state)}
   color={stateChipColor(detailsOpenFor.state)}
   sx={{ fontWeight: 600 }}
   size="small"
 />
+
                 {"  "} Total unidad: <Money value={detailsOpenFor.total} />
               </Typography>
 
@@ -443,7 +421,9 @@ const generatePdf = (detail: ExpenseDetail) => {
                           {inv.supplierName || "-"} • {inv.category || "-"}
                         </Typography>
                       </Box>
-                      <Typography variant="subtitle2">${inv.amount?.toFixed(2) ?? "0.00"}</Typography>
+                      <Typography variant="subtitle2">
+                        ${inv.amount?.toFixed(2) ?? "0.00"}
+                      </Typography>
                       {inv.filePath && (
                         <IconButton size="small" onClick={() => window.open(inv.filePath!, "_blank")}>
                           <DownloadIcon fontSize="small" />
@@ -461,6 +441,6 @@ const generatePdf = (detail: ExpenseDetail) => {
           <Button onClick={() => setDetailsOpenFor(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
-    </Layout>
+    </>
   );
 }
