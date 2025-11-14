@@ -1,22 +1,5 @@
-// src/pages/AdminSuppliers.tsx
 import { useEffect, useMemo, useState, useCallback } from "react";
-import {
-  Card,
-  CardContent,
-  Typography,
-  Stack,
-  Button,
-  Dialog,
-  DialogContent,
-  Snackbar,
-  Alert,
-  TextField,
-  MenuItem,
-  InputAdornment,
-  Skeleton,
-  Pagination,
-  Box,
-} from "@mui/material";
+import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
@@ -28,7 +11,6 @@ import SupplierDetail from "../../components/modals/SupplierDetail";
 import PageHeader from "../../components/SectionHeader";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 
-// Helpers
 const CATEGORIES = ["Mantenimiento", "Limpieza", "Seguridad", "Jardinería"] as const;
 type SortKey = "nameAsc" | "nameDesc" | "dateNew" | "dateOld" | "category";
 
@@ -36,16 +18,13 @@ export default function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Modales
   const [openNew, setOpenNew] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
 
-  // Confirmación de borrado desde la grilla
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toDeleteId, setToDeleteId] = useState<number | null>(null);
 
-  // Toast
   const [snack, setSnack] = useState<{
     open: boolean;
     msg: string;
@@ -59,17 +38,14 @@ export default function Suppliers() {
     []
   );
 
-  // Controles de lista
-  const [q, setQ] = useState(""); // búsqueda
-  const [category, setCategory] = useState<string>(""); // filtro
+  const [q, setQ] = useState("");
+  const [category, setCategory] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("nameAsc");
   const [page, setPage] = useState(1);
   const pageSize = 6;
 
-  //  TEMPORAL: consortiumId hardcodeado (DEBE existir en DB)
-  const consortiumId = 1; // ← reemplazá por un Id válido de tabla [consortium]
+  const consortiumId = 1;
 
-  // Debounce básico para q (mejor UX)
   const [qDebounced, setQDebounced] = useState(q);
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q.trim().toLowerCase()), 250);
@@ -80,10 +56,18 @@ export default function Suppliers() {
     setLoading(true);
     try {
       const data = await supplierService.getAll();
-      setSuppliers(data);
+
+      if (!Array.isArray(data)) {
+        console.error("Respuesta inesperada al obtener proveedores:", data);
+        openSnack("Respuesta inesperada del servidor al cargar proveedores.", "error");
+        setSuppliers([]);
+      } else {
+        setSuppliers(data);
+      }
     } catch (err) {
-      console.error(" Error al obtener proveedores:", err);
-      openSnack("Error al cargar proveedores ", "error");
+      console.error("Error al obtener proveedores:", err);
+      openSnack("No se pudieron cargar los proveedores. Intentá nuevamente.", "error");
+      setSuppliers([]);
     } finally {
       setLoading(false);
     }
@@ -103,15 +87,16 @@ export default function Suppliers() {
     try {
       await supplierService.remove(toDeleteId);
       setSuppliers((prev) => prev.filter((s) => s.id !== toDeleteId));
-      openSnack("Proveedor eliminado ✅", "success");
-      // Ajuste de paginación si quedó página “vacía”
+      openSnack("Proveedor eliminado", "success");
+
       setPage((p) => {
-        const total = filtered.length - 1; // uno menos tras borrar
+        const total = filtered.length - 1;
         const maxPage = Math.max(1, Math.ceil(total / pageSize));
         return Math.min(p, maxPage);
       });
-    } catch {
-      openSnack("Error al eliminar proveedor ", "error");
+    } catch (err) {
+      console.error("Error al eliminar proveedor:", err);
+      openSnack("No se pudo eliminar el proveedor. Intentá nuevamente.", "error");
     } finally {
       setConfirmOpen(false);
       setToDeleteId(null);
@@ -123,7 +108,6 @@ export default function Suppliers() {
     setOpenDetail(true);
   };
 
-  // Filtro + búsqueda + orden
   const filtered = useMemo(() => {
     let list = suppliers;
 
@@ -160,7 +144,6 @@ export default function Suppliers() {
     return list;
   }, [suppliers, qDebounced, category, sort]);
 
-  // Paginación
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   useEffect(() => {
     setPage(1);
@@ -171,11 +154,14 @@ export default function Suppliers() {
     return filtered.slice(start, start + pageSize);
   }, [filtered, page]);
 
-  // Loading skeletons
   const SkeletonCard = () => (
     <Card variant="outlined" sx={{ borderRadius: 2 }}>
       <CardContent>
-        <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" spacing={1}>
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          spacing={1}
+        >
           <Box sx={{ flex: 1 }}>
             <Skeleton variant="text" width={220} height={28} />
             <Skeleton variant="text" width={280} />
@@ -195,13 +181,16 @@ export default function Suppliers() {
       <PageHeader
         title="Proveedores del Consorcio"
         actions={
-          <Button variant="contained" color="secondary" onClick={() => setOpenNew(true)}>
+          <Button
+            variant="contained"
+            color="secondary"
+            onClick={() => setOpenNew(true)}
+          >
             + Nuevo Proveedor
           </Button>
         }
       />
 
-      {/* Controles */}
       <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} mb={2}>
         <TextField
           placeholder="Buscar por nombre, razón social, email, teléfono…"
@@ -252,7 +241,6 @@ export default function Suppliers() {
         </TextField>
       </Stack>
 
-      {/* Lista */}
       <Stack spacing={2}>
         {loading ? (
           <>
@@ -316,8 +304,8 @@ export default function Suppliers() {
                     </Typography>
 
                     <Typography variant="body2" color="text.secondary">
-                      {s.email && <> {s.email} </>}
-                      {s.phone && <>|  {s.phone}</>}
+                      {s.email && <>{s.email} </>}
+                      {s.phone && <>| {s.phone}</>}
                     </Typography>
                   </div>
 
@@ -346,7 +334,6 @@ export default function Suppliers() {
         )}
       </Stack>
 
-      {/* Paginación */}
       {!loading && filtered.length > pageSize && (
         <Stack alignItems="center" mt={2}>
           <Pagination
@@ -361,22 +348,30 @@ export default function Suppliers() {
         </Stack>
       )}
 
-      {/* Crear */}
-      <Dialog open={openNew} onClose={() => setOpenNew(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={openNew}
+        onClose={() => setOpenNew(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogContent>
           <NewSupplier
-            consortiumId={consortiumId} // ← pasamos el ID requerido por el back
+            consortiumId={consortiumId}
             onSuccess={() => {
               setOpenNew(false);
               fetchSuppliers();
-              openSnack("Proveedor creado ", "success");
+              openSnack("Proveedor creado correctamente ✅", "success"); // 🔧 mensaje afinado
             }}
           />
         </DialogContent>
       </Dialog>
 
-      {/* Detalle */}
-      <Dialog open={openDetail} onClose={() => setOpenDetail(false)} maxWidth="sm" fullWidth>
+      <Dialog
+        open={openDetail}
+        onClose={() => setOpenDetail(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogContent>
           {selectedId != null && (
             <SupplierDetail
@@ -385,14 +380,13 @@ export default function Suppliers() {
                 setOpenDetail(false);
                 setSelectedId(null);
                 fetchSuppliers();
-                openSnack("Proveedor eliminado ", "success");
+                openSnack("Proveedor eliminado ✅", "success");
               }}
             />
           )}
         </DialogContent>
       </Dialog>
 
-      {/* Confirmación de borrado desde la grilla */}
       <ConfirmDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
@@ -403,7 +397,6 @@ export default function Suppliers() {
         cancelText="Cancelar"
       />
 
-      {/* Snackbar global */}
       <Snackbar
         open={snack.open}
         autoHideDuration={3000}
