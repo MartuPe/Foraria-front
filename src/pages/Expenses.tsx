@@ -1,21 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import {
-  Box,
-  Stack,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Divider,
-  Chip,
-  IconButton,
-  Card,
-  CardContent,
-  useTheme,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Stack, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider, Chip,IconButton, Card, CardContent, useTheme, CircularProgress, } from "@mui/material";
 import "../styles/expenses.css";
 import Money from "../components/Money";
 import { fetchExpensesMock, formatDateISO } from "../services/expenses.mock";
@@ -34,6 +18,8 @@ import LocalAtmIcon from "@mui/icons-material/LocalAtm";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoForaria from '../assets/Isotipo-Color.png';
+import { ForariaStatusModal } from "../components/StatCardForms";
+
 
 type Invoice = {
   id: number;
@@ -70,6 +56,7 @@ type ExpenseDetail = {
 export default function ExpensesPage() {
   const [items, setItems] = useState<ExpenseDetail[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [header, setHeader] = useState<{
     unidad: string;
     titular: string;
@@ -83,6 +70,18 @@ export default function ExpensesPage() {
   const [loadingPaymentFor, setLoadingPaymentFor] = useState<number | null>(null);
   const theme = useTheme();
 
+  const [statusModal, setStatusModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: "success" | "error";
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    variant: "error",
+  });
+
   useEffect(() => {
     let mounted = true;
 
@@ -94,6 +93,7 @@ export default function ExpensesPage() {
     const residenceIdRaw = localStorage.getItem("residenceId");
     if (!residenceIdRaw) {
       console.warn("No residenceId en localStorage.");
+      setLoadError("No se encontró la unidad asociada a tu usuario.");
       setLoading(false);
       return;
     }
@@ -101,12 +101,14 @@ export default function ExpensesPage() {
     const residenceId = Number(residenceIdRaw);
     if (Number.isNaN(residenceId)) {
       console.warn("residenceId no válido:", residenceIdRaw);
+      setLoadError("La unidad asociada a tu usuario no es válida.");
       setLoading(false);
       return;
     }
 
     const fetchDetails = async () => {
       setLoading(true);
+      setLoadError(null);
       try {
         const url = `https://localhost:7245/api/ExpenseDetail?id=${residenceId}`;
         const resp = await axios.get<ExpenseDetail[]>(url);
@@ -121,6 +123,7 @@ export default function ExpensesPage() {
       } catch (err) {
         console.error("Error cargando ExpenseDetail:", err);
         setItems([]);
+        setLoadError("No se pudieron cargar las expensas. Intentá nuevamente más tarde.");
       } finally {
         setLoading(false);
       }
@@ -185,6 +188,7 @@ const stateChipColor = (state: string) => {
         return theme.palette.text.secondary;
     }
   };
+
 
 const generatePdf = (detail: ExpenseDetail) => {
   const pdf = new jsPDF("p", "pt", "a4");
@@ -263,6 +267,7 @@ const generatePdf = (detail: ExpenseDetail) => {
 };
 
 
+
   const handleMercadoPago = async (detail: ExpenseDetail) => {
     const residenceId = detail.residenceId;
     const expenseId = detail.id;
@@ -283,7 +288,13 @@ const generatePdf = (detail: ExpenseDetail) => {
       window.location.href = String(initPoint);
     } catch (e: any) {
       console.error("Error iniciando pago:", e);
-      alert(e?.message || "Error al iniciar pago");
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "Error al iniciar el pago",
+        message:
+          "No pudimos ingresar a Mercado Pago. Intentá nuevamente.",
+      });
     } finally {
       setLoadingPaymentFor(null);
     }
@@ -291,13 +302,31 @@ const generatePdf = (detail: ExpenseDetail) => {
 
   if (loading) {
     return (
+      <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <CircularProgress />
+          <Typography>Cargando expensas…</Typography>
+        </Stack>
+      </Box>
+    );
+  }
+
+  if (loadError) {
+    return (
       <Box className="foraria-page-container">
-        Cargando expensas…
+        <Typography variant="h5" color="error" sx={{ mb: 1 }}>
+          No se pudieron cargar tus expensas
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          {loadError}
+        </Typography>
       </Box>
     );
   }
 
   if (!header || !statValues) return null;
+
+
 
   return (
     <>
@@ -305,114 +334,139 @@ const generatePdf = (detail: ExpenseDetail) => {
         <PageHeader
           title="Expensas"
           stats={[
-            { icon: <PaymentsIcon color="action" />, title: "Total Pendiente", value: <Money value={statValues.totalPendiente} /> as unknown as string, color: "warning" },
-            { icon: <CheckCircleOutlineIcon color="action" />, title: "Última Expensa", value: statValues.ultima, color: "success" },
-            { icon: <EventAvailableIcon color="action" />, title: "Próximo Vencimiento", value: statValues.proximo, color: "secondary" },
+            {
+              icon: <PaymentsIcon color="action" />,
+              title: "Total Pendiente",
+              value: (<Money value={statValues.totalPendiente} /> as unknown as string),
+              color: "warning",
+            },
+            {
+              icon: <CheckCircleOutlineIcon color="action" />,
+              title: "Última Expensa",
+              value: statValues.ultima,
+              color: "success",
+            },
+            {
+              icon: <EventAvailableIcon color="action" />,
+              title: "Próximo Vencimiento",
+              value: statValues.proximo,
+              color: "secondary",
+            },
           ]}
         />
 
-      <Box>
-  {items.map((detail) => {
-    const exp = detail.expense;
-    const color = stateColor(detail.state);
-    const icon =
-      detail.state.toLowerCase() === "paid" ? (
-        <PaidIcon />
-      ) : detail.state.toLowerCase() === "pending" ? (
-        <HourglassEmptyIcon />
-      ) : (
-        <AttachMoneyIcon />
-      );
+        <Box>
+          {items.map((detail) => {
+            const exp = detail.expense;
 
-
-    return (
-      <InfoCard
-        key={detail.id}
-        title={exp.description || `Expensa ${exp.id}`}
-        subtitle={ <span style={{ fontSize: '2rem', fontWeight: 'bold' }}>
-    <span style={{ color: 'rgb(249 115 22)' }}>${detail.total.toLocaleString('es-AR')}</span>
-  </span>} 
-   
-       chips={[{
-  label: translateState(detail.state),
-  color: stateChipColor(detail.state),
-  variant: "outlined",
-}]}
-        
-        fields={[
-          {
-            label: "Creada:",
-            value: new Date(exp.createdAt).toLocaleDateString("es-AR"),
-          },
-          {
-            label: "Vence:",
-            value: exp.expirationDate
-              ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
-              : "-",
-          },
-        ]}
-        showDivider
-        extraActions={[
-          {
-            label:
-              loadingPaymentFor === detail.id
-                ? "Redirigiendo..."
-                : "Pagar",
-            icon: <LocalAtmIcon />,
-            variant: "contained",
-            color: "primary",
-            onClick: () => handleMercadoPago(detail),
-     
-          },
-          {
-            label: "Ver",
-            icon: <VisibilityIcon />,
-            onClick: () => setDetailsOpenFor(detail),
-          },
-          {
-             label: "PDF",
-             icon: <DownloadIcon />,
-             onClick: () => generatePdf(detail),
-          },
-          
-          
-        ]}
-        sx={{ mb: 2 }}
-      />
-    );
-  })}
-</Box>
-
+            return (
+              <InfoCard
+                key={detail.id}
+                title={exp.description || `Expensa ${exp.id}`}
+                subtitle={
+                  <span style={{ fontSize: "2rem", fontWeight: "bold" }}>
+                    <span style={{ color: "rgb(249 115 22)" }}>
+                      ${detail.total.toLocaleString("es-AR")}
+                    </span>
+                  </span>
+                }
+                chips={[
+                  {
+                    label: translateState(detail.state),
+                    color: stateChipColor(detail.state),
+                    variant: "outlined",
+                  },
+                ]}
+                fields={[
+                  {
+                    label: "Creada:",
+                    value: new Date(exp.createdAt).toLocaleDateString("es-AR"),
+                  },
+                  {
+                    label: "Vence:",
+                    value: exp.expirationDate
+                      ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
+                      : "-",
+                  },
+                ]}
+                showDivider
+                extraActions={[
+                  {
+                    label: loadingPaymentFor === detail.id ? "Redirigiendo..." : "Pagar",
+                    icon: <LocalAtmIcon />,
+                    variant: "contained",
+                    color: "primary",
+                    onClick: () => handleMercadoPago(detail),
+                  },
+                  {
+                    label: "Ver",
+                    icon: <VisibilityIcon />,
+                    onClick: () => setDetailsOpenFor(detail),
+                  },
+                  {
+                    label: "PDF",
+                    icon: <DownloadIcon />,
+                    onClick: () => generatePdf(detail),
+                  },
+                ]}
+                sx={{ mb: 2 }}
+              />
+            );
+          })}
+        </Box>
       </Box>
 
-      <Dialog open={!!detailsOpenFor} onClose={() => setDetailsOpenFor(null)} maxWidth="md" fullWidth>
+      <Dialog
+        open={!!detailsOpenFor}
+        onClose={() => setDetailsOpenFor(null)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Detalle de expensa</DialogTitle>
         <DialogContent dividers>
           {detailsOpenFor && (
             <>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                {detailsOpenFor.expense.description || `Expensa ${detailsOpenFor.expenseId}`}
+                {detailsOpenFor.expense.description ||
+                  `Expensa ${detailsOpenFor.expenseId}`}
               </Typography>
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Estado:{" "}
                 <Chip
-
-  label={translateState(detailsOpenFor.state)}
-  color={stateChipColor(detailsOpenFor.state)}
-  sx={{ fontWeight: 600 }}
-  size="small"
-/>
-
+                  label={translateState(detailsOpenFor.state)}
+                  color={stateChipColor(detailsOpenFor.state)}
+                  sx={{
+                    fontWeight: 600,
+                    color: "#fff",
+                    bgcolor: stateColor(detailsOpenFor.state),
+                  }}
+                  size="small"
+                />
                 {"  "} Total unidad: <Money value={detailsOpenFor.total} />
               </Typography>
 
               <Divider sx={{ mb: 2 }} />
 
               <Stack spacing={1}>
-                {detailsOpenFor.expense.invoices.length === 0 && <Typography>No hay facturas.</Typography>}
+                {detailsOpenFor.expense.invoices.length === 0 && (
+                  <Typography>No hay facturas.</Typography>
+                )}
                 {detailsOpenFor.expense.invoices.map((inv) => (
-                  <Box key={`dlg-inv-${inv.id}`} sx={{ borderRadius: 1, p: 1.25, bgcolor: "background.paper" }}>
-                    <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                  <Box
+                    key={`dlg-inv-${inv.id}`}
+                    sx={{
+                      borderRadius: 1,
+                      p: 1.25,
+                      bgcolor: "background.paper",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 1,
+                        alignItems: "center",
+                      }}
+                    >
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle2" noWrap>
                           {inv.concept || inv.description || `Factura ${inv.id}`}
@@ -425,11 +479,13 @@ const generatePdf = (detail: ExpenseDetail) => {
                         ${inv.amount?.toFixed(2) ?? "0.00"}
                       </Typography>
                       {inv.filePath && (
-                        <IconButton size="small" onClick={() => window.open(inv.filePath!, "_blank")}>
+                        <IconButton
+                          size="small"
+                          onClick={() => window.open(inv.filePath!, "_blank")}
+                        >
                           <DownloadIcon fontSize="small" />
                         </IconButton>
                       )}
-                      
                     </Box>
                   </Box>
                 ))}
@@ -441,6 +497,19 @@ const generatePdf = (detail: ExpenseDetail) => {
           <Button onClick={() => setDetailsOpenFor(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
+
+      <ForariaStatusModal
+        open={statusModal.open}
+        onClose={() =>
+          setStatusModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        variant={statusModal.variant}
+        title={statusModal.title}
+        message={statusModal.message}
+        primaryActionLabel="Aceptar"
+      />
     </>
-  );
-}
+  )};

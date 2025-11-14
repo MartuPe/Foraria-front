@@ -1,18 +1,5 @@
 import * as React from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  IconButton,
-  Grid,
-  TextField,
-  MenuItem,
-  Button,
-  Stack,
-  Typography,
-  Alert,
-  CircularProgress,
-} from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, IconButton, Grid, TextField, MenuItem, Button, Stack, Typography, Alert, CircularProgress, } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import PersonAddAlt1Outlined from "@mui/icons-material/PersonAddAlt1Outlined";
 import { registerUser } from "../../services/userManagementService";
@@ -27,8 +14,15 @@ const ROLES = [
   { id: 1, label: "Consorcio" },
   { id: 2, label: "Administrador" },
   { id: 3, label: "Propietario" },
-  { id: 4, label: "Inquilino" }
+  { id: 4, label: "Inquilino" },
 ];
+
+type FieldErrors = {
+  fullName?: string;
+  email?: string;
+  phone?: string;
+  residenceId?: string;
+};
 
 export default function NewUser({ open, onClose, onCreated }: Props) {
   const [form, setForm] = React.useState({
@@ -47,12 +41,21 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
     temporaryPassword?: string;
   } | null>(null);
 
+  const [fieldErrors, setFieldErrors] = React.useState<FieldErrors>({});
+
   React.useEffect(() => {
     if (!open) {
-      setForm({ fullName: "", email: "", phone: "", residenceId: "", roleId: 1 });
+      setForm({
+        fullName: "",
+        email: "",
+        phone: "",
+        residenceId: "",
+        roleId: 1,
+      });
       setError(null);
       setSuccess(null);
       setSubmitting(false);
+      setFieldErrors({});
     }
   }, [open]);
 
@@ -68,26 +71,57 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
     return digits.length ? Number(digits) : NaN;
   }
 
+  const validate = (): boolean => {
+    const next: FieldErrors = {};
+
+    if (!form.fullName.trim()) {
+      next.fullName = "El nombre completo es obligatorio.";
+    } else if (form.fullName.trim().length < 3) {
+      next.fullName = "El nombre completo debe tener al menos 3 caracteres.";
+    }
+
+    const emailRegex = /^\S+@\S+\.\S+$/;
+    if (!form.email.trim()) {
+      next.email = "El email es obligatorio.";
+    } else if (!emailRegex.test(form.email.trim())) {
+      next.email = "Ingresá un email válido.";
+    }
+
+    if (!form.phone.trim()) {
+      next.phone = "El teléfono es obligatorio.";
+    } else {
+      const phone = sanitizePhone(form.phone);
+      if (Number.isNaN(phone)) {
+        next.phone = "Ingresá un teléfono válido (solo números).";
+      }
+    }
+
+    if (!form.residenceId.trim()) {
+      next.residenceId = "El ID de unidad (residencia) es obligatorio.";
+    } else if (Number.isNaN(Number(form.residenceId))) {
+      next.residenceId = "Ingresá un ID de unidad válido.";
+    }
+
+    setFieldErrors(next);
+    return Object.keys(next).length === 0;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
+    setFieldErrors({});
 
-    if (!form.fullName.trim()) return setError("Ingresá el nombre completo.");
-    if (!form.email.trim() || !/\S+@\S+\.\S+/.test(form.email))
-      return setError("Ingresá un email válido.");
-    if (form.residenceId === "" || Number.isNaN(Number(form.residenceId)))
-      return setError("Ingresá un ID de unidad (ResidenceId) válido.");
+    if (!validate()) return;
 
     const { first, last } = splitFullName(form.fullName);
     const phone = sanitizePhone(form.phone);
-    if (Number.isNaN(phone)) return setError("Ingresá un teléfono válido (solo números).");
 
     const payload = {
       FirstName: first,
       LastName: last,
       Email: form.email.trim(),
-      PhoneNumber: phone, 
+      PhoneNumber: phone,
       RoleId: Number(form.roleId),
       ResidenceId: Number(form.residenceId),
     };
@@ -105,13 +139,23 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
       setSuccess(normalized);
       onCreated?.(normalized);
     } catch (err: any) {
-      const serverMsg =
-        err?.response?.data?.message ||
-        JSON.stringify(err?.response?.data || {}) ||
-        err?.message ||
-        "No se pudo crear el usuario.";
-      setError(serverMsg);
       console.error("Register error:", err?.response || err);
+
+      let userMessage = "No se pudo crear el usuario. Verificá los datos e intentá nuevamente.";
+
+      const serverRaw =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message || "";
+      const low = serverRaw.toString().toLowerCase();
+
+      if (low.includes("email")) {
+        userMessage = "El email ya está en uso o es inválido.";
+      } else if (low.includes("residence") || low.includes("residencia")) {
+        userMessage = "La unidad (residencia) no es válida.";
+      }
+
+      setError(userMessage);
     } finally {
       setSubmitting(false);
     }
@@ -134,7 +178,12 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
       >
         <PersonAddAlt1Outlined sx={{ color: "primary.main" }} />
         Nuevo Usuario
-        <IconButton aria-label="close" onClick={onClose} sx={{ ml: "auto" }} size="small">
+        <IconButton
+          aria-label="close"
+          onClick={onClose}
+          sx={{ ml: "auto" }}
+          size="small"
+        >
           <CloseIcon />
         </IconButton>
       </DialogTitle>
@@ -150,9 +199,17 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                 fullWidth
                 placeholder="Nombre completo"
                 value={form.fullName}
-                onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, fullName: e.target.value }))
+                }
                 autoFocus
+                error={Boolean(fieldErrors.fullName)}
               />
+              {fieldErrors.fullName && (
+                <div className="field-message field-message--error" role="alert" aria-live="polite" >
+                  {fieldErrors.fullName}
+                </div>
+              )}
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -164,8 +221,16 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                 fullWidth
                 placeholder="email@ejemplo.com"
                 value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, email: e.target.value }))
+                }
+                error={Boolean(fieldErrors.email)}
               />
+              {fieldErrors.email && (
+                <div className="field-message field-message--error" role="alert" aria-live="polite" >
+                  {fieldErrors.email}
+                </div>
+              )}
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -176,8 +241,18 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                 fullWidth
                 placeholder="+54 11 1234-5678"
                 value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, phone: e.target.value }))
+                }
+                error={Boolean(fieldErrors.phone)}
               />
+           
+
+              {fieldErrors.phone && (
+                <div className="field-message field-message--error" role="alert" aria-live="polite" >
+                  {fieldErrors.phone}
+                </div>
+              )}
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -190,9 +265,15 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                 value={form.residenceId}
                 onChange={(e) => {
                   const v = e.target.value.replace(/[^\d]/g, "");
-                  setForm({ ...form, residenceId: v });
+                  setForm((prev) => ({ ...prev, residenceId: v }));
                 }}
+                error={Boolean(fieldErrors.residenceId)}
               />
+              {fieldErrors.residenceId && (
+                <div className="field-message field-message--error" role="alert" aria-live="polite" >
+                  {fieldErrors.residenceId}
+                </div>
+              )}
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
@@ -204,7 +285,10 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                 fullWidth
                 value={form.roleId}
                 onChange={(e) =>
-                  setForm({ ...form, roleId: Number(e.target.value) })
+                  setForm((prev) => ({
+                    ...prev,
+                    roleId: Number(e.target.value),
+                  }))
                 }
               >
                 {ROLES.map((r) => (
@@ -243,7 +327,12 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
             )}
 
             <Grid size={{ xs: 12 }}>
-              <Stack direction="row" spacing={2} justifyContent="flex-start" sx={{ mt: 1 }}>
+              <Stack
+                direction="row"
+                spacing={2}
+                justifyContent="flex-start"
+                sx={{ mt: 1 }}
+              >
                 <Button
                   type="submit"
                   variant="contained"
