@@ -1,21 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import {
-  Box,
-  Stack,
-  Typography,
-  Button,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Divider,
-  Chip,
-  IconButton,
-  Card,
-  CardContent,
-  useTheme,
-  CircularProgress,
-} from "@mui/material";
+import { Box, Stack, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider, Chip,IconButton, Card, CardContent, useTheme, CircularProgress, } from "@mui/material";
 import "../styles/expenses.css";
 import Money from "../components/Money";
 import { fetchExpensesMock, formatDateISO } from "../services/expenses.mock";
@@ -30,6 +14,7 @@ import PaidIcon from "@mui/icons-material/Paid";
 import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import LocalAtmIcon from "@mui/icons-material/LocalAtm";
+import { ForariaStatusModal } from "../components/StatCardForms";
 
 type Invoice = {
   id: number;
@@ -66,6 +51,7 @@ type ExpenseDetail = {
 export default function ExpensesPage() {
   const [items, setItems] = useState<ExpenseDetail[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [header, setHeader] = useState<{
     unidad: string;
     titular: string;
@@ -79,6 +65,18 @@ export default function ExpensesPage() {
   const [loadingPaymentFor, setLoadingPaymentFor] = useState<number | null>(null);
   const theme = useTheme();
 
+  const [statusModal, setStatusModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    variant: "success" | "error";
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    variant: "error",
+  });
+
   useEffect(() => {
     let mounted = true;
 
@@ -90,6 +88,7 @@ export default function ExpensesPage() {
     const residenceIdRaw = localStorage.getItem("residenceId");
     if (!residenceIdRaw) {
       console.warn("No residenceId en localStorage.");
+      setLoadError("No se encontró la unidad asociada a tu usuario.");
       setLoading(false);
       return;
     }
@@ -97,12 +96,14 @@ export default function ExpensesPage() {
     const residenceId = Number(residenceIdRaw);
     if (Number.isNaN(residenceId)) {
       console.warn("residenceId no válido:", residenceIdRaw);
+      setLoadError("La unidad asociada a tu usuario no es válida.");
       setLoading(false);
       return;
     }
 
     const fetchDetails = async () => {
       setLoading(true);
+      setLoadError(null);
       try {
         const url = `https://localhost:7245/api/ExpenseDetail?id=${residenceId}`;
         const resp = await axios.get<ExpenseDetail[]>(url);
@@ -117,6 +118,7 @@ export default function ExpensesPage() {
       } catch (err) {
         console.error("Error cargando ExpenseDetail:", err);
         setItems([]);
+        setLoadError("No se pudieron cargar las expensas. Intentá nuevamente más tarde.");
       } finally {
         setLoading(false);
       }
@@ -154,9 +156,14 @@ export default function ExpensesPage() {
     try {
       setDownloadingPdfFor(detail.id);
       const url = `https://localhost:7245/api/ExpenseDetail/pdf?id=${detail.id}`;
-      const resp = await axios.get(url, { responseType: "blob", validateStatus: () => true });
+      const resp = await axios.get(url, {
+        responseType: "blob",
+        validateStatus: () => true,
+      });
       if (resp.status === 200) {
-        const blob = new Blob([resp.data], { type: resp.headers["content-type"] || "application/pdf" });
+        const blob = new Blob([resp.data], {
+          type: resp.headers["content-type"] || "application/pdf",
+        });
         const link = document.createElement("a");
         link.href = URL.createObjectURL(blob);
         link.download = `expensa_${detail.expenseId}_residencia_${detail.residenceId}.pdf`;
@@ -166,9 +173,21 @@ export default function ExpensesPage() {
         URL.revokeObjectURL(link.href);
       } else {
         console.warn("No se pudo descargar PDF. status:", resp.status);
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "No se pudo descargar el PDF",
+          message: "Ocurrió un problema al generar la expensa. Intentá nuevamente.",
+        });
       }
     } catch (err) {
       console.error("Error descargando PDF:", err);
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo descargar el PDF",
+        message: "Ocurrió un error. Por favor, intentá nuevamente.",
+      });
     } finally {
       setDownloadingPdfFor(null);
     }
@@ -194,7 +213,13 @@ export default function ExpensesPage() {
       window.location.href = String(initPoint);
     } catch (e: any) {
       console.error("Error iniciando pago:", e);
-      alert(e?.message || "Error al iniciar pago");
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "Error al iniciar el pago",
+        message:
+          "No pudimos ingresar a Mercado Pago. Intentá nuevamente.",
+      });
     } finally {
       setLoadingPaymentFor(null);
     }
@@ -202,8 +227,24 @@ export default function ExpensesPage() {
 
   if (loading) {
     return (
+      <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <CircularProgress />
+          <Typography>Cargando expensas…</Typography>
+        </Stack>
+      </Box>
+    );
+  }
+
+  if (loadError) {
+    return (
       <Box className="foraria-page-container">
-        Cargando expensas…
+        <Typography variant="h5" color="error" sx={{ mb: 1 }}>
+          No se pudieron cargar tus expensas
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          {loadError}
+        </Typography>
       </Box>
     );
   }
@@ -216,9 +257,24 @@ export default function ExpensesPage() {
         <PageHeader
           title="Expensas"
           stats={[
-            { icon: <PaymentsIcon color="action" />, title: "Total Pendiente", value: <Money value={statValues.totalPendiente} /> as unknown as string, color: "warning" },
-            { icon: <CheckCircleOutlineIcon color="action" />, title: "Última Expensa", value: statValues.ultima, color: "success" },
-            { icon: <EventAvailableIcon color="action" />, title: "Próximo Vencimiento", value: statValues.proximo, color: "secondary" },
+            {
+              icon: <PaymentsIcon color="action" />,
+              title: "Total Pendiente",
+              value: ( <Money value={statValues.totalPendiente} /> as unknown as string ),
+              color: "warning",
+            },
+            {
+              icon: <CheckCircleOutlineIcon color="action" />,
+              title: "Última Expensa",
+              value: statValues.ultima,
+              color: "success",
+            },
+            {
+              icon: <EventAvailableIcon color="action" />,
+              title: "Próximo Vencimiento",
+              value: statValues.proximo,
+              color: "secondary",
+            },
           ]}
         />
 
@@ -227,13 +283,7 @@ export default function ExpensesPage() {
             const exp = detail.expense;
             const color = stateColor(detail.state);
             const icon =
-              detail.state.toLowerCase() === "paid" ? (
-                <PaidIcon />
-              ) : detail.state.toLowerCase() === "pending" ? (
-                <HourglassEmptyIcon />
-              ) : (
-                <AttachMoneyIcon />
-              );
+              detail.state.toLowerCase() === "paid" ? ( <PaidIcon /> ) : detail.state.toLowerCase() === "pending" ? ( <HourglassEmptyIcon /> ) : ( <AttachMoneyIcon /> );
 
             return (
               <Card
@@ -249,8 +299,8 @@ export default function ExpensesPage() {
                   mb: 2,
                 }}
               >
-                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }} >
+                  <Stack direction="row" justifyContent="space-between" alignItems="center" >
                     <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
                       {exp.description || `Expensa ${exp.id}`}
                     </Typography>
@@ -258,7 +308,11 @@ export default function ExpensesPage() {
                       icon={icon}
                       label={detail.state}
                       size="small"
-                      sx={{ bgcolor: color + "20", color, fontWeight: 600 }}
+                      sx={{
+                        bgcolor: color + "20",
+                        color,
+                        fontWeight: 600,
+                      }}
                     />
                   </Stack>
 
@@ -274,18 +328,20 @@ export default function ExpensesPage() {
                       startIcon={<DownloadIcon />}
                       onClick={() => handleDownloadPdf(detail)}
                       disabled={downloadingPdfFor === detail.id}
-                    >
-                      {downloadingPdfFor === detail.id ? "Descargando..." : "PDF"}
+                    > {downloadingPdfFor === detail.id ? "Descargando..." : "PDF"}
                     </Button>
 
-                    <Button size="small" startIcon={<VisibilityIcon />} onClick={() => setDetailsOpenFor(detail)}>
-                      Ver
+                    <Button
+                      size="small"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => setDetailsOpenFor(detail)}
+                    > Ver
                     </Button>
 
                     <Button
                       size="small"
                       variant="contained"
-                      color="primary"
+                      color="secondary"
                       startIcon={<LocalAtmIcon />}
                       onClick={() => handleMercadoPago(detail)}
                       disabled={loadingPaymentFor === detail.id}
@@ -307,36 +363,68 @@ export default function ExpensesPage() {
         </Box>
       </Box>
 
-      <Dialog open={!!detailsOpenFor} onClose={() => setDetailsOpenFor(null)} maxWidth="md" fullWidth>
+      <Dialog
+        open={!!detailsOpenFor}
+        onClose={() => setDetailsOpenFor(null)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogTitle>Detalle de expensa</DialogTitle>
         <DialogContent dividers>
           {detailsOpenFor && (
             <>
               <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                {detailsOpenFor.expense.description || `Expensa ${detailsOpenFor.expenseId}`}
+                {detailsOpenFor.expense.description ||
+                  `Expensa ${detailsOpenFor.expenseId}`}
               </Typography>
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Estado:{" "}
                 <Chip
                   label={detailsOpenFor.state}
-                  sx={{ color: "#fff", bgcolor: stateColor(detailsOpenFor.state), fontWeight: 600 }}
+                  sx={{
+                    color: "#fff",
+                    bgcolor: stateColor(detailsOpenFor.state),
+                    fontWeight: 600,
+                  }}
                   size="small"
-                />
-                {"  "} Total unidad: <Money value={detailsOpenFor.total} />
+                />{" "}
+                {"  "} Total unidad:{" "}
+                <Money value={detailsOpenFor.total} />
               </Typography>
 
               <Divider sx={{ mb: 2 }} />
 
               <Stack spacing={1}>
-                {detailsOpenFor.expense.invoices.length === 0 && <Typography>No hay facturas.</Typography>}
+                {detailsOpenFor.expense.invoices.length === 0 && (
+                  <Typography>No hay facturas.</Typography>
+                )}
                 {detailsOpenFor.expense.invoices.map((inv) => (
-                  <Box key={`dlg-inv-${inv.id}`} sx={{ borderRadius: 1, p: 1.25, bgcolor: "background.paper" }}>
-                    <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+                  <Box
+                    key={`dlg-inv-${inv.id}`}
+                    sx={{
+                      borderRadius: 1,
+                      p: 1.25,
+                      bgcolor: "background.paper",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        gap: 1,
+                        alignItems: "center",
+                      }}
+                    >
                       <Box sx={{ flex: 1 }}>
                         <Typography variant="subtitle2" noWrap>
-                          {inv.concept || inv.description || `Factura ${inv.id}`}
+                          {inv.concept ||
+                            inv.description ||
+                            `Factura ${inv.id}`}
                         </Typography>
-                        <Typography variant="body2" color="text.secondary" noWrap>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          noWrap
+                        >
                           {inv.supplierName || "-"} • {inv.category || "-"}
                         </Typography>
                       </Box>
@@ -344,7 +432,12 @@ export default function ExpensesPage() {
                         ${inv.amount?.toFixed(2) ?? "0.00"}
                       </Typography>
                       {inv.filePath && (
-                        <IconButton size="small" onClick={() => window.open(inv.filePath!, "_blank")}>
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            window.open(inv.filePath!, "_blank")
+                          }
+                        >
                           <DownloadIcon fontSize="small" />
                         </IconButton>
                       )}
@@ -359,6 +452,20 @@ export default function ExpensesPage() {
           <Button onClick={() => setDetailsOpenFor(null)}>Cerrar</Button>
         </DialogActions>
       </Dialog>
+
+      <ForariaStatusModal
+        open={statusModal.open}
+        onClose={() =>
+          setStatusModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        variant={statusModal.variant}
+        title={statusModal.title}
+        message={statusModal.message}
+        primaryActionLabel="Aceptar"
+      />
     </>
   );
 }
