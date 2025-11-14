@@ -15,6 +15,7 @@ import UpdateData from "./pages/UpdateData";
 import Profile from "./pages/Profile";
 import ChangeData from "./pages/ChangeData";
 import Votes from "./pages/Votes";
+import VotesPrueba from "./pages/VotesPrueba";
 import Meetings from "./pages/Meetings";
 import Documents from "./pages/Documents";
 import ExpensesPage from "./pages/Expenses";
@@ -52,6 +53,7 @@ export default function App() {
             <Route path="perfil" element={<Profile />} />
             <Route path="editarInformacion" element={<ChangeData />} />
             <Route path="votaciones" element={<Votes />} />
+            <Route path="votaciones-prueba" element={<VotesPrueba />} />
             <Route path="reuniones" element={<Meetings />} />
             <Route path="documentos" element={<Documents />} />
             <Route path="expensas" element={<ExpensesPage />} />
@@ -74,6 +76,7 @@ export default function App() {
             <Route path="auditoria" element={<AdminAudit />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
+            <Route path="votaciones-prueba" element={<VotesPrueba />} />
             <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
             <Route path="documents" element={<AdminDocuments />} />
