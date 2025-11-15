@@ -557,7 +557,7 @@ const Forums: React.FC = () => {
   );
   const [replyText, setReplyText] = useState<Record<number, string>>({});
   const [sendingReply, setSendingReply] = useState<number | null>(null);
-  const { mutate: sendReply } = useMutation("/Message", "post");
+  // Ojo: ya no usamos useMutation para /Message, lo hacemos con FormData directo
 
   const toggleThread = (threadId: number) => {
     setExpandedThreads((prev) => {
@@ -727,6 +727,7 @@ const Forums: React.FC = () => {
     }
   };
 
+  // ====== enviar respuesta (POST /Message con FormData) ======
   const handleSendReply = async (threadId: number) => {
     const text = replyText[threadId]?.trim();
     if (!text || sendingReply === threadId) return;
@@ -734,69 +735,46 @@ const Forums: React.FC = () => {
     setSendingReply(threadId);
 
     try {
-      const messageData = {
-        Content: text,
-        Thread_id: threadId,
-        User_id: currentUserId,
-      };
+      const form = new FormData();
+      form.append("Content", text);
+      form.append("Thread_id", String(threadId));
+      form.append("User_id", String(currentUserId));
 
-      await sendReply(messageData);
+      const res = await fetch(`${API_BASE}/Message`, {
+        method: "POST",
+        body: form,
+      });
 
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Error al crear mensaje");
+      }
+
+      // limpiar input
       setReplyText((p) => ({
         ...p,
         [threadId]: "",
       }));
 
-      const key = String(threadId);
-      setEnriched((p) => ({
-        ...p,
-        [key]: {
-          ...(p[key] ?? {}),
-          loading: true,
+      // recargar mensajes del hilo
+      const listRes = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
+        headers: {
+          "Content-Type": "application/json",
         },
-      }));
+      });
 
-      setTimeout(async () => {
-        try {
-          const res = await fetch(
-            `${API_BASE}/Message/thread/${threadId}`,
-            {
-              headers: {
-                "Content-Type": "application/json",
-              },
-            }
-          );
-
-          if (res.ok) {
-            const messages: Message[] = await res.json();
-            setEnriched((p) => ({
-              ...p,
-              [key]: {
-                ...(p[key] ?? {}),
-                commentsCount: messages.length,
-                comments: messages,
-                loading: false,
-              },
-            }));
-          } else {
-            setEnriched((p) => ({
-              ...p,
-              [key]: {
-                ...(p[key] ?? {}),
-                loading: false,
-              },
-            }));
-          }
-        } catch {
-          setEnriched((p) => ({
-            ...p,
-            [key]: {
-              ...(p[key] ?? {}),
-              loading: false,
-            },
-          }));
-        }
-      }, 800);
+      if (listRes.ok) {
+        const messages: Message[] = await listRes.json();
+        const key = String(threadId);
+        setEnriched((p) => ({
+          ...p,
+          [key]: {
+            ...(p[key] ?? {}),
+            commentsCount: messages.length,
+            comments: messages,
+          },
+        }));
+      }
     } catch (e: any) {
       alert(`Error al enviar la respuesta: ${e?.message || "desconocido"}`);
     } finally {
@@ -817,6 +795,19 @@ const Forums: React.FC = () => {
     if (threadToDelete == null) return;
 
     const threadId = threadToDelete;
+    const key = String(threadId);
+    const hasReplies = (enriched[key]?.commentsCount ?? 0) > 0;
+
+    // chequeo front igual que el back
+    if (hasReplies) {
+      setStatusDialogMessage(
+        "No se puede eliminar un thread que contiene mensajes. Eliminá primero las respuestas."
+      );
+      setStatusDialogOpen(true);
+      setDeleteDialogOpen(false);
+      setThreadToDelete(null);
+      return;
+    }
 
     try {
       setDeletingThreadId(threadId);
@@ -847,6 +838,14 @@ const Forums: React.FC = () => {
       } else if (res.status === 404) {
         alert("El post ya no existe o fue borrado.");
         refetchThreads();
+      } else if (res.status === 409) {
+        // mensaje de negocio del back
+        const text = await res.text();
+        console.error("Error al borrar el post:", text);
+        setStatusDialogMessage(
+          "No se puede eliminar un thread que contiene mensajes."
+        );
+        setStatusDialogOpen(true);
       } else {
         const text = await res.text();
         console.error("Error al borrar el post:", text);
@@ -949,6 +948,8 @@ const Forums: React.FC = () => {
       typeof thread.state === "string" &&
       thread.state.toLowerCase() === "cerrado";
 
+    const hasReplies = (meta.commentsCount ?? 0) > 0;
+
     return (
       <Card
         key={thread.id}
@@ -1031,25 +1032,29 @@ const Forums: React.FC = () => {
                     )}
                   </IconButton>
 
-                  {/* Cerrar hilo */} <IconButton
-          size="small"
-                onClick={() => handleCloseThread(thread.threadId)}
-                  sx={{
-                  color: isClosed ? "text.secondary" : "warning.main",
-                                    }}
-                      disabled={closingThreadId === thread.threadId || isClosed}
->
-                       <LockOutlined fontSize="small" />
-                          </IconButton>
-
-                  
-                   
-                   
+                  {/* Cerrar hilo */}
+                  <IconButton
+                    size="small"
+                    onClick={() => handleCloseThread(thread.threadId)}
+                    sx={{
+                      color: isClosed ? "text.secondary" : "warning.main",
+                    }}
+                    disabled={closingThreadId === thread.threadId || isClosed}
+                  >
+                    <LockOutlined fontSize="small" />
+                  </IconButton>
 
                   {/* Editar */}
                   <IconButton
                     size="small"
-                    onClick={() => openEditDialog(thread)}
+                    onClick={() => {
+                      setThreadBeingEdited({
+                        id: thread.threadId,
+                        title: thread.title,
+                        description: thread.description,
+                      });
+                      setEditOpen(true);
+                    }}
                     sx={{ color: "info.main" }}
                   >
                     <EditOutlined fontSize="small" />
@@ -1060,7 +1065,7 @@ const Forums: React.FC = () => {
                     size="small"
                     onClick={() => openDeleteDialog(thread.threadId)}
                     sx={{ color: "error.main" }}
-                    disabled={deletingThreadId === thread.threadId}
+                    disabled={deletingThreadId === thread.threadId || hasReplies}
                   >
                     <DeleteOutline fontSize="small" />
                   </IconButton>
@@ -1433,17 +1438,10 @@ const Forums: React.FC = () => {
 
                               <Stack
                                 direction="row"
-                                justifyContent="space-between"
+                                justifyContent="flex-end"
                                 alignItems="center"
                                 sx={{ mt: 1 }}
                               >
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  Tip: Ctrl + Enter para enviar
-                                </Typography>
-
                                 <Button
                                   variant="contained"
                                   color="success"
@@ -1794,8 +1792,11 @@ const Forums: React.FC = () => {
           <Typography variant="body1" sx={{ mb: 1 }}>
             ¿Seguro que querés eliminar este post?
           </Typography>
-          <Typography variant="body2" color="text.secondary">
-            Esta acción no se puede deshacer.
+          <Typography
+            variant="body2"
+            color="text.secondary"
+          >
+            Solo se pueden eliminar hilos que no tengan respuestas.
           </Typography>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

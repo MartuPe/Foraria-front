@@ -1,3 +1,4 @@
+// src/pages/ThreadView.tsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -234,133 +235,133 @@ const ThreadView: React.FC = () => {
 
   if (loading) {
     return (
-        <Box sx={{ py: 6, textAlign: "center" }}>
-          <CircularProgress />
-        </Box>
+      <Box sx={{ py: 6, textAlign: "center" }}>
+        <CircularProgress />
+      </Box>
     );
   }
 
   if (!threadId) {
     return (
-        <Box sx={{ py: 6, textAlign: "center" }}>
-          <Typography variant="h6" color="error">
-            No se recibió el ID del hilo
-          </Typography>
-          <Button sx={{ mt: 2 }} onClick={() => navigate("/forums/general")}>
-            Volver a foros
-          </Button>
-        </Box>
+      <Box sx={{ py: 6, textAlign: "center" }}>
+        <Typography variant="h6" color="error">
+          No se recibió el ID del hilo
+        </Typography>
+        <Button sx={{ mt: 2 }} onClick={() => navigate("/forums/general")}>
+          Volver a foros
+        </Button>
+      </Box>
     );
   }
 
   if (!thread) {
     return (
-        <Box sx={{ py: 6, textAlign: "center" }}>
-          <Typography variant="h6" color="error">
-            No se encontró el hilo
-          </Typography>
-          <Button sx={{ mt: 2 }} onClick={goBackToForum}>
-            Volver
-          </Button>
-        </Box>
+      <Box sx={{ py: 6, textAlign: "center" }}>
+        <Typography variant="h6" color="error">
+          No se encontró el hilo
+        </Typography>
+        <Button sx={{ mt: 2 }} onClick={goBackToForum}>
+          Volver
+        </Button>
+      </Box>
     );
   }
 
   return (
-      <Box sx={{ px: 2, py: 3, display: "grid", gap: 2 }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Button variant="outlined" onClick={goBackToForum}>
-            <ArrowBackIcon />
-            Volver al foro
-          </Button>
-        </Stack>
+    <Box sx={{ px: 2, py: 3, display: "grid", gap: 2 }}>
+      <Stack direction="row" spacing={1} alignItems="center">
+        <Button variant="outlined" onClick={goBackToForum}>
+          <ArrowBackIcon />
+          Volver al foro
+        </Button>
+      </Stack>
 
-        <InfoCard
-          title={thread.theme}
-          subtitle={`Usuario ${thread.user_id} · ${formattedDate}`}
-          description={thread.description}
-          extraActions={[
-            {
-              label: String(reactions.likes ?? 0),
-              icon: (
-                <ThumbUpOutlinedIcon
-                  sx={{ color: reactions.userReaction === 1 ? "success.main" : undefined }}
-                />
-              ),
-              variant: "text",
-              onClick: () => !reacting && toggleReactionForThread(1),
-            },
-            {
-              label: String(reactions.dislikes ?? 0),
-              icon: (
-                <ThumbDownOutlinedIcon
-                  sx={{ color: reactions.userReaction === -1 ? "error.main" : undefined }}
-                />
-              ),
-              variant: "text",
-              onClick: () => !reacting && toggleReactionForThread(-1),
-            },
-            {
-              label: `${messages.length} Respuestas`,
-              icon: <ChatBubbleOutlineOutlinedIcon />,
-              variant: "text",
-            },
-            {
-              label: "Comentar",
-              variant: "outlined",
-              color: "secondary",
-              onClick: onCommentThread,
-            },
-          ]}
-          showDivider
-        />
-
-        {showCommentBox && (
-          <Box sx={{ px: 1, py: 2 }}>
-            <TextField
-              fullWidth
-              multiline
-              minRows={3}
-              label="Escribí tu comentario"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              disabled={sending}
-            />
-            <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={handleSendComment}
-                disabled={sending || !commentText.trim()}
-              >
-                Enviar
-              </Button>
-              <Button variant="text" onClick={() => setShowCommentBox(false)}>
-                Cancelar
-              </Button>
-            </Stack>
-          </Box>
-        )}
-
-        <Box>
-          <Typography>Respuestas ({messages.length})</Typography>
-          <Divider />
-        </Box>
-
-        <Box>
-          {messages.map((msg) => {
-            const msgDate = new Date(msg.createdAt).toLocaleDateString("es-AR");
-            return (
-              <InfoCard
-                key={msg.id}
-                title={`Usuario ${msg.user_id}`}
-                subtitle={`${msgDate}`}
-                description={msg.content}
+      <InfoCard
+        title={thread.theme}
+        subtitle={`Usuario ${thread.user_id} · ${formattedDate}`}
+        description={thread.description}
+        extraActions={[
+          {
+            label: String(reactions.likes ?? 0),
+            icon: (
+              <ThumbUpOutlinedIcon
+                sx={{ color: reactions.userReaction === 1 ? "success.main" : undefined }}
               />
-            );
-          })}
+            ),
+            variant: "text",
+            onClick: () => !reacting && toggleReactionForThread(1),
+          },
+          {
+            label: String(reactions.dislikes ?? 0),
+            icon: (
+              <ThumbDownOutlinedIcon
+                sx={{ color: reactions.userReaction === -1 ? "error.main" : undefined }}
+              />
+            ),
+            variant: "text",
+            onClick: () => !reacting && toggleReactionForThread(-1),
+          },
+          {
+            label: `${messages.length} Respuestas`,
+            icon: <ChatBubbleOutlineOutlinedIcon />,
+            variant: "text",
+          },
+          {
+            label: "Comentar",
+            variant: "outlined",
+            color: "secondary",
+            onClick: onCommentThread,
+          },
+        ]}
+        showDivider
+      />
+
+      {showCommentBox && (
+        <Box sx={{ px: 1, py: 2 }}>
+          <TextField
+            fullWidth
+            multiline
+            minRows={3}
+            label="Escribí tu comentario"
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            disabled={sending}
+          />
+          <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleSendComment}
+              disabled={sending || !commentText.trim()}
+            >
+              Enviar
+            </Button>
+            <Button variant="text" onClick={() => setShowCommentBox(false)}>
+              Cancelar
+            </Button>
+          </Stack>
         </Box>
+      )}
+
+      <Box>
+        <Typography>Respuestas ({messages.length})</Typography>
+        <Divider />
       </Box>
+
+      <Box>
+        {messages.map((msg) => {
+          const msgDate = new Date(msg.createdAt).toLocaleDateString("es-AR");
+          return (
+            <InfoCard
+              key={msg.id}
+              title={`Usuario ${msg.user_id}`}
+              subtitle={`${msgDate}`}
+              description={msg.content}
+            />
+          );
+        })}
+      </Box>
+    </Box>
   );
 };
 
