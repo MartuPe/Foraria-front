@@ -45,27 +45,23 @@ const Login: React.FC = () => {
     try {
       const res = await authService.login(email.trim(), password);
 
-      // 🔴 IMPORTANTE: Antes tenías esto:
-      // if (!res.success) throw new Error(res.message ?? "Login inválido");
-      // Eso hacía que aunque el back devuelva 200, siempre tires error
-      // si la propiedad "success" no viene definida.
-
-      // Si llegamos acá sin que Axios explote, asumimos que el login fue OK.
-      // (Si el back devuelve 401/500, Axios lanza error y cae en el catch).
-
+      // Ahora storage.role está correctamente guardado
       const role = storage.role as Role | null;
-      const requires =
-        res.requiresPasswordChange === true ||
-        localStorage.getItem("requiresPasswordChange") === "true";
+      const requires = res.requiresPasswordChange === true;
 
+      // Verificar si debe actualizar información primero
       if (requires && (role === Role.OWNER || role === Role.TENANT)) {
         navigate("/actualizarInformacion");
         return;
       }
 
+      // Redirigir al dashboard correspondiente
       const target =
-        role === Role.ADMIN || role === Role.CONSORCIO ? "/admin/dashboard" : "/dashboard";
+        role === Role.ADMIN || role === Role.CONSORCIO 
+          ? "/admin/dashboard" 
+          : "/dashboard";
       navigate(target);
+      
     } catch (error: any) {
       const raw =
         error?.response?.data?.message ||

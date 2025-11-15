@@ -109,7 +109,6 @@ const Forums: React.FC = () => {
   const [forumStats, setForumStats] = useState<Forum | null>(null);
   const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:7245/api";
 
-  // ====== CATEGORÍA por URL (usuario) o por tabs (admin) ======
   const slugFromPath = useMemo(() => {
     const match = location.pathname.match(/\/forums\/([^/]+)/);
     return match ? match[1] : "general";
