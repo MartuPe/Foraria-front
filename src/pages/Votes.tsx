@@ -84,10 +84,16 @@ interface UserCountResponse {
 
 
 export default function Votes() {
+  const consortiumId = localStorage.getItem("consortiumId");
+  const urlUserConsortioum = `https://localhost:7245/api/User/consortium/${consortiumId}`;
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const totalUsersInConsortium = useGet<Poll[]>(
+    urlUserConsortioum
+  );; 
+  const usersCount = totalUsersInConsortium.data?.length ?? 0;
   const [totalUsers, setTotalUsers] = useState<number>(0);
   const [loadError, setLoadError] = useState<string | null>(null);
   
@@ -242,7 +248,7 @@ export default function Votes() {
     }).sort((a, b) => b.votes - a.votes);
 
     const winner = optionsWithResults.length > 0 ? optionsWithResults[0] : null;
-    const participationPercent = totalUsers > 0 ? Math.min(Math.round((totalVotes / totalUsers) * 100), 100) : 0;
+    const participationPercent = usersCount > 0 ? Math.min(Math.round((totalVotes / usersCount) * 100), 100) : 0;
 
     return {
       totalVotes,
@@ -513,7 +519,7 @@ export default function Votes() {
                   color={isActive ? "text.secondary" : "text.disabled"}
                   fontWeight={600}
                 >
-                  {totalVotes}/{totalUsers}
+                  {totalVotes}/{usersCount} votos
                 </Typography>
               </Stack>
               <LinearProgress 
