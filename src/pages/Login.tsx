@@ -1,13 +1,5 @@
 import React, { useState } from "react";
-import {
-  Box,
-  Button,
-  TextField,
-  Typography,
-  InputAdornment,
-  IconButton,
-  Link,
-} from "@mui/material";
+import { Box, Button, TextField, Typography,InputAdornment, IconButton, Link, } from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
@@ -44,14 +36,7 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const res = await authService.login(email.trim(), password);
-
-      // 🔴 IMPORTANTE: Antes tenías esto:
-      // if (!res.success) throw new Error(res.message ?? "Login inválido");
-      // Eso hacía que aunque el back devuelva 200, siempre tires error
-      // si la propiedad "success" no viene definida.
-
-      // Si llegamos acá sin que Axios explote, asumimos que el login fue OK.
-      // (Si el back devuelve 401/500, Axios lanza error y cae en el catch).
+      if (!res.success) throw new Error(res.message ?? "Login inválido");
 
       const role = storage.role as Role | null;
       const requires =
@@ -122,11 +107,7 @@ const Login: React.FC = () => {
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton
-                  onClick={() => setShowPassword((s) => !s)}
-                  edge="end"
-                  aria-label="mostrar/ocultar contraseña"
-                >
+                <IconButton onClick={() => setShowPassword((s) => !s)} edge="end" aria-label="mostrar/ocultar contraseña">
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </InputAdornment>
@@ -140,34 +121,18 @@ const Login: React.FC = () => {
           </div>
         )}
 
-        <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-          disabled={loading}
-          className="foraria-gradient-button"
-          sx={{ mt: 1 }}
-        >
+        <Button type="submit" variant="contained" fullWidth disabled={loading} className="foraria-gradient-button" sx={{ mt: 1 }} >
           {loading ? "Ingresando..." : "Iniciar Sesión"}
         </Button>
 
         {msg.general && (
-          <div
-            className="field-message field-message--error field-message--general"
-            role="alert"
-            aria-live="polite"
-          >
+          <div className="field-message field-message--error field-message--general" role="alert" aria-live="polite">
             {msg.general}
           </div>
         )}
 
         <Box className="foraria-centered-link" sx={{ mt: 2 }}>
-          <Link
-            component={RouterLink}
-            to="/recuperar"
-            underline="hover"
-            className="foraria-form-link"
-          >
+          <Link component={RouterLink} to="/recuperar" underline="hover" className="foraria-form-link">
             Olvidé mi contraseña
           </Link>
         </Box>
