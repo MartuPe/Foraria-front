@@ -84,11 +84,39 @@ const CATEGORY_LABELS = ["General","Administración","Seguridad","Mantenimiento"
 const Forums: React.FC = () => {
   const { data: forumsRaw, loading: loadingForums, error: errorForums, refetch: refetchForums } = useGet<Forum[]>("/Forum");
   const { data: threadsRaw, loading: loadingThreads, error: errorThreads, refetch: refetchThreads } = useGet<Thread[]>("/Thread");
-  const loading = loadingForums || loadingThreads;
-  const error = !!errorForums || !!errorThreads;
-
+const loading = loadingForums || loadingThreads;
+const [loadError, setLoadError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+useEffect(() => {
+ 
+  if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
+    setLoadError(null);
+  }
+  
+  
+  if (errorForums || errorThreads) {
+    const errorMsg = String(errorForums || errorThreads);
+    
+    
+    const is404 = errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found") ||
+                  errorMsg.toLowerCase().includes("status code 404");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
+                      errorMsg.toLowerCase().includes("no hay");
+    
+    if (is404 || isNotFound) {
+      
+      setLoadError(null);
+    } else {
+   
+      setLoadError("No se pudo cargar el foro. Intentá nuevamente más tarde.");
+    }
+  }
+}, [forumsRaw, threadsRaw, errorForums, errorThreads]);
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isAdminRole = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
@@ -618,22 +646,62 @@ const Forums: React.FC = () => {
         </Box>
       )}
 
-      {error && !loading && (
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography variant="h6" color="error">Error cargando el foro</Typography>
-          <Button onClick={() => { refetchForums(); refetchThreads(); }} sx={{ mt: 2 }}>Reintentar</Button>
-        </Box>
-      )}
+     {loadError && !loading && (
+  <Paper
+    sx={{
+      p: 6,
+      textAlign: "center",
+      border: "1px dashed #d0d0d0",
+      borderRadius: 3,
+      backgroundColor: "#fafafa",
+    }}
+  >
+    <ChatIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+    <Typography variant="h5" color="text.primary" gutterBottom>
+      Error al cargar el foro
+    </Typography>
+    <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+      {loadError}
+    </Typography>
+    <Button 
+      variant="contained" 
+      onClick={() => { refetchForums(); refetchThreads(); }} 
+      sx={{ mt: 1 }}
+    >
+      Reintentar
+    </Button>
+  </Paper>
+)}
 
-      {!loading && !error && posts.length === 0 && (
-        <Card variant="outlined" sx={{ textAlign: "center", py: 6, borderRadius: 3 }}>
-          <Typography variant="h6" color="text.secondary">No hay posts en {currentCategoryName} aún</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
-            ¡Sé el primero en crear un post en esta categoría!
-          </Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Crear primer post</Button>
-        </Card>
-      )}
+     {!loading && !loadError && posts.length === 0 && (
+  <Paper
+    sx={{
+      p: 6,
+      textAlign: "center",
+      border: "1px dashed #d0d0d0",
+      borderRadius: 3,
+      backgroundColor: "#fafafa",
+    }}
+  >
+    <ChatIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+    <Typography variant="h5" color="text.primary" gutterBottom>
+      No hay posts en {currentCategoryName}
+    </Typography>
+    <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+      Aún no se han creado posts en esta categoría.
+    </Typography>
+    <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+      ¡Sé el primero en crear un post!
+    </Typography>
+    <Button 
+      variant="contained" 
+      startIcon={<AddIcon />} 
+      onClick={() => setOpen(true)}
+    >
+      Crear primer post
+    </Button>
+  </Paper>
+)}
 
       <Stack spacing={2}>{posts.map(renderThread)}</Stack>
 
