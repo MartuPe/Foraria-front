@@ -46,7 +46,7 @@ export default function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/recuperar" element={<RecoverPassword />} />
           <Route path="/reset-password" element={<ResetPassword />} />
-          <Route path="/actualizarInformacion" element={<RequireRoles roles={RoleGroups.USER}><UpdateData /></RequireRoles>} />
+          <Route path="/actualizarInformacion" element={<UpdateData />} />
           <Route element={<RequireAuth><RequireRoles roles={RoleGroups.USER}><Layout /></RequireRoles></RequireAuth>}>
             <Route path="dashboard" element={<Dashboard />} />
             <Route path="perfil" element={<Profile />} />
