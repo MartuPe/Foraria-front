@@ -13,7 +13,6 @@ import {
   FormControl,
   InputLabel,
   Divider,
-  Chip,
 } from "@mui/material";
 import PageHeader from "../../components/SectionHeader";
 import InvoiceUploadForm from "../../components/modals/UploadInvoice";
@@ -21,7 +20,6 @@ import InfoCard, { InfoFile } from "../../components/InfoCard";
 import DownloadIcon from "@mui/icons-material/Download";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import Money from "../../components/Money";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import IconButton from "@mui/material/IconButton";
 import axios from "axios";
 import jsPDF from "jspdf";
@@ -465,10 +463,6 @@ const generateAdminPdf = (exp: Expense) => {
 
     {!loadingExpenses &&
       expenses.map((exp) => {
-        const expFiles: InfoFile[] = (exp.invoices || [])
-          .flatMap((inv) => (inv.filePath ? inv.filePath.split(",") : []))
-          .map((name) => ({ url: name, type: name.split(".").pop() }));
-
         return (
           <InfoCard
             key={exp.id}

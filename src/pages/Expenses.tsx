@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Box, Stack, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider, Chip,IconButton, Card, CardContent, useTheme, CircularProgress, } from "@mui/material";
+import { Box, Stack, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider, Chip,IconButton, useTheme, CircularProgress, } from "@mui/material";
 import "../styles/expenses.css";
 import Money from "../components/Money";
 import { fetchExpensesMock, formatDateISO } from "../services/expenses.mock";
@@ -11,9 +11,6 @@ import PageHeader from "../components/SectionHeader";
 import axios from "axios";
 import DownloadIcon from "@mui/icons-material/Download";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import PaidIcon from "@mui/icons-material/Paid";
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import LocalAtmIcon from "@mui/icons-material/LocalAtm";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -66,7 +63,6 @@ export default function ExpensesPage() {
   } | null>(null);
 
   const [detailsOpenFor, setDetailsOpenFor] = useState<ExpenseDetail | null>(null);
-  const [downloadingPdfFor, setDownloadingPdfFor] = useState<number | null>(null);
   const [loadingPaymentFor, setLoadingPaymentFor] = useState<number | null>(null);
   const theme = useTheme();
 

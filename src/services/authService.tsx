@@ -1,7 +1,7 @@
 import { api } from "../api/axios";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
-import { initSessionFromToken, getCurrentUser } from "./userService";
+import { initSessionFromToken } from "./userService";
 
 export type LoginResponse = {
   success: boolean;
