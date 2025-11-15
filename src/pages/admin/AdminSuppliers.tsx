@@ -44,7 +44,7 @@ export default function Suppliers() {
   const [page, setPage] = useState(1);
   const pageSize = 6;
 
-  const consortiumId = 1;
+  const consortiumId = Number(localStorage.getItem("consortiumId"));
 
   const [qDebounced, setQDebounced] = useState(q);
   useEffect(() => {
@@ -55,7 +55,7 @@ export default function Suppliers() {
   const fetchSuppliers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await supplierService.getAll();
+      const data = await supplierService.getAll(consortiumId);
 
       if (!Array.isArray(data)) {
         console.error("Respuesta inesperada al obtener proveedores:", data);

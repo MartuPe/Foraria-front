@@ -19,10 +19,11 @@ export interface Supplier {
 
 // Tipo para creación: opcionalmente Omit
 export type CreateSupplier = Omit<Supplier, "id" | "active" | "registrationDate">;
-
+ 
 export const supplierService = {
-  async getAll(): Promise<Supplier[]> {
-    const { data } = await api.get("/Supplier");
+ 
+  async getAll(id: number): Promise<Supplier[]> {
+    const { data } = await api.get(`/Supplier/?consortiumId=${id}`);
     return data;
   },
 
