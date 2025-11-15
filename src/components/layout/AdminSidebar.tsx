@@ -34,7 +34,7 @@ import {
   DirectionsCar,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
-import logoForaria from "../../assets/Isotipo-Color.png";
+import isotipoForaria from "../../assets/Isotipo-Color.png";
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard",            icon: <DashboardIcon />,      path: "/admin/dashboard" },
@@ -131,7 +131,7 @@ useEffect(() => {
           minHeight: "auto",
         }}
       >
-        <Box component="img" src={logoForaria} alt="Foraria Logo" sx={{ width: 32, height: 32, objectFit: "contain" }} />
+        <Box component="img" src={isotipoForaria} alt="Foraria Logo" sx={{ width: 32, height: 32, objectFit: "contain" }} />
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700, color: "white", fontSize: "1.1rem" }}>
             Foraria
