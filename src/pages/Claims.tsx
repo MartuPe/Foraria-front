@@ -10,6 +10,7 @@ import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 
 interface ClaimResponse { description?: string | null; responseDate?: string | null; user_id: number; claim_id: number; responsibleSector_id?: number | null; }
 interface User { id?: number; firstName?: string | null; lastName?: string | null; email?: string | null; }
@@ -31,7 +32,12 @@ const Claims: React.FC = () => {
   const API_BASE = (process.env.REACT_APP_API_URL?.replace(/\/+$/,"") || "https://localhost:7245");
   const userRole = storage.role ?? "";
   const canManageClaims = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
-  const safeClaimData = useMemo(() => claimData ?? [], [claimData]);
+
+  const is404Error = error && (String(error).includes("404") || String(error).toLowerCase().includes("not found"));
+  const safeClaimData = useMemo(() => {
+    if (is404Error) return [];
+    return claimData ?? [];
+  }, [claimData, is404Error]);
 
   const filteredAndSorted = useMemo(() => {
     const norm = (s?: string | null) => (s ?? "").toString().trim().toLowerCase();
@@ -66,7 +72,11 @@ const Claims: React.FC = () => {
   }, [safeClaimData, tab, search]);
 
   if (loading) return <div>Cargando reclamos...</div>;
-  if (error) return <div>Error al cargar: {String(error)}</div>;
+  
+
+  if (error && !is404Error) {
+    return <div>Error al cargar: {String(error)}</div>;
+  }
 
   const fileTypeFromPath = (path?: string) => {
     if (!path) return "";
@@ -91,6 +101,10 @@ const Claims: React.FC = () => {
     return { label: raw!, color: "warning" as const, variant: "outlined" as const };
   };
   const categoryChipFor = (raw?: string | null) => !raw ? { label: "Sin categoría", color: "default" as const, variant: "outlined" as const } : { label: raw, color: "info" as const, variant: "outlined" as const };
+
+ 
+  const isInitialEmpty = safeClaimData.length === 0 && !search && tab === "todas";
+  const isFilteredEmpty = filteredAndSorted.length === 0 && (search || tab !== "todas");
 
   return (
     <Box className="foraria-page-container">
@@ -117,7 +131,54 @@ const Claims: React.FC = () => {
       </Dialog>
 
       <Stack spacing={2}>
-        {filteredAndSorted.length > 0 ? (
+        {isInitialEmpty ? (
+          
+          <Paper 
+            sx={{ 
+              p: 6, 
+              textAlign: "center", 
+              border: "1px dashed #d0d0d0", 
+              borderRadius: 3,
+              backgroundColor: "#fafafa"
+            }}
+          >
+            <DescriptionOutlinedIcon 
+              sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} 
+            />
+            <Typography variant="h5" color="text.primary" gutterBottom>
+              No hay reclamos registrados
+            </Typography>
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+              Aún no se han creado reclamos en el sistema. Comienza creando tu primer reclamo.
+            </Typography>
+            <Button 
+              variant="contained" 
+              color="secondary" 
+              size="large"
+              onClick={() => setOpenNew(true)}
+            >
+              + Crear Primer Reclamo
+            </Button>
+          </Paper>
+        ) : isFilteredEmpty ? (
+          
+          <Paper 
+            sx={{ 
+              p: 4, 
+              textAlign: "center", 
+              border: "1px solid #f0f0f0", 
+              borderRadius: 3 
+            }}
+          >
+            <Typography variant="h6" color="text.secondary">
+              No se encontraron reclamos con los filtros aplicados
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+              Intenta cambiar los filtros o realizar una nueva búsqueda
+            </Typography>
+          </Paper>
+        ) : (
+ 
           filteredAndSorted.map((c) => {
             const id = c.claim.id ?? 0;
             const userFullName = c.user?.firstName || c.user?.lastName ? `${c.user?.firstName ?? ""} ${c.user?.lastName ?? ""}`.trim() : `Usuario ${c.claim.user_id ?? ""}`;
@@ -178,10 +239,6 @@ const Claims: React.FC = () => {
               </Box>
             );
           })
-        ) : (
-          <Paper sx={{ p: 4, textAlign: "center", border: "1px solid #f0f0f0", borderRadius: 3 }}>
-            <Typography variant="h6" color="text.secondary">No se encontraron reclamos</Typography>
-          </Paper>
         )}
       </Stack>
     </Box>
