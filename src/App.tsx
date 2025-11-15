@@ -16,23 +16,22 @@ import Profile from "./pages/Profile";
 import ChangeData from "./pages/ChangeData";
 import Votes from "./pages/Votes";
 import Meetings from "./pages/Meetings";
-import Documents from "./pages/Documents";
+// import Documents from "./pages/Documents";
 import ExpensesPage from "./pages/Expenses";
 import Claims from "./pages/Claims";
 import Dashboard from "./pages/Dashboard";
 import Calendar from "./pages/Calendar";
-import NewReserve from "./components/modals/NewEvent";
 import Forums from "./pages/Forums";
 import Comentarios from "./pages/ThreadView";
 import Configuration from "./pages/Configuration";
 import SelectConsortium from "./pages/SelectConsortium";
 import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminAudit from "./pages/admin/AdminAudit";
+// import AdminAudit from "./pages/admin/AdminAudit";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminVotes from "./pages/admin/AdminVotes";
 import AdminSuppliers from "./pages/admin/AdminSuppliers";
 import AdminFactura from "./pages/admin/AdminExpenses";
-import AdminDocuments from "./pages/admin/AdminDocuments";
+// import AdminDocuments from "./pages/admin/AdminDocuments";
 
 export default function App() {
   const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
@@ -53,11 +52,10 @@ export default function App() {
             <Route path="editarInformacion" element={<ChangeData />} />
             <Route path="votaciones" element={<Votes />} />
             <Route path="reuniones" element={<Meetings />} />
-            <Route path="documentos" element={<Documents />} />
+            {/* <Route path="documentos" element={<Documents />} /> */}
             <Route path="expensas" element={<ExpensesPage />} />
             <Route path="reclamos" element={<Claims />} />
             <Route path="calendario" element={<Calendar />} />
-            <Route path="nuevaReserva" element={<NewReserve />} />
             <Route path="configuracion" element={<Configuration />} />
             <Route path="select-consortium" element={<SelectConsortium />} />
             {["todas","general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"]
@@ -71,12 +69,12 @@ export default function App() {
             <Route path="calendario" element={<Calendar />} />
             <Route path="perfil" element={<Profile />} />
             <Route path="foros" element={<Forums />} />
-            <Route path="auditoria" element={<AdminAudit />} />
+            {/* <Route path="auditoria" element={<AdminAudit />} /> */}
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<AdminVotes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
-            <Route path="documents" element={<AdminDocuments />} />
+            {/* <Route path="documents" element={<AdminDocuments />} /> */}
             <Route path="configuracion" element={<Configuration />} />
           </Route>
           <Route path="*" element={<Navigate to={isAdmin ? "/admin/dashboard" : "/dashboard"} replace />} />
