@@ -1,5 +1,13 @@
 import React, { useState } from "react";
-import { Box, Button, TextField, Typography,InputAdornment, IconButton, Link, } from "@mui/material";
+import {
+  Box,
+  Button,
+  TextField,
+  Typography,
+  InputAdornment,
+  IconButton,
+  Link,
+} from "@mui/material";
 import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
@@ -36,21 +44,24 @@ const Login: React.FC = () => {
     setLoading(true);
     try {
       const res = await authService.login(email.trim(), password);
-      if (!res.success) throw new Error(res.message ?? "Login inválido");
 
+      // Ahora storage.role está correctamente guardado
       const role = storage.role as Role | null;
-      const requires =
-        res.requiresPasswordChange === true ||
-        localStorage.getItem("requiresPasswordChange") === "true";
+      const requires = res.requiresPasswordChange === true;
 
+      // Verificar si debe actualizar información primero
       if (requires && (role === Role.OWNER || role === Role.TENANT)) {
         navigate("/actualizarInformacion");
         return;
       }
 
+      // Redirigir al dashboard correspondiente
       const target =
-        role === Role.ADMIN || role === Role.CONSORCIO ? "/admin/dashboard" : "/dashboard";
+        role === Role.ADMIN || role === Role.CONSORCIO 
+          ? "/admin/dashboard" 
+          : "/dashboard";
       navigate(target);
+      
     } catch (error: any) {
       const raw =
         error?.response?.data?.message ||
@@ -107,7 +118,11 @@ const Login: React.FC = () => {
           InputProps={{
             endAdornment: (
               <InputAdornment position="end">
-                <IconButton onClick={() => setShowPassword((s) => !s)} edge="end" aria-label="mostrar/ocultar contraseña">
+                <IconButton
+                  onClick={() => setShowPassword((s) => !s)}
+                  edge="end"
+                  aria-label="mostrar/ocultar contraseña"
+                >
                   {showPassword ? <VisibilityOff /> : <Visibility />}
                 </IconButton>
               </InputAdornment>
@@ -121,18 +136,34 @@ const Login: React.FC = () => {
           </div>
         )}
 
-        <Button type="submit" variant="contained" fullWidth disabled={loading} className="foraria-gradient-button" sx={{ mt: 1 }} >
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          disabled={loading}
+          className="foraria-gradient-button"
+          sx={{ mt: 1 }}
+        >
           {loading ? "Ingresando..." : "Iniciar Sesión"}
         </Button>
 
         {msg.general && (
-          <div className="field-message field-message--error field-message--general" role="alert" aria-live="polite">
+          <div
+            className="field-message field-message--error field-message--general"
+            role="alert"
+            aria-live="polite"
+          >
             {msg.general}
           </div>
         )}
 
         <Box className="foraria-centered-link" sx={{ mt: 2 }}>
-          <Link component={RouterLink} to="/recuperar" underline="hover" className="foraria-form-link">
+          <Link
+            component={RouterLink}
+            to="/recuperar"
+            underline="hover"
+            className="foraria-form-link"
+          >
             Olvidé mi contraseña
           </Link>
         </Box>

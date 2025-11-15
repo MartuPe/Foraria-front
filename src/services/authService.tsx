@@ -12,14 +12,27 @@ export type LoginResponse = {
   requiresPasswordChange?: boolean;
   user?: {
     id: number;
-    email: string;
-    firstName?: string;
+    name?: string;
     lastName?: string;
-    roleId?: number;
-    roleName?: string;
-    role?: string;     
-    residenceId?: number ;
-    consortiumId?: number; 
+    mail?: string;
+    phoneNumber?: number;
+    dni?: number;
+    photo?: string;
+    role_id?: number;
+    role?: {
+      id: number;
+      description: string;
+    };
+    residences?: Array<{
+      id: number;
+      floor?: number;
+      number?: number;
+      tower?: string;
+      consortiumId?: number;
+    }>;
+    requiresPasswordChange?: boolean;
+    hasPermission?: boolean;
+    consortiumId?: number;
   };
 };
 
@@ -27,67 +40,60 @@ export const authService = {
   async login(email: string, password: string): Promise<LoginResponse> {
     const { data } = await api.post<LoginResponse>("/User/login", { email, password });
 
+    // 1) Guardar tokens
     const access = data.accessToken ?? data.token;
     if (access) storage.token = access;
     if (data.refreshToken) storage.refresh = data.refreshToken;
 
-    const role = data.user?.roleName ?? data.user?.role ?? storage.role;
-    if (role) storage.role = role as Role;
-
-        // 3) Guardar usuario/IDs (lo nuevo)
-    if (data.user) {
-      // user básico desde la respuesta
-      const u = {
-        id: data.user.id,
-        email: data.user.email,
-        firstName: data.user.firstName ?? "",
-        lastName: data.user.lastName ?? "",
-        role: (data.user.roleName ?? data.user.role ?? storage.role) || "",
-        // si el back ya manda consorcio/residencia, los usamos
-        consortiumId: data.user.consortiumId ?? null,
-        residences: data.user.residenceId
-          ? [{ id: data.user.residenceId, floor: null, number: null, consortiumId: data.user.consortiumId ?? 0 }]
-          : [],
-      };
-
-      // persistimos en storage de forma consistente
-      storage.user = u;
-      storage.userId = u.id ?? null;
-      storage.consortiumId = (u.consortiumId as number | null) ?? null;
-      storage.residenceId = data.user.residenceId ?? null;
+    // 2) Extraer el rol correctamente desde role.description
+    const roleDescription = data.user?.role?.description;
+    if (roleDescription) {
+      storage.role = roleDescription as Role;
+      localStorage.setItem("role", roleDescription);
     }
 
-    // 3.b) Fallback: si no vino consortium/residence en la respuesta, intentar sacarlo del JWT
-    if (!storage.consortiumId || !storage.userId) {
-      const fromToken = initSessionFromToken(); // decodifica y persiste lo que encuentre
-      // si aún falta info y el rol lo permite, se puede enriquecer (opcional, no rompe)
-      if (fromToken?.id) {
-        try {
-          await getCurrentUser(); // intenta /User?id=... para completar datos de admin/consorcio
-        } catch {/* ignore */}
+    // 3) Guardar datos del usuario
+    if (data.user) {
+      const firstResidence = data.user.residences?.[0];
+      const consortiumId = data.user.consortiumId ?? firstResidence?.consortiumId ?? null;
+      const residenceId = firstResidence?.id ?? null;
+
+      const u = {
+        id: data.user.id,
+        email: data.user.mail ?? email,
+        firstName: data.user.name ?? "",
+        lastName: data.user.lastName ?? "",
+        role: roleDescription ?? "",
+        consortiumId: consortiumId,
+        residences: data.user.residences ?? [],
+      };
+
+      // Persistir en storage
+      storage.user = u;
+      storage.userId = u.id;
+      storage.consortiumId = consortiumId;
+      storage.residenceId = residenceId;
+
+      // También en localStorage para los guards
+      localStorage.setItem("userId", String(u.id));
+      localStorage.setItem("email", u.email);
+      
+      if (consortiumId) {
+        localStorage.setItem("consortiumId", String(consortiumId));
+      } else {
+        localStorage.removeItem("consortiumId");
+      }
+      
+      if (residenceId) {
+        localStorage.setItem("residenceId", String(residenceId));
+      } else {
+        localStorage.removeItem("residenceId");
       }
     }
 
+    // 4) Manejar requiresPasswordChange
     const requires = data.requiresPasswordChange === true;
-    if (requires && (role === Role.OWNER || role === Role.TENANT)) {
-      localStorage.setItem("requiresPasswordChange", "true");
-    } else {
-      localStorage.setItem("requiresPasswordChange", "false");
-    }
-   
-    if (data.user?.id) localStorage.setItem("userId", String(data.user.id));
-if (data.user?.email) localStorage.setItem("email", data.user.email);
-
-if (data.user?.residenceId !== undefined && data.user?.residenceId !== null) {
-  localStorage.setItem("residenceId", String(data.user.residenceId));
-} else {
-  localStorage.removeItem("residenceId");
-}
-if (data.user?.consortiumId !== undefined && data.user?.consortiumId !== null) {
-  localStorage.setItem("consortiumId", String(data.user.consortiumId));
-} else {
-  localStorage.removeItem("consortiumId");
-}
+    localStorage.setItem("requiresPasswordChange", requires ? "true" : "false");
 
     return data;
   },
