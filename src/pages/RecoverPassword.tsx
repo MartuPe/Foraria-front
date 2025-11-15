@@ -1,85 +1,64 @@
-import React, { useState } from "react";
-import {  Box, Button, TextField, Typography, CircularProgress, Link, } from "@mui/material";
-import isotipoColor from "../assets/Isotipo-Color.png";
-import { Link as RouterLink } from "react-router-dom";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { ForariaStatusModal } from "../components/StatCardForms"; 
+import React, { useState } from 'react';
+import { Box, Button, TextField, Typography, Alert, CircularProgress } from '@mui/material';
+import isotipoColor from '../assets/Isotipo-Color.png';
+import { Link as RouterLink } from 'react-router-dom';
+import { Link } from '@mui/material';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const ForgotPassword: React.FC = () => {
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState('');
   const [emailError, setEmailError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-
-  const [statusModal, setStatusModal] = useState<{
-    open: boolean;
-    title: string;
-    message: string;
-    variant: "success" | "error";
-  }>({
-    open: false,
-    title: "",
-    message: "",
-    variant: "success",
-  });
+  const [serverMessage, setServerMessage] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
 
   const validateEmail = (value: string) => {
+    // validación simple; ajusta si necesitas más estricta
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return re.test(value);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    setEmailError(null);
+    setServerMessage(null);
+    setServerError(null);
 
     if (!email) {
-      setEmailError("El email es requerido");
+      setEmailError('El email es requerido');
       return;
     }
     if (!validateEmail(email)) {
-      setEmailError("Introduce un email válido");
+      setEmailError('Introduce un email válido');
       return;
     }
+    setEmailError(null);
 
     setLoading(true);
-
     try {
-      const res = await fetch(
-        "https://localhost:7245/api/User/forgot-password",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email }),
-        }
-      );
+      const res = await fetch('https://localhost:7245/api/User/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email })
+      });
 
+      // intenta parsear JSON aunque el status no sea 2xx
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        const msg = data?.message || "No se pudo enviar el correo.";
-        setStatusModal({
-          open: true,
-          variant: "error",
-          title: "Error",
-          message: msg,
-        });
+        // si el servidor devuelve un mensaje de error en JSON, úsalo
+        const msg = data?.message || `Error ${res.status}`;
+        setServerError(msg);
       } else {
-        const msg =
-          data?.message || "Si el email es válido, recibirás un enlace.";
-        setStatusModal({
-          open: true,
-          variant: "success",
-          title: "Correo enviado",
-          message: msg,
-        });
+        const msg = data?.message || 'Revisa tu correo';
+        setServerMessage(msg);
+        // opcional: limpiar campo o mantenerlo según UX deseada
+        // setEmail('');
       }
     } catch (err) {
-      console.error("Forgot password error:", err);
-      setStatusModal({
-        open: true,
-        variant: "error",
-        title: "Error de conexión",
-        message: "No se pudo conectar con el servidor.",
-      });
+      setServerError('No se pudo conectar con el servidor. Intenta más tarde.');
+      console.error('Forgot password error:', err);
     } finally {
       setLoading(false);
     }
@@ -93,45 +72,47 @@ const ForgotPassword: React.FC = () => {
         onSubmit={handleSubmit}
         noValidate
       >
-        <Box
-          component="img"
-          src={isotipoColor}
-          alt="Logo"
-          className="foraria-logo"
-        />
-
-        <Typography variant="h5" className="foraria-form-title">
+        <Box component="img" src={isotipoColor} alt="Logo" className="foraria-logo" />
+        <Typography
+          variant="h5"
+          component="h1"
+          gutterBottom
+          className="foraria-form-title"
+        >
           Recuperar Contraseña
         </Typography>
 
-        <Typography sx={{ mb: 2 }}>
-          Ingresa tu email y te enviaremos un enlace para recuperar tu
-          contraseña.
+        <Typography>
+          Ingresa tu email y te enviaremos un enlace para recuperar tu contraseña
         </Typography>
 
         <Box className="foraria-centered-link" sx={{ mb: 1 }}>
-          <Link
-            component={RouterLink}
-            to="/iniciarSesion"
-            underline="hover"
-            className="foraria-form-link foraria-left-link"
-          >
-            <ArrowBackIcon sx={{ mr: 0.5 }} />
+          <Link component={RouterLink} to="/iniciarSesion" underline="hover" className="foraria-form-link foraria-left-link">
+            <ArrowBackIcon />
             Volver al login
           </Link>
         </Box>
 
+        {serverMessage && <Alert severity="success" sx={{ mb: 2 }}>{serverMessage}</Alert>}
+        {serverError && <Alert severity="error" sx={{ mb: 2 }}>{serverError}</Alert>}
+
         <TextField
           label="Email"
-          fullWidth
           variant="outlined"
+          fullWidth
           margin="normal"
+          sx={{
+            '& .MuiInputLabel-root': {
+              color: '#ebebd3',
+              transform: 'translate(14px, -20px) scale(0.75)',
+            },
+          }}
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="tu@email.com"
-          InputLabelProps={{ shrink: true }}
+          placeholder="Tu@email.com"
+          InputLabelProps={{ className: 'foraria-form-label', shrink: true }}
           error={!!emailError}
-          helperText={emailError ?? ""}
+          helperText={emailError ?? ''}
           disabled={loading}
           autoComplete="email"
           type="email"
@@ -143,7 +124,7 @@ const ForgotPassword: React.FC = () => {
           fullWidth
           className="foraria-gradient-button"
           disabled={loading}
-          sx={{ position: "relative" }}
+          sx={{ position: 'relative' }}
         >
           {loading ? (
             <>
@@ -151,19 +132,10 @@ const ForgotPassword: React.FC = () => {
               Enviando...
             </>
           ) : (
-            "Enviar enlace de recuperación"
+            'Enviar enlace de recuperación'
           )}
         </Button>
       </Box>
-
-      <ForariaStatusModal
-        open={statusModal.open}
-        onClose={() => setStatusModal((s) => ({ ...s, open: false }))}
-        variant={statusModal.variant}
-        title={statusModal.title}
-        message={statusModal.message}
-        primaryActionLabel="Aceptar"
-      />
     </Box>
   );
 };
