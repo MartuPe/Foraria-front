@@ -8,14 +8,28 @@ import {
   Button,
   Stack,
   TextField,
+  Dialog,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
 import ThumbDownOutlinedIcon from "@mui/icons-material/ThumbDownOutlined";
 import ChatBubbleOutlineOutlinedIcon from "@mui/icons-material/ChatBubbleOutlineOutlined";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+
 import InfoCard from "../components/InfoCard";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "../hooks/useMutation";
+
+import { storage } from "../utils/storage";
+import { Role, RoleGroups } from "../constants/roles";
+import {
+  Message,
+  deleteMessage as deleteMessageApi,
+} from "../services/messageService";
+import EditMessage from "../components/modals/EditMessage";
 
 interface Thread {
   id: number;
@@ -34,18 +48,12 @@ interface ReactionResponse {
   userReaction?: 1 | -1 | 0;
 }
 
-interface Message {
-  id: number;
-  content: string;
-  createdAt: string;
-  state: string;
-  thread_id: number;
-  user_id: number;
-  optionalFile?: string | null;
-}
-
+// OJO: este es el que ya usabas en ThreadView
 const API_BASE = "https://localhost:7245/api";
-const currentUserId = Number(localStorage.getItem("userId"));
+
+const currentUserId = Number(localStorage.getItem("userId") || 0);
+const currentRole = storage.role as Role | null;
+const isAdmin = currentRole ? RoleGroups.ADMIN.includes(currentRole) : false;
 
 const ThreadView: React.FC = () => {
   const location = useLocation();
@@ -54,7 +62,8 @@ const ThreadView: React.FC = () => {
 
   const threadIdFromState = (location.state as any)?.threadId;
   const threadIdParam = params.threadId ? Number(params.threadId) : undefined;
-  const threadId = typeof threadIdFromState === "number" ? threadIdFromState : threadIdParam;
+  const threadId =
+    typeof threadIdFromState === "number" ? threadIdFromState : threadIdParam;
 
   const [thread, setThread] = useState<Thread | null>(null);
   const [reactions, setReactions] = useState<ReactionResponse>({
@@ -71,11 +80,35 @@ const ThreadView: React.FC = () => {
   const [reacting, setReacting] = useState(false);
   const [/*error*/, setError] = useState(false);
 
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+
   const { mutate: toggleMutate } =
     useMutation<
       ReactionResponse,
-      { user_id: number; thread_id?: number; message_id?: number; reactionType: number }
+      {
+        user_id: number;
+        thread_id?: number;
+        message_id?: number;
+        reactionType: number;
+      }
     >("/Reactions/toggle", "post");
+
+  // recargar solo mensajes (para cuando edites o borres)
+  const reloadMessages = async () => {
+    if (!threadId) return;
+    try {
+      const res = await fetch(`${API_BASE}/Message/thread/${threadId}`);
+      if (res.ok) {
+        const msgs = await res.json();
+        setMessages(Array.isArray(msgs) ? msgs : []);
+      } else {
+        setMessages([]);
+      }
+    } catch (err) {
+      console.error("Error recargando mensajes del hilo", err);
+      setMessages([]);
+    }
+  };
 
   useEffect(() => {
     if (!threadId) {
@@ -100,7 +133,13 @@ const ThreadView: React.FC = () => {
         else setThread(null);
 
         if (reactionsRes.ok) setReactions(await reactionsRes.json());
-        else setReactions({ total: 0, likes: 0, dislikes: 0, userReaction: 0 });
+        else
+          setReactions({
+            total: 0,
+            likes: 0,
+            dislikes: 0,
+            userReaction: 0,
+          });
 
         if (messagesRes.ok) {
           const msgs = await messagesRes.json();
@@ -112,7 +151,12 @@ const ThreadView: React.FC = () => {
         console.error("Error cargando datos del hilo", err);
         if (mounted) {
           setThread(null);
-          setReactions({ total: 0, likes: 0, dislikes: 0, userReaction: 0 });
+          setReactions({
+            total: 0,
+            likes: 0,
+            dislikes: 0,
+            userReaction: 0,
+          });
           setMessages([]);
         }
       } finally {
@@ -126,7 +170,9 @@ const ThreadView: React.FC = () => {
     };
   }, [threadId]);
 
-  const formattedDate = thread ? new Date(thread.createdAt).toLocaleDateString("es-AR") : "";
+  const formattedDate = thread
+    ? new Date(thread.createdAt).toLocaleDateString("es-AR")
+    : "";
 
   const toggleReactionForThread = async (reactionType: 1 | -1) => {
     if (!thread || reacting) return;
@@ -137,27 +183,40 @@ const ThreadView: React.FC = () => {
     const willRemove = prevUserReaction === reactionType;
     const newUserReaction = willRemove ? 0 : reactionType;
 
-    // Actualización optimista
     const optimistic = {
       likes:
         reactions.likes +
-        (reactionType === 1 && !willRemove ? 1 : reactionType === 1 && willRemove ? -1 : 0),
+        (reactionType === 1 && !willRemove
+          ? 1
+          : reactionType === 1 && willRemove
+          ? -1
+          : 0),
       dislikes:
         reactions.dislikes +
-        (reactionType === -1 && !willRemove ? 1 : reactionType === -1 && willRemove ? -1 : 0),
-      total:
-        reactions.total +
-        (willRemove ? -1 : 1),
+        (reactionType === -1 && !willRemove
+          ? 1
+          : reactionType === -1 && willRemove
+          ? -1
+          : 0),
+      total: reactions.total + (willRemove ? -1 : 1),
       userReaction: newUserReaction as 1 | -1 | 0,
     };
     setReactions(optimistic);
 
-    const payload = { user_id: currentUserId, thread_id: thread.id, reactionType };
+    const payload = {
+      user_id: currentUserId,
+      thread_id: thread.id,
+      reactionType,
+    };
 
     try {
       const result = await toggleMutate(payload);
 
-      if (result && typeof result.likes === "number" && typeof result.dislikes === "number") {
+      if (
+        result &&
+        typeof result.likes === "number" &&
+        typeof result.dislikes === "number"
+      ) {
         setReactions({
           likes: result.likes,
           dislikes: result.dislikes,
@@ -168,8 +227,9 @@ const ThreadView: React.FC = () => {
               : newUserReaction,
         });
       } else {
-        // fallback: obtener desde API
-        const reacRes = await fetch(`${API_BASE}/Reactions/thread/${thread.id}`);
+        const reacRes = await fetch(
+          `${API_BASE}/Reactions/thread/${thread.id}`
+        );
         const reacJson: ReactionResponse = await reacRes.json();
         setReactions({
           likes: reacJson.likes ?? 0,
@@ -233,6 +293,26 @@ const ThreadView: React.FC = () => {
     }
   };
 
+  const canEditOrDelete = (msg: Message) =>
+    isAdmin || msg.user_id === currentUserId;
+
+  const handleDeleteMessage = async (msg: Message) => {
+    if (!canEditOrDelete(msg)) return;
+
+    const ok = window.confirm(
+      "¿Eliminar esta respuesta? Esta acción no se puede deshacer."
+    );
+    if (!ok) return;
+
+    try {
+      await deleteMessageApi(msg.id, currentUserId);
+      setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+    } catch (err) {
+      console.error("Error eliminando mensaje", err);
+      alert("No se pudo eliminar el mensaje.");
+    }
+  };
+
   if (loading) {
     return (
       <Box sx={{ py: 6, textAlign: "center" }}>
@@ -285,7 +365,10 @@ const ThreadView: React.FC = () => {
             label: String(reactions.likes ?? 0),
             icon: (
               <ThumbUpOutlinedIcon
-                sx={{ color: reactions.userReaction === 1 ? "success.main" : undefined }}
+                sx={{
+                  color:
+                    reactions.userReaction === 1 ? "success.main" : undefined,
+                }}
               />
             ),
             variant: "text",
@@ -295,7 +378,10 @@ const ThreadView: React.FC = () => {
             label: String(reactions.dislikes ?? 0),
             icon: (
               <ThumbDownOutlinedIcon
-                sx={{ color: reactions.userReaction === -1 ? "error.main" : undefined }}
+                sx={{
+                  color:
+                    reactions.userReaction === -1 ? "error.main" : undefined,
+                }}
               />
             ),
             variant: "text",
@@ -336,7 +422,11 @@ const ThreadView: React.FC = () => {
             >
               Enviar
             </Button>
-            <Button variant="text" onClick={() => setShowCommentBox(false)}>
+            <Button
+              variant="text"
+              onClick={() => setShowCommentBox(false)}
+              disabled={sending}
+            >
               Cancelar
             </Button>
           </Stack>
@@ -348,19 +438,107 @@ const ThreadView: React.FC = () => {
         <Divider />
       </Box>
 
+      {/* RESPUESTAS CON ICONOS DE EDITAR / ELIMINAR ARRIBA A LA DERECHA */}
       <Box>
         {messages.map((msg) => {
-          const msgDate = new Date(msg.createdAt).toLocaleDateString("es-AR");
+          const msgDate = msg.createdAt
+            ? new Date(msg.createdAt).toLocaleDateString("es-AR")
+            : "";
+          const allowed = canEditOrDelete(msg);
+
           return (
-            <InfoCard
+            <Box
               key={msg.id}
-              title={`Usuario ${msg.user_id}`}
-              subtitle={`${msgDate}`}
-              description={msg.content}
-            />
+              sx={{
+                position: "relative",
+                borderRadius: 3,
+                border: "1px solid",
+                borderColor: "divider",
+                p: 2,
+                mb: 1.5,
+              }}
+            >
+              {/* Íconos tipo hilo, arriba a la derecha */}
+              {allowed && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 8,
+                    right: 8,
+                    display: "flex",
+                    gap: 0.5,
+                  }}
+                >
+                  <Tooltip title="Editar respuesta">
+                    <IconButton
+                      size="small"
+                      onClick={() => setEditingMessage(msg)}
+                    >
+                      <EditOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar respuesta">
+                    <IconButton
+                      size="small"
+                      onClick={() => handleDeleteMessage(msg)}
+                    >
+                      <DeleteOutlineOutlinedIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              )}
+
+              {/* Contenido de la respuesta */}
+              <Typography
+                variant="body2"
+                sx={{ fontWeight: 600, mb: 0.2 }}
+              >
+                {`Usuario ${msg.user_id}`}
+              </Typography>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: "block", mb: 0.5 }}
+              >
+                {msgDate}
+              </Typography>
+              <Typography variant="body2" sx={{ whiteSpace: "pre-wrap" }}>
+                {msg.content}
+              </Typography>
+
+              {msg.optionalFile && (
+                <Typography
+                  component="a"
+                  href={msg.optionalFile}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  variant="body2"
+                  sx={{ mt: 0.5, display: "inline-block" }}
+                >
+                  Ver archivo adjunto
+                </Typography>
+              )}
+            </Box>
           );
         })}
       </Box>
+
+      {/* Modal edición de respuesta */}
+      <Dialog
+        open={!!editingMessage}
+        onClose={() => setEditingMessage(null)}
+        fullWidth
+        maxWidth="sm"
+      >
+        {editingMessage && (
+          <EditMessage
+            messageId={editingMessage.id}
+            initialContent={editingMessage.content}
+            onClose={() => setEditingMessage(null)}
+            onUpdated={reloadMessages}
+          />
+        )}
+      </Dialog>
     </Box>
   );
 };

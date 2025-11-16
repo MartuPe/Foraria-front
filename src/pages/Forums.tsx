@@ -44,11 +44,13 @@ import {
 import PageHeader from "../components/SectionHeader";
 import NewPost from "../components/modals/NewPost";
 import EditThread from "../components/modals/EditThread";
+import EditMessage from "../components/modals/EditMessage";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
+import { deleteMessage as deleteMessageApi } from "../services/messageService";
 
 interface Thread {
   id: number;
@@ -196,7 +198,8 @@ const Forums: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const isAdminRole = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
+  const isAdminRole =
+    storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
   const isAdminRoute = location.pathname.startsWith("/admin");
   const isAdmin = isAdminRole || isAdminRoute;
 
@@ -276,9 +279,7 @@ const Forums: React.FC = () => {
     if (numericCategory === null) return new Set<number>();
 
     return new Set(
-      safeForums
-        .filter((f) => f.category === numericCategory)
-        .map((f) => f.id)
+      safeForums.filter((f) => f.category === numericCategory).map((f) => f.id)
     );
   }, [safeForums, isAdmin, adminCategory, slugFromPath]);
 
@@ -542,8 +543,7 @@ const Forums: React.FC = () => {
   const headerStats = useMemo(
     () => ({
       totalPosts: forumStats?.countThreads ?? computedStats.totalPosts,
-      activeUsers:
-        forumStats?.countUserActives ?? computedStats.activeUsers,
+      activeUsers: forumStats?.countUserActives ?? computedStats.activeUsers,
       totalResponses:
         forumStats?.countResponses ?? computedStats.totalResponses,
       pinned: computedStats.pinned,
@@ -551,13 +551,15 @@ const Forums: React.FC = () => {
     [forumStats, computedStats]
   );
 
-  // ====== Reacciones ======
+  // ====== Reacciones / respuestas ======
   const [expandedThreads, setExpandedThreads] = useState<Set<number>>(
     new Set()
   );
   const [replyText, setReplyText] = useState<Record<number, string>>({});
   const [sendingReply, setSendingReply] = useState<number | null>(null);
-  // Ojo: ya no usamos useMutation para /Message, lo hacemos con FormData directo
+
+  // edición de mensajes individuales
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
 
   const toggleThread = (threadId: number) => {
     setExpandedThreads((prev) => {
@@ -727,6 +729,32 @@ const Forums: React.FC = () => {
     }
   };
 
+  // helper para recargar comentarios de un hilo
+  const reloadComments = async (threadId: number) => {
+    try {
+      const listRes = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (listRes.ok) {
+        const messages: Message[] = await listRes.json();
+        const key = String(threadId);
+        setEnriched((p) => ({
+          ...p,
+          [key]: {
+            ...(p[key] ?? {}),
+            commentsCount: messages.length,
+            comments: messages,
+          },
+        }));
+      }
+    } catch (e) {
+      console.error("Error recargando comentarios", e);
+    }
+  };
+
   // ====== enviar respuesta (POST /Message con FormData) ======
   const handleSendReply = async (threadId: number) => {
     const text = replyText[threadId]?.trim();
@@ -756,25 +784,7 @@ const Forums: React.FC = () => {
         [threadId]: "",
       }));
 
-      // recargar mensajes del hilo
-      const listRes = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (listRes.ok) {
-        const messages: Message[] = await listRes.json();
-        const key = String(threadId);
-        setEnriched((p) => ({
-          ...p,
-          [key]: {
-            ...(p[key] ?? {}),
-            commentsCount: messages.length,
-            comments: messages,
-          },
-        }));
-      }
+      await reloadComments(threadId);
     } catch (e: any) {
       alert(`Error al enviar la respuesta: ${e?.message || "desconocido"}`);
     } finally {
@@ -782,7 +792,27 @@ const Forums: React.FC = () => {
     }
   };
 
-  // ====== abrir diálogo de borrado ======
+  // ====== borrar respuesta individual ======
+  const handleDeleteComment = async (threadId: number, messageId: number) => {
+    const confirm = window.confirm(
+      "¿Eliminar esta respuesta? Esta acción no se puede deshacer."
+    );
+    if (!confirm) return;
+
+    try {
+      await deleteMessageApi(messageId, currentUserId);
+      await reloadComments(threadId);
+    } catch (e: any) {
+      console.error("Error eliminando mensaje", e);
+      alert(
+        `No se pudo eliminar la respuesta: ${
+          e?.message || "error desconocido"
+        }`
+      );
+    }
+  };
+
+  // ====== abrir diálogo de borrado de thread ======
   const openDeleteDialog = (threadId: number) => {
     if (!isAdmin) return;
     setThreadToDelete(threadId);
@@ -914,7 +944,7 @@ const Forums: React.FC = () => {
     }
   };
 
-  // ====== abrir modal de edición ======
+  // ====== abrir modal de edición de thread ======
   const openEditDialog = (thread: {
     threadId: number;
     title: string;
@@ -988,11 +1018,7 @@ const Forums: React.FC = () => {
                   ))}
 
                   {isAdmin && meta.pinned && (
-                    <Chip
-                      label="Fijado"
-                      size="small"
-                      color="warning"
-                    />
+                    <Chip label="Fijado" size="small" color="warning" />
                   )}
                 </Stack>
 
@@ -1047,14 +1073,13 @@ const Forums: React.FC = () => {
                   {/* Editar */}
                   <IconButton
                     size="small"
-                    onClick={() => {
-                      setThreadBeingEdited({
-                        id: thread.threadId,
+                    onClick={() =>
+                      openEditDialog({
+                        threadId: thread.threadId,
                         title: thread.title,
                         description: thread.description,
-                      });
-                      setEditOpen(true);
-                    }}
+                      })
+                    }
                     sx={{ color: "info.main" }}
                   >
                     <EditOutlined fontSize="small" />
@@ -1128,19 +1153,13 @@ const Forums: React.FC = () => {
                   size="small"
                   startIcon={<ChatIcon />}
                   endIcon={
-                    isExpanded ? (
-                      <ExpandLessIcon />
-                    ) : (
-                      <ExpandMoreIcon />
-                    )
+                    isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />
                   }
                   onClick={() => toggleThread(thread.threadId)}
                   sx={{ textTransform: "none" }}
                 >
                   {meta.commentsCount}{" "}
-                  {meta.commentsCount === 1
-                    ? "respuesta"
-                    : "respuestas"}
+                  {meta.commentsCount === 1 ? "respuesta" : "respuestas"}
                 </Button>
               </Stack>
 
@@ -1170,10 +1189,7 @@ const Forums: React.FC = () => {
                     }}
                   >
                     <CircularProgress size={24} />
-                    <Typography
-                      variant="body2"
-                      sx={{ ml: 1 }}
-                    >
+                    <Typography variant="body2" sx={{ ml: 1 }}>
                       Cargando mensajes...
                     </Typography>
                   </Box>
@@ -1187,9 +1203,7 @@ const Forums: React.FC = () => {
                             left: 20,
                             top: 40,
                             bottom:
-                              meta.comments.length > 1
-                                ? 60
-                                : 40,
+                              meta.comments.length > 1 ? 60 : 40,
                             width: 3,
                             bgcolor: "primary.main",
                             opacity: 0.4,
@@ -1197,117 +1211,153 @@ const Forums: React.FC = () => {
                           }}
                         />
                         {meta.comments.map(
-                          (comment: Message, index: number) => (
-                            <Box
-                              key={comment.id}
-                              sx={{
-                                position: "relative",
-                                ml: index === 0 ? 0 : 3,
-                                mb: 2,
-                              }}
-                            >
-                              {index > 0 && (
-                                <Box
-                                  sx={{
-                                    position: "absolute",
-                                    left: -26,
-                                    top: 24,
-                                    width: 20,
-                                    height: 3,
-                                    bgcolor: "secondary.main",
-                                    opacity: 0.6,
-                                    borderRadius: 1.5,
-                                  }}
-                                />
-                              )}
-                              {index > 0 && (
-                                <Box
-                                  sx={{
-                                    position: "absolute",
-                                    left: -28,
-                                    top: 22,
-                                    width: 8,
-                                    height: 8,
-                                    bgcolor: "secondary.main",
-                                    borderRadius: "50%",
-                                    border: "2px solid white",
-                                  }}
-                                />
-                              )}
+                          (comment: Message, index: number) => {
+                            const canEdit =
+                              isAdmin || comment.user_id === currentUserId;
 
-                              <Paper
-                                variant="outlined"
+                            return (
+                              <Box
+                                key={comment.id}
                                 sx={{
-                                  p: 2,
-                                  bgcolor:
-                                    comment.user_id === currentUserId
-                                      ? "primary.50"
-                                      : "grey.50",
-                                  borderLeft:
-                                    index === 0
-                                      ? "4px solid"
-                                      : "3px solid",
-                                  borderLeftColor:
-                                    index === 0
-                                      ? "primary.main"
-                                      : "secondary.main",
-                                  borderRadius: 2,
+                                  position: "relative",
+                                  ml: index === 0 ? 0 : 3,
+                                  mb: 2,
                                 }}
                               >
-                                <Stack
-                                  direction="row"
-                                  spacing={2}
-                                >
-                                  <Avatar
+                                {index > 0 && (
+                                  <Box
                                     sx={{
-                                      width: 36,
-                                      height: 36,
-                                      bgcolor:
-                                        comment.user_id ===
-                                        currentUserId
-                                          ? "secondary.main"
-                                          : "primary.main",
+                                      position: "absolute",
+                                      left: -26,
+                                      top: 24,
+                                      width: 20,
+                                      height: 3,
+                                      bgcolor: "secondary.main",
+                                      opacity: 0.6,
+                                      borderRadius: 1.5,
+                                    }}
+                                  />
+                                )}
+                                {index > 0 && (
+                                  <Box
+                                    sx={{
+                                      position: "absolute",
+                                      left: -28,
+                                      top: 22,
+                                      width: 8,
+                                      height: 8,
+                                      bgcolor: "secondary.main",
+                                      borderRadius: "50%",
+                                      border: "2px solid white",
+                                    }}
+                                  />
+                                )}
+
+                                {/* Íconos editar / borrar de respuesta */}
+                                {canEdit && (
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.5}
+                                    sx={{
+                                      position: "absolute",
+                                      top: 8,
+                                      right: 8,
+                                      zIndex: 1,
                                     }}
                                   >
-                                    U{comment.user_id}
-                                  </Avatar>
-
-                                  <Box sx={{ flex: 1 }}>
-                                    <Stack
-                                      direction="row"
-                                      spacing={1}
-                                      alignItems="center"
-                                      sx={{ mb: 1 }}
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        setEditingMessage(comment)
+                                      }
                                     >
-                                      <Typography
-                                        variant="subtitle2"
-                                        color="primary"
-                                        sx={{ fontWeight: 600 }}
-                                      >
-                                        Usuario {comment.user_id}
-                                      </Typography>
-
-                                      <Typography
-                                        variant="caption"
-                                        color="text.secondary"
-                                      >
-                                        {formatDateNumeric(
-                                          comment.createdAt
-                                        )}
-                                      </Typography>
-                                    </Stack>
-
-                                    <Typography
-                                      variant="body2"
-                                      sx={{ lineHeight: 1.6 }}
+                                      <EditOutlined fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        handleDeleteComment(
+                                          thread.threadId,
+                                          comment.id
+                                        )
+                                      }
                                     >
-                                      {comment.content}
-                                    </Typography>
-                                  </Box>
-                                </Stack>
-                              </Paper>
-                            </Box>
-                          )
+                                      <DeleteOutline fontSize="small" />
+                                    </IconButton>
+                                  </Stack>
+                                )}
+
+                                <Paper
+                                  variant="outlined"
+                                  sx={{
+                                    p: 2,
+                                    bgcolor:
+                                      comment.user_id === currentUserId
+                                        ? "primary.50"
+                                        : "grey.50",
+                                    borderLeft:
+                                      index === 0
+                                        ? "4px solid"
+                                        : "3px solid",
+                                    borderLeftColor:
+                                      index === 0
+                                        ? "primary.main"
+                                        : "secondary.main",
+                                    borderRadius: 2,
+                                  }}
+                                >
+                                  <Stack direction="row" spacing={2}>
+                                    <Avatar
+                                      sx={{
+                                        width: 36,
+                                        height: 36,
+                                        bgcolor:
+                                          comment.user_id ===
+                                          currentUserId
+                                            ? "secondary.main"
+                                            : "primary.main",
+                                      }}
+                                    >
+                                      U{comment.user_id}
+                                    </Avatar>
+
+                                    <Box sx={{ flex: 1 }}>
+                                      <Stack
+                                        direction="row"
+                                        spacing={1}
+                                        alignItems="center"
+                                        sx={{ mb: 1 }}
+                                      >
+                                        <Typography
+                                          variant="subtitle2"
+                                          color="primary"
+                                          sx={{ fontWeight: 600 }}
+                                        >
+                                          Usuario {comment.user_id}
+                                        </Typography>
+
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                        >
+                                          {formatDateNumeric(
+                                            comment.createdAt
+                                          )}
+                                        </Typography>
+                                      </Stack>
+
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ lineHeight: 1.6 }}
+                                      >
+                                        {comment.content}
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
+                                </Paper>
+                              </Box>
+                            );
+                          }
                         )}
                       </Box>
                     ) : (
@@ -1319,8 +1369,7 @@ const Forums: React.FC = () => {
                           py: 4,
                         }}
                       >
-                        No hay respuestas aún. ¡Sé el primero en
-                        comentar!
+                        No hay respuestas aún. ¡Sé el primero en comentar!
                       </Typography>
                     )}
 
@@ -1330,8 +1379,8 @@ const Forums: React.FC = () => {
                         color="text.secondary"
                         sx={{ textAlign: "center", py: 3 }}
                       >
-                        Este hilo está cerrado. No se pueden agregar
-                        nuevas respuestas.
+                        Este hilo está cerrado. No se pueden agregar nuevas
+                        respuestas.
                       </Typography>
                     ) : (
                       <Box
@@ -1402,31 +1451,23 @@ const Forums: React.FC = () => {
                                 minRows={2}
                                 maxRows={6}
                                 placeholder="Escribe tu respuesta..."
-                                value={
-                                  replyText[thread.threadId] ||
-                                  ""
-                                }
+                                value={replyText[thread.threadId] || ""}
                                 onChange={(e) =>
                                   setReplyText((p) => ({
                                     ...p,
-                                    [thread.threadId]:
-                                      e.target.value,
+                                    [thread.threadId]: e.target.value,
                                   }))
                                 }
                                 variant="outlined"
                                 size="small"
-                                disabled={
-                                  sendingReply === thread.threadId
-                                }
+                                disabled={sendingReply === thread.threadId}
                                 onKeyDown={(e) => {
                                   if (
                                     e.key === "Enter" &&
                                     (e.ctrlKey || e.metaKey)
                                   ) {
                                     e.preventDefault();
-                                    handleSendReply(
-                                      thread.threadId
-                                    );
+                                    handleSendReply(thread.threadId);
                                   }
                                 }}
                                 sx={{
@@ -1446,34 +1487,23 @@ const Forums: React.FC = () => {
                                   variant="contained"
                                   color="success"
                                   endIcon={
-                                    sendingReply ===
-                                    thread.threadId ? (
-                                      <CircularProgress
-                                        size={16}
-                                      />
+                                    sendingReply === thread.threadId ? (
+                                      <CircularProgress size={16} />
                                     ) : (
                                       <SendIcon />
                                     )
                                   }
-                                  onClick={() =>
-                                    handleSendReply(
-                                      thread.threadId
-                                    )
-                                  }
+                                  onClick={() => handleSendReply(thread.threadId)}
                                   disabled={
-                                    !replyText[
-                                      thread.threadId
-                                    ]?.trim() ||
-                                    sendingReply ===
-                                      thread.threadId
+                                    !replyText[thread.threadId]?.trim() ||
+                                    sendingReply === thread.threadId
                                   }
                                   sx={{
                                     borderRadius: 999,
                                     px: 3,
                                   }}
                                 >
-                                  {sendingReply ===
-                                  thread.threadId
+                                  {sendingReply === thread.threadId
                                     ? "Enviando..."
                                     : "Enviar"}
                                 </Button>
@@ -1525,10 +1555,7 @@ const Forums: React.FC = () => {
             <Stack direction="row" alignItems="center" spacing={1}>
               <ChatIcon color="primary" />
               <Box>
-                <Typography
-                  variant="overline"
-                  color="text.secondary"
-                >
+                <Typography variant="overline" color="text.secondary">
                   Posts Totales
                 </Typography>
                 <Typography variant="h6">
@@ -1544,16 +1571,10 @@ const Forums: React.FC = () => {
             <Stack direction="row" alignItems="center" spacing={1}>
               <GroupsIcon color="success" />
               <Box>
-                <Typography
-                  variant="overline"
-                  color="text.secondary"
-                >
+                <Typography variant="overline" color="text.secondary">
                   Participantes
                 </Typography>
-                <Typography
-                  variant="h6"
-                  color="success.main"
-                >
+                <Typography variant="h6" color="success.main">
                   {headerStats.activeUsers}
                 </Typography>
               </Box>
@@ -1566,16 +1587,10 @@ const Forums: React.FC = () => {
             <Stack direction="row" alignItems="center" spacing={1}>
               <TrendingIcon color="secondary" />
               <Box>
-                <Typography
-                  variant="overline"
-                  color="text.secondary"
-                >
+                <Typography variant="overline" color="text.secondary">
                   Respuestas
                 </Typography>
-                <Typography
-                  variant="h6"
-                  color="secondary.main"
-                >
+                <Typography variant="h6" color="secondary.main">
                   {headerStats.totalResponses}
                 </Typography>
               </Box>
@@ -1584,17 +1599,8 @@ const Forums: React.FC = () => {
         </Card>
       </Stack>
 
-      <Paper
-        elevation={0}
-        variant="outlined"
-        sx={{ p: 2, borderRadius: 2, mb: 2 }}
-      >
-        <Stack
-          direction="row"
-          alignItems="center"
-          gap={1}
-          sx={{ mb: 1.5 }}
-        >
+      <Paper elevation={0} variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2 }}>
+        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
           <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
           <Typography
             variant="subtitle1"
@@ -1704,20 +1710,11 @@ const Forums: React.FC = () => {
       )}
 
       {/* Dialog para crear nuevo post */}
-      <Dialog
-        open={open}
-        onClose={() => setOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
+      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
         <DialogContent>
           {!resolvedForumId ? (
             <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ mb: 1 }}
-              >
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
                 No se pudo identificar el foro destino.
               </Typography>
               <Button
@@ -1746,12 +1743,7 @@ const Forums: React.FC = () => {
       </Dialog>
 
       {/* Dialog para editar post */}
-      <Dialog
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="md" fullWidth>
         <DialogContent>
           {threadBeingEdited ? (
             <EditThread
@@ -1775,7 +1767,29 @@ const Forums: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de confirmación de borrado */}
+      {/* Dialog para editar respuesta */}
+      <Dialog
+        open={!!editingMessage}
+        onClose={() => setEditingMessage(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogContent>
+          {editingMessage ? (
+            <EditMessage
+              messageId={editingMessage.id}
+              initialContent={editingMessage.content}
+              onClose={() => setEditingMessage(null)}
+              onUpdated={async () => {
+                await reloadComments(editingMessage.thread_id);
+                setEditingMessage(null);
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmación de borrado de thread */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => {
@@ -1792,10 +1806,7 @@ const Forums: React.FC = () => {
           <Typography variant="body1" sx={{ mb: 1 }}>
             ¿Seguro que querés eliminar este post?
           </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-          >
+          <Typography variant="body2" color="text.secondary">
             Solo se pueden eliminar hilos que no tengan respuestas.
           </Typography>
         </DialogContent>
@@ -1815,11 +1826,7 @@ const Forums: React.FC = () => {
             onClick={handleDeleteThread}
             disabled={!!deletingThreadId}
             startIcon={
-              deletingThreadId ? (
-                <CircularProgress size={16} />
-              ) : (
-                <DeleteOutline />
-              )
+              deletingThreadId ? <CircularProgress size={16} /> : <DeleteOutline />
             }
           >
             {deletingThreadId ? "Eliminando..." : "Eliminar"}
@@ -1836,9 +1843,7 @@ const Forums: React.FC = () => {
       >
         <DialogTitle>Estado del hilo</DialogTitle>
         <DialogContent>
-          <Typography variant="body1">
-            {statusDialogMessage}
-          </Typography>
+          <Typography variant="body1">{statusDialogMessage}</Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setStatusDialogOpen(false)} autoFocus>
