@@ -20,8 +20,8 @@ import {
   GroupAdd as CreateMeetingsIcon,
   Event as CreateEventsIcon,
   Assignment as ReclaimsIcon,
-  BarChart as StatsIcon,
-  VolumeUp as AuditIcon,
+  // BarChart as StatsIcon,
+  // VolumeUp as AuditIcon,
   Forum as ForumsIcon,
   Settings,
   ChevronRight,
@@ -45,8 +45,8 @@ const menuItems = [
   { id: "meetings",  label: "Crear Reuniones",      icon: <CreateMeetingsIcon />, path: "/admin/reuniones" },
   { id: "events",    label: "Crear Eventos",        icon: <CreateEventsIcon />,   path: "/admin/eventos" },
   { id: "reclaims",  label: "Gestión Reclamos",     icon: <ReclaimsIcon />,       path: "/admin/reclamos" },
-  { id: "stats",     label: "Estadísticas",         icon: <StatsIcon />,          path: "/admin/estadisticas" },
-  { id: "audit",     label: "Auditoría",            icon: <AuditIcon />,          path: "/admin/auditoria" },
+  // { id: "stats",     label: "Estadísticas",         icon: <StatsIcon />,          path: "/admin/estadisticas" },
+  // { id: "audit",     label: "Auditoría",            icon: <AuditIcon />,          path: "/admin/auditoria" },
 ];
 
 const forosSubMenu = [

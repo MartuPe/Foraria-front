@@ -18,7 +18,7 @@ import {
   CalendarToday,
   HowToVote as VotacionesIcon,
   Groups as ReunionesIcon,
-  Description as DocumentosIcon,
+  // Description as DocumentosIcon,
   Forum as ForosIcon,
   Settings,
   ChevronRight,
@@ -47,7 +47,7 @@ const menuItems: MenuItem[] = [
   { id: "calendario", label: "Calendario", icon: <CalendarToday />, path: "/calendario" },
   { id: "votaciones", label: "Votaciones", icon: <VotacionesIcon />, path: "/votaciones" },
   { id: "reuniones", label: "Reuniones", icon: <ReunionesIcon />, path: "/reuniones" },
-  { id: "documentos", label: "Documentos", icon: <DocumentosIcon />, path: "/documentos" },
+  // { id: "documentos", label: "Documentos", icon: <DocumentosIcon />, path: "/documentos" },
 ];
 
 interface ForumApiItem {

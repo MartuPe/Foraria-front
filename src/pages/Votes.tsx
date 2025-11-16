@@ -21,7 +21,11 @@ import {
   AvatarGroup,
   Tooltip,
   IconButton,
-  Skeleton
+  Skeleton,
+  Paper,
+  CircularProgress,
+
+
 } from "@mui/material";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -38,7 +42,7 @@ import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
 import ErrorModal from "../components/modals/ErrorModal";
 import SuccessModal from "../components/modals/SuccessModal";
-
+import HowToVoteOutlinedIcon from '@mui/icons-material/HowToVoteOutlined';
 
 export interface PollOption {
   id: number;
@@ -80,11 +84,18 @@ interface UserCountResponse {
 
 
 export default function Votes() {
+  const consortiumId = localStorage.getItem("consortiumId");
+  const urlUserConsortioum = `https://localhost:7245/api/User/consortium/${consortiumId}`;
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
   const [showErrorModal, setShowErrorModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const totalUsersInConsortium = useGet<Poll[]>(
+    urlUserConsortioum
+  );; 
+  const usersCount = totalUsersInConsortium.data?.length ?? 0;
   const [totalUsers, setTotalUsers] = useState<number>(0);
+  const [loadError, setLoadError] = useState<string | null>(null);
   
   // Estados para el modal de votación
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
@@ -126,8 +137,33 @@ export default function Votes() {
   }, []);
 
   useEffect(() => {
-    if (pollsData) setPolls(pollsData);
-  }, [pollsData]);
+   if (pollsData) {
+    setPolls(pollsData);
+    setLoadError(null);
+  }
+  
+  if (error) {
+    const errorMsg = typeof error === 'string' ? error : String(error);
+    
+    
+     const is404 = errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found") ||
+                  errorMsg.toLowerCase().includes("status code 404");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
+                      errorMsg.toLowerCase().includes("no hay");
+    
+    if (is404 || isNotFound) {
+      
+      setPolls([]);
+      setLoadError(null);
+    } else {
+      
+      setPolls([]);
+      setLoadError("No se pudieron cargar las votaciones. Intentá nuevamente más tarde.");
+    }
+  }
+}, [pollsData, error]);
 
   useEffect(() => {
     if (!connected) return;
@@ -212,7 +248,7 @@ export default function Votes() {
     }).sort((a, b) => b.votes - a.votes);
 
     const winner = optionsWithResults.length > 0 ? optionsWithResults[0] : null;
-    const participationPercent = totalUsers > 0 ? Math.min(Math.round((totalVotes / totalUsers) * 100), 100) : 0;
+    const participationPercent = usersCount > 0 ? Math.min(Math.round((totalVotes / usersCount) * 100), 100) : 0;
 
     return {
       totalVotes,
@@ -257,7 +293,7 @@ export default function Votes() {
           cursor: 'pointer',
           opacity: isActive ? 1 : 0.85,
           '&:hover': {
-            transform: isActive ? 'translateY(-6px) scale(1.02)' : 'translateY(-2px)',
+            transform: isActive ? 'translateY(-6px) scale(1)' : 'translateY(-2px)',
             boxShadow: isActive 
               ? '0 12px 24px rgba(0,0,0,0.15)' 
               : '0 4px 12px rgba(0,0,0,0.08)',
@@ -483,7 +519,7 @@ export default function Votes() {
                   color={isActive ? "text.secondary" : "text.disabled"}
                   fontWeight={600}
                 >
-                  {totalVotes}/{totalUsers}
+                  {totalVotes}/{usersCount} votos
                 </Typography>
               </Stack>
               <LinearProgress 
@@ -652,31 +688,72 @@ export default function Votes() {
     );
   }, [polls, tab]);
 
-  if (loading) return <p>Cargando votaciones...</p>;
-  if (error) return <p>Error al cargar: {error}</p>;
-
+  if (loading) {
   return (
-      <Box className="foraria-page-container">
-        <PageHeader
-          title="Votaciones del Consorcio"
-          tabs={[
-            { label: "Todas", value: "todas" },
-            { label: "Activas", value: "actives" },
-            { label: "Finalizadas", value: "finalizada" },
-          ]}
-          selectedTab={tab}
-          onTabChange={(v) => setTab(v as typeof tab)}
-        />
+    <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <CircularProgress />
+        <Typography>Cargando votaciones…</Typography>
+      </Stack>
+    </Box>
+  );
+}
 
+const isEmpty = polls.length === 0;
+  return (
+  <Box className="foraria-page-container">
+    <PageHeader
+      title="Votaciones del Consorcio"
+      tabs={[
+        { label: "Todas", value: "todas" },
+        { label: "Activas", value: "actives" },
+        { label: "Finalizadas", value: "finalizada" },
+      ]}
+      selectedTab={tab}
+      onTabChange={(v) => setTab(v as typeof tab)}
+    />
+
+    {isEmpty ? (
+      // NUEVO: Estado vacío con manejo de error
+      <Paper
+        sx={{
+          p: 6,
+          textAlign: "center",
+          border: "1px dashed #d0d0d0",
+          borderRadius: 3,
+          backgroundColor: "#fafafa",
+        }}
+      >
+        <HowToVoteOutlinedIcon
+          sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+        />
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          {loadError ? "Error al cargar votaciones" : "No hay votaciones disponibles"}
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+          {loadError 
+            ? "No se pudieron cargar las votaciones. Intentá nuevamente más tarde."
+            : "Aún no se han creado votaciones para este consorcio."
+          }
+        </Typography>
+        {!loadError && (
+          <Typography variant="body2" color="text.secondary">
+            Las votaciones aparecerán aquí cuando la administración las cree.
+          </Typography>
+        )}
+      </Paper>
+    ) : (
+      // Lista de votaciones
+      <Stack spacing={2}>
         {filteredPolls.length === 0 ? (
           <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-            No hay votaciones disponibles.
+            No hay votaciones en esta categoría.
           </Typography>
         ) : (
-          <Stack spacing={2}>
-            {filteredPolls.map(renderPollCard)}
-          </Stack>
+          filteredPolls.map(renderPollCard)
         )}
+      </Stack>
+    )}
 
         {/* Modal de Votación */}
         <Dialog
