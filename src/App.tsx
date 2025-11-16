@@ -28,7 +28,6 @@ import SelectConsortium from "./pages/SelectConsortium";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 // import AdminAudit from "./pages/admin/AdminAudit";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
-import AdminVotes from "./pages/admin/AdminVotes";
 import AdminSuppliers from "./pages/admin/AdminSuppliers";
 import AdminFactura from "./pages/admin/AdminExpenses";
 // import AdminDocuments from "./pages/admin/AdminDocuments";
@@ -61,6 +60,7 @@ export default function App() {
             {["todas","general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"]
             .map(f => <Route key={f} path={`forums/${f}`} element={<Forums />} />)}
             <Route path="forums/comentarios" element={<Comentarios />} />
+
           </Route>
 
           <Route path="/admin" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><Layout /></RequireRoles></RequireAuth>}>
@@ -71,7 +71,7 @@ export default function App() {
             <Route path="foros" element={<Forums />} />
             {/* <Route path="auditoria" element={<AdminAudit />} /> */}
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
-            <Route path="votaciones" element={<AdminVotes />} />
+            <Route path="votaciones" element={<Votes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
             {/* <Route path="documents" element={<AdminDocuments />} /> */}
