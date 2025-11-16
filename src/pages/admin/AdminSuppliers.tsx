@@ -4,7 +4,6 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
-
 import { supplierService, Supplier } from "../../services/supplierService";
 import NewSupplier from "../../components/modals/NewSupplier";
 import SupplierDetail from "../../components/modals/SupplierDetail";
@@ -71,7 +70,7 @@ export default function Suppliers() {
     } finally {
       setLoading(false);
     }
-  }, [openSnack]);
+  }, [openSnack, consortiumId]);
 
   useEffect(() => {
     fetchSuppliers();
