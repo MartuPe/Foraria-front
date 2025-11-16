@@ -20,8 +20,8 @@ import {
   GroupAdd as CreateMeetingsIcon,
   Event as CreateEventsIcon,
   Assignment as ReclaimsIcon,
-  BarChart as StatsIcon,
-  VolumeUp as AuditIcon,
+  // BarChart as StatsIcon,
+  // VolumeUp as AuditIcon,
   Forum as ForumsIcon,
   Settings,
   ChevronRight,
@@ -34,7 +34,7 @@ import {
   DirectionsCar,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
-import logoForaria from "../../assets/Isotipo-Color.png";
+import isotipoForaria from "../../assets/Isotipo-Color.png";
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard",            icon: <DashboardIcon />,      path: "/admin/dashboard" },
@@ -45,8 +45,8 @@ const menuItems = [
   { id: "meetings",  label: "Crear Reuniones",      icon: <CreateMeetingsIcon />, path: "/admin/reuniones" },
   { id: "events",    label: "Crear Eventos",        icon: <CreateEventsIcon />,   path: "/admin/eventos" },
   { id: "reclaims",  label: "Gestión Reclamos",     icon: <ReclaimsIcon />,       path: "/admin/reclamos" },
-  { id: "stats",     label: "Estadísticas",         icon: <StatsIcon />,          path: "/admin/estadisticas" },
-  { id: "audit",     label: "Auditoría",            icon: <AuditIcon />,          path: "/admin/auditoria" },
+  // { id: "stats",     label: "Estadísticas",         icon: <StatsIcon />,          path: "/admin/estadisticas" },
+  // { id: "audit",     label: "Auditoría",            icon: <AuditIcon />,          path: "/admin/auditoria" },
 ];
 
 const forosSubMenu = [
@@ -131,7 +131,7 @@ useEffect(() => {
           minHeight: "auto",
         }}
       >
-        <Box component="img" src={logoForaria} alt="Foraria Logo" sx={{ width: 32, height: 32, objectFit: "contain" }} />
+        <Box component="img" src={isotipoForaria} alt="Foraria Logo" sx={{ width: 32, height: 32, objectFit: "contain" }} />
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700, color: "white", fontSize: "1.1rem" }}>
             Foraria

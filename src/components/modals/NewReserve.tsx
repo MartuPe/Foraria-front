@@ -110,12 +110,15 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
 
     const createdAt = `${day}T${time}:00.000`;
 
+    const consortiumId = localStorage.getItem("consortiumId");
+
     const payload = {
       description: description || "Sin descripción",
       createdAt,
       place_id: getPlaceId(area),
       residence_id: localStorage.getItem("residenceId"),
       user_id: Number(localStorage.getItem("userId")),
+      consortium_id: Number(consortiumId),
     };
 
     try {

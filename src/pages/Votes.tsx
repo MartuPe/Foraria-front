@@ -200,8 +200,33 @@ export default function VotesPrueba() {
   }, []);
 
   useEffect(() => {
-    if (pollsData) setPolls(pollsData);
-  }, [pollsData]);
+   if (pollsData) {
+    setPolls(pollsData);
+    setLoadError(null);
+  }
+  
+  if (error) {
+    const errorMsg = typeof error === 'string' ? error : String(error);
+    
+    
+     const is404 = errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found") ||
+                  errorMsg.toLowerCase().includes("status code 404");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
+                      errorMsg.toLowerCase().includes("no hay");
+    
+    if (is404 || isNotFound) {
+      
+      setPolls([]);
+      setLoadError(null);
+    } else {
+      
+      setPolls([]);
+      setLoadError("No se pudieron cargar las votaciones. Intentá nuevamente más tarde.");
+    }
+  }
+}, [pollsData, error]);
 
   useEffect(() => {
     if (!connected) return;
@@ -470,7 +495,7 @@ export default function VotesPrueba() {
     }).sort((a, b) => b.votes - a.votes);
 
     const winner = optionsWithResults.length > 0 ? optionsWithResults[0] : null;
-    const participationPercent = totalUsers > 0 ? Math.min(Math.round((totalVotes / totalUsers) * 100), 100) : 0;
+    const participationPercent = usersCount > 0 ? Math.min(Math.round((totalVotes / usersCount) * 100), 100) : 0;
 
     return {
       totalVotes,
@@ -923,9 +948,18 @@ export default function VotesPrueba() {
     }
   }, []);
 
-  if (loading) return <p>Cargando votaciones...</p>;
-  if (error) return <p>Error al cargar: {error}</p>;
+  if (loading) {
+  return (
+    <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <CircularProgress />
+        <Typography>Cargando votaciones…</Typography>
+      </Stack>
+    </Box>
+  );
+}
 
+const isEmpty = polls.length === 0;
   return (
     <Box className="foraria-page-container">
       <PageHeader
