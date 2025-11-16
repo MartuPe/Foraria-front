@@ -24,8 +24,10 @@ import IconButton from "@mui/material/IconButton";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-const token = localStorage.getItem("accessToken");
 import isotipoForaria from "../../assets/Isotipo-Color.png";
+
+const token = localStorage.getItem("accessToken");
+
 
 interface InvoiceItem {
   description: string;
