@@ -2,22 +2,29 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box, Card, CardContent, Typography, Chip, Button, Stack, Dialog, DialogContent,
-  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton, Tabs, Tab
+  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton, Tabs, Tab,
+  DialogTitle, DialogActions
 } from "@mui/material";
+
 import {
   Add as AddIcon, ChatBubbleOutline as ChatIcon, Groups as GroupsIcon,
   TrendingUp as TrendingIcon, ThumbUp as ThumbUpIcon, ThumbDown as ThumbDownIcon,
   Reply as ReplyIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon,
   Send as SendIcon, VisibilityOutlined, PushPinOutlined, PushPin,
-  EditOutlined, DeleteOutline, FilterList as FilterListIcon
+  EditOutlined, DeleteOutline, FilterList as FilterListIcon,
+  LockOutlined
 } from "@mui/icons-material";
+
 import PageHeader from "../components/SectionHeader";
 import NewPost from "../components/modals/NewPost";
+import EditThread from "../components/modals/EditThread";
+import EditMessage from "../components/modals/EditMessage";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
+import { deleteMessage as deleteMessageApi } from "../services/messageService";
 
 interface Thread {
   id: number;
@@ -79,19 +86,65 @@ const ADMIN_TAB_COLORS: Record<string, string> = {
   "Garage y Parking": "#7e57c2",
 };
 
-const CATEGORY_LABELS = ["General","Administración","Seguridad","Mantenimiento","Espacios Comunes","Garage y Parking"] as const;
+const CATEGORY_LABELS = [
+  "General",
+  "Administración",
+  "Seguridad",
+  "Mantenimiento",
+  "Espacios Comunes",
+  "Garage y Parking",
+] as const;
 
 const Forums: React.FC = () => {
-  const { data: forumsRaw, loading: loadingForums, error: errorForums, refetch: refetchForums } = useGet<Forum[]>("/Forum");
-  const { data: threadsRaw, loading: loadingThreads, error: errorThreads, refetch: refetchThreads } = useGet<Thread[]>("/Thread");
+  const {
+    data: forumsRaw,
+    loading: loadingForums,
+    error: errorForums,
+    refetch: refetchForums,
+  } = useGet<Forum[]>("/Forum");
+  const {
+    data: threadsRaw,
+    loading: loadingThreads,
+    error: errorThreads,
+    refetch: refetchThreads,
+  } = useGet<Thread[]>("/Thread");
   const loading = loadingForums || loadingThreads;
-  const error = !!errorForums || !!errorThreads;
-
+  const [loadError, setLoadError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+useEffect(() => {
+ 
+  if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
+    setLoadError(null);
+  }
+  
+  
+  if (errorForums || errorThreads) {
+    const errorMsg = String(errorForums || errorThreads);
+    
+    
+    const is404 = errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found") ||
+                  errorMsg.toLowerCase().includes("status code 404");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
+                      errorMsg.toLowerCase().includes("no hay");
+    
+    if (is404 || isNotFound) {
+      
+      setLoadError(null);
+    } else {
+   
+      setLoadError("No se pudo cargar el foro. Intentá nuevamente más tarde.");
+    }
+  }
+}, [forumsRaw, threadsRaw, errorForums, errorThreads]);
+
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const isAdminRole = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
+  const isAdminRole =
+    storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
   const isAdminRoute = location.pathname.startsWith("/admin");
   const isAdmin = isAdminRole || isAdminRoute;
 
@@ -107,53 +160,102 @@ const Forums: React.FC = () => {
   }>>({});
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
-  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:7245/api";
+  const API_BASE =
+    process.env.REACT_APP_API_URL || "http://localhost:7245/api";
+
+  // manejo de error de carga
+  useEffect(() => {
+    if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
+      setLoadError(null);
+    }
+
+    if (errorForums || errorThreads) {
+      const errorMsg = String(errorForums || errorThreads);
+
+      const is404 =
+        errorMsg.toLowerCase().includes("404") ||
+        errorMsg.toLowerCase().includes("not found") ||
+        errorMsg.toLowerCase().includes("status code 404");
+
+      const isNotFound =
+        errorMsg.toLowerCase().includes("no se encontraron") ||
+        errorMsg.toLowerCase().includes("no hay");
+
+      if (is404 || isNotFound) {
+        setLoadError(null);
+      } else {
+        setLoadError(
+          "No se pudo cargar el foro. Intentá nuevamente más tarde."
+        );
+      }
+    }
+  }, [forumsRaw, threadsRaw, errorForums, errorThreads]);
 
   const slugFromPath = useMemo(() => {
     const match = location.pathname.match(/\/forums\/([^/]+)/);
     return match ? match[1] : "general";
   }, [location.pathname]);
 
-  const adminCategory = (searchParams.get("category") as keyof typeof ADMIN_TAB_COLORS | null) || "Todas";
+  const adminCategory =
+    (searchParams.get("category") as keyof typeof ADMIN_TAB_COLORS | null) ||
+    "Todas";
   const setAdminCategory = (cat: string) => setSearchParams({ category: cat });
 
   const currentCategoryName = useMemo(() => {
     if (!forumsRaw) {
-      switch ((isAdmin ? adminCategory : slugFromPath)) {
-        case "administracion": case "Administración": return "Administración";
-        case "seguridad": case "Seguridad": return "Seguridad";
-        case "mantenimiento": case "Mantenimiento": return "Mantenimiento";
-        case "espacios-comunes": case "Espacios Comunes": return "Espacios Comunes";
-        case "garage-parking": case "Garage y Parking": return "Garage y Parking";
-        case "Todas": return "Todas";
-        default: return "General";
+      switch (isAdmin ? adminCategory : slugFromPath) {
+        case "administracion":
+        case "Administración":
+          return "Administración";
+        case "seguridad":
+        case "Seguridad":
+          return "Seguridad";
+        case "mantenimiento":
+        case "Mantenimiento":
+          return "Mantenimiento";
+        case "espacios-comunes":
+        case "Espacios Comunes":
+          return "Espacios Comunes";
+        case "garage-parking":
+        case "Garage y Parking":
+          return "Garage y Parking";
+        case "Todas":
+          return "Todas";
+        default:
+          return "General";
       }
     }
     const key = isAdmin ? adminCategory : slugFromPath;
     if (key === "Todas") return "Todas";
-    const found = forumsRaw.find((f) => toSlug(f.categoryName) === toSlug(key));
+    const found = forumsRaw.find(
+      (f) => toSlug(f.categoryName) === toSlug(key)
+    );
     return found?.categoryName ?? "General";
   }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
 
   // ids de foros para la categoría actual
   const forumIdsForCategory = useMemo(() => {
     if (!forumsRaw) return new Set<number>();
-    // Para admin "Todas" = todos. Para usuario nunca usamos "Todas".
     if (isAdmin && adminCategory === "Todas") {
-      return new Set(forumsRaw.map(f => f.id));
+      return new Set(forumsRaw.map((f) => f.id));
     }
     const key = isAdmin ? adminCategory : slugFromPath;
     return new Set(
-      forumsRaw.filter((f) => toSlug(f.categoryName) === toSlug(key)).map((f) => f.id)
+      forumsRaw
+        .filter((f) => toSlug(f.categoryName) === toSlug(key))
+        .map((f) => f.id)
     );
   }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
 
-  // resolved forumId (para crear post): primer foro de la categoría actual
+  // forumId resuelto para crear post
   const resolvedForumId = useMemo(() => {
     if (!forumsRaw) return null;
-    if (isAdmin && adminCategory === "Todas") return forumsRaw[0]?.id ?? null;
+    if (isAdmin && adminCategory === "Todas")
+      return forumsRaw[0]?.id ?? null;
     const key = isAdmin ? adminCategory : currentCategoryName;
-    const found = forumsRaw.find((f) => toSlug(f.categoryName) === toSlug(key));
+    const found = forumsRaw.find(
+      (f) => toSlug(f.categoryName) === toSlug(key)
+    );
     return found ? found.id : null;
   }, [forumsRaw, isAdmin, adminCategory, currentCategoryName]);
 
@@ -164,43 +266,73 @@ const Forums: React.FC = () => {
     return threadsRaw.filter((t) => forumIdsForCategory.has(t.forumId ?? -1));
   }, [threadsRaw, forumsRaw, forumIdsForCategory]);
 
-  // ====== Stats del foro (si hay forum resuelto) ======
+  // Stats del foro
   useEffect(() => {
     let mounted = true;
-    if (!resolvedForumId) { setForumStats(null); return; }
+    if (!resolvedForumId) {
+      setForumStats(null);
+      return;
+    }
     const controller = new AbortController();
     (async () => {
       try {
-        const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, { signal: controller.signal });
-        if (!res.ok) { setForumStats(null); return; }
+        const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) {
+          setForumStats(null);
+          return;
+        }
         const json: Forum = await res.json();
         if (mounted) setForumStats(json);
       } catch { if (mounted) setForumStats(null); }
     })();
-    return () => { mounted = false; controller.abort(); };
+    return () => {
+      mounted = false;
+      controller.abort();
+    };
   }, [resolvedForumId, API_BASE]);
 
-  // ====== Reacciones + mensajes por thread ======
+  // Reacciones + mensajes por thread
   useEffect(() => {
-    if (!postsRaw || postsRaw.length === 0) { setEnriched({}); return; }
+    if (!postsRaw || postsRaw.length === 0) {
+      setEnriched({});
+      return;
+    }
     let mounted = true;
     const controllers: AbortController[] = [];
     const fetchForThread = async (threadId: number) => {
       const key = String(threadId);
-      setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), loading: true, error: false } }));
-      const ctl = new AbortController(); controllers.push(ctl);
-      // reactions
-      let reactions: ReactionResponse = { total: 0, likes: 0, dislikes: 0, userReaction: 0 };
+      setEnriched((p) => ({
+        ...p,
+        [key]: { ...(p[key] ?? {}), loading: true, error: false },
+      }));
+      const ctl = new AbortController();
+      controllers.push(ctl);
+
+      let reactions: ReactionResponse = {
+        total: 0,
+        likes: 0,
+        dislikes: 0,
+        userReaction: 0,
+      };
       try {
-        const r = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, { signal: ctl.signal, headers: { "Content-Type": "application/json" } });
+        const r = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, {
+          signal: ctl.signal,
+          headers: { "Content-Type": "application/json" },
+        });
         if (r.ok) reactions = await r.json();
       } catch {}
-      // messages
+
       let messages: Message[] = [];
       try {
-        const m = await fetch(`${API_BASE}/Message/thread/${threadId}`, { signal: ctl.signal, headers: { "Content-Type": "application/json" } });
+        const m = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
+          signal: ctl.signal,
+          headers: { "Content-Type": "application/json" },
+        });
         if (m.ok) messages = await m.json();
       } catch {}
+
       if (!mounted) return;
       setEnriched((prev) => ({
         ...prev,
@@ -223,43 +355,81 @@ const Forums: React.FC = () => {
     return () => { mounted = false; controllers.forEach(c => c.abort()); };
   }, [postsRaw, API_BASE]);
 
-  // ====== Proyección de posts para UI ======
+  // Proyección de posts para UI
   const posts = useMemo(() => {
     if (!postsRaw) return [];
     return postsRaw.map((p) => ({
       id: String(p.id),
       threadId: p.id,
       title: p.theme ?? "Sin título",
-      subtitle: `Usuario ${p.userId ?? "-"} · ${formatDateNumeric(p.createdAt)}`,
+      subtitle: `Usuario ${p.userId ?? "-"} · ${formatDateNumeric(
+        p.createdAt
+      )}`,
       description: p.description ?? "",
-      chips: [{
-        label: (forumsRaw?.find((f) => f.id === p.forumId)?.categoryName) ?? String(p.forumId ?? "-"),
-        color: p.state === "Activo" ? "success" : p.state === "Pendiente" ? "warning" : "default",
-      }],
+      state: p.state,
+      chips: [
+        {
+          label:
+            forumsRaw?.find((f) => f.id === p.forumId)?.categoryName ??
+            String(p.forumId ?? "-"),
+          color:
+            p.state === "Activo"
+              ? "success"
+              : p.state === "Pendiente"
+              ? "warning"
+              : "default",
+        },
+      ],
     }));
   }, [postsRaw, forumsRaw]);
 
-  // ====== KPIs ======
+  // KPIs
   const computedStats = useMemo(() => {
     const totalPosts = posts.length;
-    const activeUsers = new Set(postsRaw?.map((p) => p.userId).filter(Boolean)).size || 0;
-    const totalResponses = Object.values(enriched).reduce((acc, e) => acc + (e?.commentsCount ?? 0), 0);
-    const pinned = Object.values(enriched).filter(e => e?.pinned).length;
+    const activeUsers =
+      new Set(postsRaw?.map((p) => p.userId).filter(Boolean)).size || 0;
+    const totalResponses = Object.values(enriched).reduce(
+      (acc, e) => acc + (e?.commentsCount ?? 0),
+      0
+    );
+    const pinned = Object.values(enriched).filter((e) => e?.pinned).length;
     return { totalPosts, activeUsers, totalResponses, pinned };
   }, [posts, postsRaw, enriched]);
 
-  const headerStats = useMemo(() => ({
-    totalPosts: forumStats?.countThreads ?? computedStats.totalPosts,
-    activeUsers: forumStats?.countUserActives ?? computedStats.activeUsers,
-    totalResponses: forumStats?.countResponses ?? computedStats.totalResponses,
-    pinned: computedStats.pinned,
-  }), [forumStats, computedStats]);
+  const headerStats = useMemo(
+    () => ({
+      totalPosts: forumStats?.countThreads ?? computedStats.totalPosts,
+      activeUsers: forumStats?.countUserActives ?? computedStats.activeUsers,
+      totalResponses:
+        forumStats?.countResponses ?? computedStats.totalResponses,
+      pinned: computedStats.pinned,
+    }),
+    [forumStats, computedStats]
+  );
 
-  // ====== Reacciones ======
-  const [expandedThreads, setExpandedThreads] = useState<Set<number>>(new Set());
+  // Reacciones / respuestas
+  const [expandedThreads, setExpandedThreads] = useState<Set<number>>(
+    new Set()
+  );
   const [replyText, setReplyText] = useState<Record<number, string>>({});
   const [sendingReply, setSendingReply] = useState<number | null>(null);
-  const { mutate: sendReply } = useMutation("/Message", "post");
+
+  // edición de mensajes individuales
+  const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+
+  // edición de threads y borrado
+  const [editOpen, setEditOpen] = useState(false);
+  const [threadBeingEdited, setThreadBeingEdited] = useState<{
+    id: number;
+    title: string;
+    description: string;
+  } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
+  const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [statusDialogMessage, setStatusDialogMessage] = useState("");
+  const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
 
   const toggleThread = (threadId: number) => {
     setExpandedThreads(prev => {
@@ -271,14 +441,27 @@ const Forums: React.FC = () => {
 
   const togglePinLocal = (threadId: number) => {
     const key = String(threadId);
-    setEnriched(prev => ({ ...prev, [key]: { ...(prev[key] ?? {}), pinned: !prev[key]?.pinned } }));
+    setEnriched((prev) => ({
+      ...prev,
+      [key]: { ...(prev[key] ?? {}), pinned: !prev[key]?.pinned },
+    }));
   };
 
   const toggleReactionForThread = async (threadId: number, reactionType: 1 | -1) => {
     const key = String(threadId);
-    const current = enriched[key] ?? { likes: 0, dislikes: 0, totalReactions: 0, reacting: false, userReaction: 0 };
+    const current =
+      enriched[key] ?? {
+        likes: 0,
+        dislikes: 0,
+        totalReactions: 0,
+        reacting: false,
+        userReaction: 0,
+      };
     if (current.reacting) return;
-    setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), reacting: true } }));
+    setEnriched((p) => ({
+      ...p,
+      [key]: { ...(p[key] ?? {}), reacting: true },
+    }));
     const prevUser = current.userReaction ?? 0;
     const willRemove = prevUser === reactionType;
     const newUser = (willRemove ? 0 : reactionType) as 1 | -1 | 0;
@@ -288,9 +471,16 @@ const Forums: React.FC = () => {
       totalReactions: current.totalReactions + (willRemove ? -1 : 1),
       userReaction: newUser,
     };
-    setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), ...optimistic } }));
+    setEnriched((p) => ({
+      ...p,
+      [key]: { ...(p[key] ?? {}), ...optimistic },
+    }));
     try {
-      const payload = { user_id: currentUserId, thread_id: threadId, reactionType };
+      const payload = {
+        user_id: currentUserId,
+        thread_id: threadId,
+        reactionType,
+      };
       const result = await toggleMutate(payload);
       if (result && typeof result.likes === "number") {
         setEnriched((p) => ({
@@ -307,7 +497,9 @@ const Forums: React.FC = () => {
         }));
         return;
       }
-      const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`);
+      const reacRes = await fetch(
+        `${API_BASE}/Reactions/thread/${threadId}`
+      );
       if (!reacRes.ok) throw new Error("Reactions fallback failed");
       const reacJson: ReactionResponse = await reacRes.json();
       setEnriched((p) => ({
@@ -348,44 +540,253 @@ const Forums: React.FC = () => {
     }
   };
 
+  // helper para recargar comentarios de un hilo
+  const reloadComments = async (threadId: number) => {
+    try {
+      const listRes = await fetch(
+        `${API_BASE}/Message/thread/${threadId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (listRes.ok) {
+        const messages: Message[] = await listRes.json();
+        const key = String(threadId);
+        setEnriched((p) => ({
+          ...p,
+          [key]: {
+            ...(p[key] ?? {}),
+            commentsCount: messages.length,
+            comments: messages,
+          },
+        }));
+      }
+    } catch (e) {
+      console.error("Error recargando comentarios", e);
+    }
+  };
+
+  // enviar respuesta (POST /Message con FormData)
   const handleSendReply = async (threadId: number) => {
     const text = replyText[threadId]?.trim();
     if (!text || sendingReply === threadId) return;
     setSendingReply(threadId);
     try {
-      const messageData = { Content: text, Thread_id: threadId, User_id: currentUserId };
-      await sendReply(messageData);
-      setReplyText((p) => ({ ...p, [threadId]: "" }));
-      const key = String(threadId);
-      setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), loading: true } }));
-      setTimeout(async () => {
-        try {
-          const res = await fetch(`${API_BASE}/Message/thread/${threadId}`, { headers: { "Content-Type": "application/json" } });
-          if (res.ok) {
-            const messages: Message[] = await res.json();
-            setEnriched((p) => ({
-              ...p,
-              [key]: { ...(p[key] ?? {}), commentsCount: messages.length, comments: messages, loading: false },
-            }));
-          } else {
-            setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), loading: false } }));
-          }
-        } catch {
-          setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), loading: false } }));
-        }
-      }, 800);
+      const form = new FormData();
+      form.append("Content", text);
+      form.append("Thread_id", String(threadId));
+      form.append("User_id", String(currentUserId));
+
+      const res = await fetch(`${API_BASE}/Message`, {
+        method: "POST",
+        body: form,
+      });
+
+      if (!res.ok) {
+        const txt = await res.text();
+        throw new Error(txt || "Error al crear mensaje");
+      }
+
+      setReplyText((p) => ({
+        ...p,
+        [threadId]: "",
+      }));
+
+      await reloadComments(threadId);
     } catch (e: any) {
-      alert(`Error al enviar la respuesta: ${e?.message || "desconocido"}`);
+      alert(
+        `Error al enviar la respuesta: ${e?.message || "desconocido"}`
+      );
     } finally {
       setSendingReply(null);
     }
   };
 
-  // ====== Render de cada thread ======
+  // borrar respuesta individual
+  const handleDeleteComment = async (
+    threadId: number,
+    messageId: number
+  ) => {
+    const confirmDelete = window.confirm(
+      "¿Eliminar esta respuesta? Esta acción no se puede deshacer."
+    );
+    if (!confirmDelete) return;
+
+    try {
+      await deleteMessageApi(messageId, currentUserId);
+      await reloadComments(threadId);
+    } catch (e: any) {
+      console.error("Error eliminando mensaje", e);
+      alert(
+        `No se pudo eliminar la respuesta: ${
+          e?.message || "error desconocido"
+        }`
+      );
+    }
+  };
+
+  // abrir diálogo de borrado de thread
+  const openDeleteDialog = (threadId: number) => {
+    if (!isAdmin) return;
+    setThreadToDelete(threadId);
+    setDeleteDialogOpen(true);
+  };
+
+  // borrar thread (confirmado desde el diálogo)
+  const handleDeleteThread = async () => {
+    if (!isAdmin) return;
+    if (threadToDelete == null) return;
+
+    const threadId = threadToDelete;
+    const key = String(threadId);
+    const hasReplies = (enriched[key]?.commentsCount ?? 0) > 0;
+
+    if (hasReplies) {
+      setStatusDialogMessage(
+        "No se puede eliminar un thread que contiene mensajes. Eliminá primero las respuestas."
+      );
+      setStatusDialogOpen(true);
+      setDeleteDialogOpen(false);
+      setThreadToDelete(null);
+      return;
+    }
+
+    try {
+      setDeletingThreadId(threadId);
+
+      const res = await fetch(`${API_BASE}/Thread/${threadId}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.status === 204) {
+        const key = String(threadId);
+
+        setEnriched((prev) => {
+          const copy = { ...prev };
+          delete copy[key];
+          return copy;
+        });
+
+        setExpandedThreads((prev) => {
+          const s = new Set(prev);
+          s.delete(threadId);
+          return s;
+        });
+
+        refetchThreads();
+      } else if (res.status === 404) {
+        alert("El post ya no existe o fue borrado.");
+        refetchThreads();
+      } else if (res.status === 409) {
+        const text = await res.text();
+        console.error("Error al borrar el post:", text);
+        setStatusDialogMessage(
+          "No se puede eliminar un thread que contiene mensajes."
+        );
+        setStatusDialogOpen(true);
+      } else {
+        const text = await res.text();
+        console.error("Error al borrar el post:", text);
+        alert("No se pudo borrar el post. Probá de nuevo.");
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Ocurrió un error al borrar el post.");
+    } finally {
+      setDeletingThreadId(null);
+      setDeleteDialogOpen(false);
+      setThreadToDelete(null);
+    }
+  };
+
+  // cerrar hilo (PATCH /Thread/{id}/close)
+  const handleCloseThread = async (threadId: number) => {
+    if (!isAdmin) return;
+
+    try {
+      setClosingThreadId(threadId);
+
+      const res = await fetch(`${API_BASE}/Thread/${threadId}/close`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      if (res.status === 409) {
+        let msg = "El hilo ya se encuentra cerrado.";
+        try {
+          const json = await res.json();
+          if (json?.error) msg = json.error;
+        } catch {}
+        setStatusDialogMessage(msg);
+        setStatusDialogOpen(true);
+        await refetchThreads();
+        return;
+      }
+
+      if (!res.ok) {
+        const text = await res.text();
+        console.error("Error al cerrar el hilo:", text);
+        setStatusDialogMessage(
+          "No se pudo cerrar el hilo. Probá de nuevo."
+        );
+        setStatusDialogOpen(true);
+        return;
+      }
+
+      setStatusDialogMessage("El hilo se cerró correctamente.");
+      setStatusDialogOpen(true);
+      await refetchThreads();
+    } catch (e) {
+      console.error(e);
+      setStatusDialogMessage(
+        "Ocurrió un error al cerrar el hilo."
+      );
+      setStatusDialogOpen(true);
+    } finally {
+      setClosingThreadId(null);
+    }
+  };
+
+  // abrir modal de edición de thread
+  const openEditDialog = (thread: {
+    threadId: number;
+    title: string;
+    description: string;
+  }) => {
+    if (!isAdmin) return;
+    setThreadBeingEdited({
+      id: thread.threadId,
+      title: thread.title,
+      description: thread.description,
+    });
+    setEditOpen(true);
+  };
+
+  // Render cada thread
   const renderThread = (thread: any) => {
     const key = String(thread.threadId);
-    const meta = enriched[key] ?? { likes: 0, dislikes: 0, totalReactions: 0, commentsCount: 0, comments: [], userReaction: 0 };
+    const meta =
+      enriched[key] ?? {
+        likes: 0,
+        dislikes: 0,
+        totalReactions: 0,
+        commentsCount: 0,
+        comments: [],
+        userReaction: 0,
+      };
     const isExpanded = expandedThreads.has(thread.threadId);
+    const isClosed =
+      typeof thread.state === "string" &&
+      thread.state.toLowerCase() === "cerrado";
+    const hasReplies = (meta.commentsCount ?? 0) > 0;
 
     return (
       <Card key={thread.id} variant="outlined" sx={{ borderRadius: 3, transition: "all .2s", "&:hover": { boxShadow: 2, transform: "translateY(-1px)" } }}>
@@ -393,30 +794,94 @@ const Forums: React.FC = () => {
           <Stack spacing={2}>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
               <Box sx={{ flex: 1 }}>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                  <Typography variant="h6" color="primary">{thread.title}</Typography>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ mb: 1 }}
+                >
+                  <Typography variant="h6" color="primary">
+                    {thread.title}
+                  </Typography>
                   {thread.chips.map((chip: any, i: number) => (
                     <Chip key={`${chip.label}-${i}`} label={chip.label} color={chip.color} size="small" />
                   ))}
-                  {isAdmin && (meta.pinned ? <Chip label="Fijado" size="small" color="warning" /> : null)}
+
+                  {isAdmin && meta.pinned && (
+                    <Chip label="Fijado" size="small" color="warning" />
+                  )}
                 </Stack>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>{thread.subtitle}</Typography>
-                <Typography variant="body1" sx={{ mb: 2 }}>{thread.description}</Typography>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 1 }}
+                >
+                  {thread.subtitle}
+                </Typography>
+                <Typography variant="body1" sx={{ mb: 2 }}>
+                  {thread.description}
+                </Typography>
               </Box>
 
               {/* Herramientas SOLO admin */}
               {isAdmin && (
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
-                  <IconButton size="small" onClick={() => {/* vista detalle */}} sx={{ color: "primary.main" }}>
+                  <IconButton
+                    size="small"
+                    onClick={() => {
+                      /* vista detalle */
+                    }}
+                    sx={{ color: "primary.main" }}
+                  >
                     <VisibilityOutlined fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => togglePinLocal(thread.threadId)} sx={{ color: "warning.main" }}>
-                    {meta.pinned ? <PushPin fontSize="small" /> : <PushPinOutlined fontSize="small" />}
+                  <IconButton
+                    size="small"
+                    onClick={() => togglePinLocal(thread.threadId)}
+                    sx={{ color: "warning.main" }}
+                  >
+                    {meta.pinned ? (
+                      <PushPin fontSize="small" />
+                    ) : (
+                      <PushPinOutlined fontSize="small" />
+                    )}
                   </IconButton>
-                  <IconButton size="small" onClick={() => {/* editar */}} sx={{ color: "info.main" }}>
+
+                  <IconButton
+                    size="small"
+                    onClick={() => handleCloseThread(thread.threadId)}
+                    sx={{
+                      color: isClosed ? "text.secondary" : "warning.main",
+                    }}
+                    disabled={
+                      closingThreadId === thread.threadId || isClosed
+                    }
+                  >
+                    <LockOutlined fontSize="small" />
+                  </IconButton>
+
+                  <IconButton
+                    size="small"
+                    onClick={() =>
+                      openEditDialog({
+                        threadId: thread.threadId,
+                        title: thread.title,
+                        description: thread.description,
+                      })
+                    }
+                    sx={{ color: "info.main" }}
+                  >
                     <EditOutlined fontSize="small" />
                   </IconButton>
-                  <IconButton size="small" onClick={() => {/* borrar */}} sx={{ color: "error.main" }}>
+
+                  <IconButton
+                    size="small"
+                    onClick={() => openDeleteDialog(thread.threadId)}
+                    sx={{ color: "error.main" }}
+                    disabled={
+                      deletingThreadId === thread.threadId || hasReplies
+                    }
+                  >
                     <DeleteOutline fontSize="small" />
                   </IconButton>
                 </Stack>
@@ -429,16 +894,48 @@ const Forums: React.FC = () => {
                         onClick={() => !meta.reacting && toggleReactionForThread(thread.threadId, 1)} disabled={!!meta.reacting} sx={{ minWidth: "auto", px: 1 }}>
                   {meta.likes}
                 </Button>
-                <Button size="small" startIcon={<ThumbDownIcon sx={{ color: meta.userReaction === -1 ? "error.main" : undefined }} />}
-                        onClick={() => !meta.reacting && toggleReactionForThread(thread.threadId, -1)} disabled={!!meta.reacting} sx={{ minWidth: "auto", px: 1 }}>
+                <Button
+                  size="small"
+                  startIcon={
+                    <ThumbDownIcon
+                      sx={{
+                        color:
+                          meta.userReaction === -1
+                            ? "error.main"
+                            : undefined,
+                      }}
+                    />
+                  }
+                  onClick={() =>
+                    !meta.reacting &&
+                    toggleReactionForThread(thread.threadId, -1)
+                  }
+                  disabled={!!meta.reacting}
+                  sx={{ minWidth: "auto", px: 1 }}
+                >
                   {meta.dislikes}
                 </Button>
-                <Button size="small" startIcon={<ChatIcon />} endIcon={isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                        onClick={() => toggleThread(thread.threadId)} sx={{ textTransform: "none" }}>
-                  {meta.commentsCount} {meta.commentsCount === 1 ? "respuesta" : "respuestas"}
+
+                <Button
+                  size="small"
+                  startIcon={<ChatIcon />}
+                  endIcon={
+                    isExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />
+                  }
+                  onClick={() => toggleThread(thread.threadId)}
+                  sx={{ textTransform: "none" }}
+                >
+                  {meta.commentsCount}{" "}
+                  {meta.commentsCount === 1 ? "respuesta" : "respuestas"}
                 </Button>
               </Stack>
-              <Button variant="outlined" size="small" startIcon={<ReplyIcon />} onClick={() => toggleThread(thread.threadId)} sx={{ textTransform: "none" }}>
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ReplyIcon />}
+                onClick={() => toggleThread(thread.threadId)}
+                sx={{ textTransform: "none" }}
+              >
                 Responder
               </Button>
             </Stack>
@@ -449,78 +946,337 @@ const Forums: React.FC = () => {
                 {meta.loading ? (
                   <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                     <CircularProgress size={24} />
-                    <Typography variant="body2" sx={{ ml: 1 }}>Cargando mensajes...</Typography>
+                    <Typography variant="body2" sx={{ ml: 1 }}>
+                      Cargando mensajes...
+                    </Typography>
                   </Box>
                 ) : (
                   <Stack spacing={1}>
                     {meta.comments && meta.comments.length > 0 ? (
                       <Box sx={{ position: "relative", pl: 2 }}>
-                        <Box sx={{ position: "absolute", left: 20, top: 40, bottom: meta.comments.length > 1 ? 60 : 40, width: 3, bgcolor: "primary.main", opacity: .4, borderRadius: 1.5 }} />
-                        {meta.comments.map((comment: Message, index: number) => (
-                          <Box key={comment.id} sx={{ position: "relative", ml: index === 0 ? 0 : 3, mb: 2 }}>
-                            {index > 0 && (<Box sx={{ position: "absolute", left: -26, top: 24, width: 20, height: 3, bgcolor: "secondary.main", opacity: .6, borderRadius: 1.5 }} />)}
-                            {index > 0 && (<Box sx={{ position: "absolute", left: -28, top: 22, width: 8, height: 8, bgcolor: "secondary.main", borderRadius: "50%", border: "2px solid white" }} />)}
-                            <Paper variant="outlined" sx={{ p: 2, bgcolor: comment.user_id === currentUserId ? "primary.50" : "grey.50",
-                              borderLeft: index === 0 ? "4px solid" : "3px solid", borderLeftColor: index === 0 ? "primary.main" : "secondary.main", borderRadius: 2 }}>
-                              <Stack direction="row" spacing={2}>
-                                <Avatar sx={{ width: 36, height: 36, bgcolor: comment.user_id === currentUserId ? "secondary.main" : "primary.main" }}>
-                                  U{comment.user_id}
-                                </Avatar>
-                                <Box sx={{ flex: 1 }}>
-                                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                                    <Typography variant="subtitle2" color="primary" sx={{ fontWeight: 600 }}>Usuario {comment.user_id}</Typography>
-                                    <Typography variant="caption" color="text.secondary">{formatDateNumeric(comment.createdAt)}</Typography>
-                                    {comment.user_id === currentUserId && <Chip label="Tú" size="small" color="secondary" sx={{ height: 20, fontSize: ".7rem" }} />}
-                                    {index === 0 && <Chip label="OP" size="small" color="primary" variant="outlined" sx={{ height: 20, fontSize: ".7rem" }} />}
+                        <Box
+                          sx={{
+                            position: "absolute",
+                            left: 20,
+                            top: 40,
+                            bottom:
+                              meta.comments.length > 1 ? 60 : 40,
+                            width: 3,
+                            bgcolor: "primary.main",
+                            opacity: 0.4,
+                            borderRadius: 1.5,
+                          }}
+                        />
+                        {meta.comments.map(
+                          (comment: Message, index: number) => {
+                            const canEdit =
+                              isAdmin ||
+                              comment.user_id === currentUserId;
+
+                            return (
+                              <Box
+                                key={comment.id}
+                                sx={{
+                                  position: "relative",
+                                  ml: index === 0 ? 0 : 3,
+                                  mb: 2,
+                                }}
+                              >
+                                {index > 0 && (
+                                  <Box
+                                    sx={{
+                                      position: "absolute",
+                                      left: -26,
+                                      top: 24,
+                                      width: 20,
+                                      height: 3,
+                                      bgcolor: "secondary.main",
+                                      opacity: 0.6,
+                                      borderRadius: 1.5,
+                                    }}
+                                  />
+                                )}
+                                {index > 0 && (
+                                  <Box
+                                    sx={{
+                                      position: "absolute",
+                                      left: -28,
+                                      top: 22,
+                                      width: 8,
+                                      height: 8,
+                                      bgcolor: "secondary.main",
+                                      borderRadius: "50%",
+                                      border: "2px solid white",
+                                    }}
+                                  />
+                                )}
+
+                                {canEdit && (
+                                  <Stack
+                                    direction="row"
+                                    spacing={0.5}
+                                    sx={{
+                                      position: "absolute",
+                                      top: 8,
+                                      right: 8,
+                                      zIndex: 1,
+                                    }}
+                                  >
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        setEditingMessage(comment)
+                                      }
+                                    >
+                                      <EditOutlined fontSize="small" />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      onClick={() =>
+                                        handleDeleteComment(
+                                          thread.threadId,
+                                          comment.id
+                                        )
+                                      }
+                                    >
+                                      <DeleteOutline fontSize="small" />
+                                    </IconButton>
                                   </Stack>
-                                  <Typography variant="body2" sx={{ lineHeight: 1.6 }}>{comment.content}</Typography>
-                                </Box>
-                              </Stack>
-                            </Paper>
-                          </Box>
-                        ))}
+                                )}
+
+                                <Paper
+                                  variant="outlined"
+                                  sx={{
+                                    p: 2,
+                                    bgcolor:
+                                      comment.user_id === currentUserId
+                                        ? "primary.50"
+                                        : "grey.50",
+                                    borderLeft:
+                                      index === 0
+                                        ? "4px solid"
+                                        : "3px solid",
+                                    borderLeftColor:
+                                      index === 0
+                                        ? "primary.main"
+                                        : "secondary.main",
+                                    borderRadius: 2,
+                                  }}
+                                >
+                                  <Stack
+                                    direction="row"
+                                    spacing={2}
+                                  >
+                                    <Avatar
+                                      sx={{
+                                        width: 36,
+                                        height: 36,
+                                        bgcolor:
+                                          comment.user_id ===
+                                          currentUserId
+                                            ? "secondary.main"
+                                            : "primary.main",
+                                      }}
+                                    >
+                                      U{comment.user_id}
+                                    </Avatar>
+
+                                    <Box sx={{ flex: 1 }}>
+                                      <Stack
+                                        direction="row"
+                                        spacing={1}
+                                        alignItems="center"
+                                        sx={{ mb: 1 }}
+                                      >
+                                        <Typography
+                                          variant="subtitle2"
+                                          color="primary"
+                                          sx={{ fontWeight: 600 }}
+                                        >
+                                          Usuario {comment.user_id}
+                                        </Typography>
+
+                                        <Typography
+                                          variant="caption"
+                                          color="text.secondary"
+                                        >
+                                          {formatDateNumeric(
+                                            comment.createdAt
+                                          )}
+                                        </Typography>
+                                      </Stack>
+
+                                      <Typography
+                                        variant="body2"
+                                        sx={{ lineHeight: 1.6 }}
+                                      >
+                                        {comment.content}
+                                      </Typography>
+                                    </Box>
+                                  </Stack>
+                                </Paper>
+                              </Box>
+                            );
+                          }
+                        )}
                       </Box>
                     ) : (
-                      <Typography variant="body2" color="text.secondary" sx={{ textAlign: "center", py: 4 }}>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{
+                          textAlign: "center",
+                          py: 4,
+                        }}
+                      >
                         No hay respuestas aún. ¡Sé el primero en comentar!
                       </Typography>
                     )}
 
-                    {/* Nueva respuesta */}
-                    <Box sx={{ mt: 3, ml: 5, position: "relative" }}>
-                      {meta.comments && meta.comments.length > 0 && (
-                        <>
-                          <Box sx={{ position: "absolute", left: -28, top: 24, width: 24, height: 3, bgcolor: "success.main", opacity: .7, borderRadius: 1.5 }} />
-                          <Box sx={{ position: "absolute", left: -30, top: 22, width: 8, height: 8, bgcolor: "success.main", borderRadius: "50%", border: "2px solid white" }} />
-                        </>
-                      )}
-                      <Paper variant="outlined" sx={{ p: 2, borderRadius: 2, borderLeft: "3px solid", borderLeftColor: "success.main" }}>
-                        <Stack direction="row" spacing={2} alignItems="flex-start">
-                          <Avatar sx={{ width: 36, height: 36, bgcolor: "success.main" }}>U{currentUserId}</Avatar>
-                          <Box sx={{ flex: 1 }}>
-                            <TextField
-                              fullWidth multiline minRows={2} maxRows={6} placeholder="Escribe tu respuesta..."
-                              value={replyText[thread.threadId] || ""}
-                              onChange={(e) => setReplyText((p) => ({ ...p, [thread.threadId]: e.target.value }))}
-                              variant="outlined" size="small"
-                              disabled={sendingReply === thread.threadId}
-                              onKeyDown={(e) => { if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) { e.preventDefault(); handleSendReply(thread.threadId); } }}
-                              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                            />
-                            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mt: 1 }}>
-                              <Typography variant="caption" color="text.secondary">Tip: Ctrl + Enter para enviar</Typography>
-                              <Button variant="contained" color="success"
-                                endIcon={sendingReply === thread.threadId ? <CircularProgress size={16} /> : <SendIcon />}
-                                onClick={() => handleSendReply(thread.threadId)}
-                                disabled={!replyText[thread.threadId]?.trim() || sendingReply === thread.threadId}
-                                sx={{ borderRadius: 999, px: 3 }}>
-                                {sendingReply === thread.threadId ? "Enviando..." : "Enviar"}
-                              </Button>
-                            </Stack>
-                          </Box>
-                        </Stack>
-                      </Paper>
-                    </Box>
+                    {isClosed ? (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ textAlign: "center", py: 3 }}
+                      >
+                        Este hilo está cerrado. No se pueden agregar
+                        nuevas respuestas.
+                      </Typography>
+                    ) : (
+                      <Box
+                        sx={{
+                          mt: 3,
+                          ml: 5,
+                          position: "relative",
+                        }}
+                      >
+                        {meta.comments &&
+                          meta.comments.length > 0 && (
+                            <>
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  left: -28,
+                                  top: 24,
+                                  width: 24,
+                                  height: 3,
+                                  bgcolor: "success.main",
+                                  opacity: 0.7,
+                                  borderRadius: 1.5,
+                                }}
+                              />
+                              <Box
+                                sx={{
+                                  position: "absolute",
+                                  left: -30,
+                                  top: 22,
+                                  width: 8,
+                                  height: 8,
+                                  bgcolor: "success.main",
+                                  borderRadius: "50%",
+                                  border: "2px solid white",
+                                }}
+                              />
+                            </>
+                          )}
+
+                        <Paper
+                          variant="outlined"
+                          sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            borderLeft: "3px solid",
+                            borderLeftColor: "success.main",
+                          }}
+                        >
+                          <Stack
+                            direction="row"
+                            spacing={2}
+                            alignItems="flex-start"
+                          >
+                            <Avatar
+                              sx={{
+                                width: 36,
+                                height: 36,
+                                bgcolor: "success.main",
+                              }}
+                            >
+                              U{currentUserId}
+                            </Avatar>
+
+                            <Box sx={{ flex: 1 }}>
+                              <TextField
+                                fullWidth
+                                multiline
+                                minRows={2}
+                                maxRows={6}
+                                placeholder="Escribe tu respuesta..."
+                                value={replyText[thread.threadId] || ""}
+                                onChange={(e) =>
+                                  setReplyText((p) => ({
+                                    ...p,
+                                    [thread.threadId]: e.target.value,
+                                  }))
+                                }
+                                variant="outlined"
+                                size="small"
+                                disabled={
+                                  sendingReply === thread.threadId
+                                }
+                                onKeyDown={(e) => {
+                                  if (
+                                    e.key === "Enter" &&
+                                    (e.ctrlKey || e.metaKey)
+                                  ) {
+                                    e.preventDefault();
+                                    handleSendReply(thread.threadId);
+                                  }
+                                }}
+                                sx={{
+                                  "& .MuiOutlinedInput-root": {
+                                    borderRadius: 2,
+                                  },
+                                }}
+                              />
+
+                              <Stack
+                                direction="row"
+                                justifyContent="flex-end"
+                                alignItems="center"
+                                sx={{ mt: 1 }}
+                              >
+                                <Button
+                                  variant="contained"
+                                  color="success"
+                                  endIcon={
+                                    sendingReply === thread.threadId ? (
+                                      <CircularProgress size={16} />
+                                    ) : (
+                                      <SendIcon />
+                                    )
+                                  }
+                                  onClick={() =>
+                                    handleSendReply(thread.threadId)
+                                  }
+                                  disabled={
+                                    !replyText[thread.threadId]?.trim() ||
+                                    sendingReply === thread.threadId
+                                  }
+                                  sx={{
+                                    borderRadius: 999,
+                                    px: 3,
+                                  }}
+                                >
+                                  {sendingReply === thread.threadId
+                                    ? "Enviando..."
+                                    : "Enviar"}
+                                </Button>
+                              </Stack>
+                            </Box>
+                          </Stack>
+                        </Paper>
+                      </Box>
+                    )}
                   </Stack>
                 )}
               </Box>
@@ -531,7 +1287,6 @@ const Forums: React.FC = () => {
     );
   };
 
-  // ====== UI ======
   const currentTabKey = isAdmin ? adminCategory : currentCategoryName;
 
   return (
@@ -546,28 +1301,71 @@ const Forums: React.FC = () => {
         }
       />
 
-      {/* KPIs (ahora para TODOS los roles) */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} sx={{ mb: 2 }}>
+      {/* KPIs */}
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        sx={{ mb: 2 }}
+      >
         <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent><Stack direction="row" alignItems="center" spacing={1}>
-            <ChatIcon color="primary" /><Box><Typography variant="overline" color="text.secondary">Posts Totales</Typography><Typography variant="h6">{headerStats.totalPosts}</Typography></Box>
-          </Stack></CardContent>
+          <CardContent>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <ChatIcon color="primary" />
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Posts Totales
+                </Typography>
+                <Typography variant="h6">
+                  {headerStats.totalPosts}
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
         </Card>
         <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent><Stack direction="row" alignItems="center" spacing={1}>
-            <GroupsIcon color="success" /><Box><Typography variant="overline" color="text.secondary">Participantes</Typography><Typography variant="h6" color="success.main">{headerStats.activeUsers}</Typography></Box>
-          </Stack></CardContent>
+          <CardContent>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <GroupsIcon color="success" />
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Participantes
+                </Typography>
+                <Typography variant="h6" color="success.main">
+                  {headerStats.activeUsers}
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
         </Card>
         <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent><Stack direction="row" alignItems="center" spacing={1}>
-            <TrendingIcon color="secondary" /><Box><Typography variant="overline" color="text.secondary">Respuestas</Typography><Typography variant="h6" color="secondary.main">{headerStats.totalResponses}</Typography></Box>
-          </Stack></CardContent>
+          <CardContent>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <TrendingIcon color="secondary" />
+              <Box>
+                <Typography variant="overline" color="text.secondary">
+                  Respuestas
+                </Typography>
+                <Typography variant="h6" color="secondary.main">
+                  {headerStats.totalResponses}
+                </Typography>
+              </Box>
+            </Stack>
+          </CardContent>
         </Card>
       </Stack>
 
-      {/* Filtros (para TODOS). Admin tendrá además la pestaña "Todas". */}
-      <Paper elevation={0} variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2 }}>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
+      {/* Filtros */}
+      <Paper
+        elevation={0}
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 2, mb: 2 }}
+      >
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap={1}
+          sx={{ mb: 1.5 }}
+        >
           <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
           <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>Filtros</Typography>
         </Stack>
@@ -598,9 +1396,13 @@ const Forums: React.FC = () => {
             },
             "& .Mui-selected": {
               color: "white !important",
-              backgroundColor: (t) => ADMIN_TAB_COLORS[currentTabKey] || t.palette.primary.main,
-              borderColor:     (t) => ADMIN_TAB_COLORS[currentTabKey] || t.palette.primary.main,
-              boxShadow: "0 2px 8px rgba(8,61,119,0.25)"
+              backgroundColor: (t) =>
+                ADMIN_TAB_COLORS[currentTabKey] ||
+                t.palette.primary.main,
+              borderColor: (t) =>
+                ADMIN_TAB_COLORS[currentTabKey] ||
+                t.palette.primary.main,
+              boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
             },
             "& .MuiTabs-indicator": { display: "none" },
           }}
@@ -618,26 +1420,93 @@ const Forums: React.FC = () => {
         </Box>
       )}
 
-      {error && !loading && (
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography variant="h6" color="error">Error cargando el foro</Typography>
-          <Button onClick={() => { refetchForums(); refetchThreads(); }} sx={{ mt: 2 }}>Reintentar</Button>
-        </Box>
-      )}
-
-      {!loading && !error && posts.length === 0 && (
-        <Card variant="outlined" sx={{ textAlign: "center", py: 6, borderRadius: 3 }}>
-          <Typography variant="h6" color="text.secondary">No hay posts en {currentCategoryName} aún</Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
-            ¡Sé el primero en crear un post en esta categoría!
+      {loadError && !loading && (
+        <Paper
+          sx={{
+            p: 6,
+            textAlign: "center",
+            border: "1px dashed #d0d0d0",
+            borderRadius: 3,
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <ChatIcon
+            sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+          />
+          <Typography variant="h5" color="text.primary" gutterBottom>
+            Error al cargar el foro
           </Typography>
-          <Button variant="contained" startIcon={<AddIcon />} onClick={() => setOpen(true)}>Crear primer post</Button>
-        </Card>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ mb: 2 }}
+          >
+            {loadError}
+          </Typography>
+          <Button
+            variant="contained"
+            onClick={() => {
+              refetchForums();
+              refetchThreads();
+            }}
+            sx={{ mt: 1 }}
+          >
+            Reintentar
+          </Button>
+        </Paper>
       )}
 
-      <Stack spacing={2}>{posts.map(renderThread)}</Stack>
+      {!loading && !loadError && posts.length === 0 && (
+        <Paper
+          sx={{
+            p: 6,
+            textAlign: "center",
+            border: "1px dashed #d0d0d0",
+            borderRadius: 3,
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <ChatIcon
+            sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+          />
+          <Typography variant="h5" color="text.primary" gutterBottom>
+            No hay posts en {currentCategoryName}
+          </Typography>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ mb: 1 }}
+          >
+            Aún no se han creado posts en esta categoría.
+          </Typography>
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ mb: 3 }}
+          >
+            ¡Sé el primero en crear un post!
+          </Typography>
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={() => setOpen(true)}
+          >
+            Crear primer post
+          </Button>
+        </Paper>
+      )}
 
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+      {!loading && !loadError && posts.length > 0 && (
+        <Stack spacing={2}>{posts.map(renderThread)}</Stack>
+      )}
+
+      {/* Dialog para crear nuevo post */}
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogContent>
           {!resolvedForumId ? (
             <Box sx={{ py: 4, textAlign: "center" }}>
@@ -649,10 +1518,128 @@ const Forums: React.FC = () => {
               onClose={() => setOpen(false)}
               forumId={resolvedForumId}
               userId={currentUserId}
-              onCreated={() => { refetchThreads(); setOpen(false); }}
+              onCreated={() => {
+                refetchThreads();
+                setOpen(false);
+              }}
             />
           )}
         </DialogContent>
+      </Dialog>
+
+      {/* Dialog para editar post */}
+      <Dialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogContent>
+          {threadBeingEdited ? (
+            <EditThread
+              onClose={() => setEditOpen(false)}
+              threadId={threadBeingEdited.id}
+              initialTitle={threadBeingEdited.title}
+              initialDescription={threadBeingEdited.description}
+              userId={currentUserId}
+              onUpdated={() => {
+                refetchThreads();
+                setEditOpen(false);
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog para editar respuesta */}
+      <Dialog
+        open={!!editingMessage}
+        onClose={() => setEditingMessage(null)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogContent>
+          {editingMessage ? (
+            <EditMessage
+              messageId={editingMessage.id}
+              initialContent={editingMessage.content}
+              onClose={() => setEditingMessage(null)}
+              onUpdated={async () => {
+                await reloadComments(editingMessage.thread_id);
+                setEditingMessage(null);
+              }}
+            />
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmación de borrado de thread */}
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          if (!deletingThreadId) {
+            setDeleteDialogOpen(false);
+            setThreadToDelete(null);
+          }
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Eliminar post</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            ¿Seguro que querés eliminar este post?
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Solo se pueden eliminar hilos que no tengan respuestas.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+              setThreadToDelete(null);
+            }}
+            disabled={!!deletingThreadId}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleDeleteThread}
+            disabled={!!deletingThreadId}
+            startIcon={
+              deletingThreadId ? (
+                <CircularProgress size={16} />
+              ) : (
+                <DeleteOutline />
+              )
+            }
+          >
+            {deletingThreadId ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Dialog informativo de estado de hilo */}
+      <Dialog
+        open={statusDialogOpen}
+        onClose={() => setStatusDialogOpen(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Estado del hilo</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1">
+            {statusDialogMessage}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setStatusDialogOpen(false)} autoFocus>
+            Aceptar
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );

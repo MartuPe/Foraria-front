@@ -24,9 +24,9 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-  RadioGroup,            
-  FormControlLabel,      
-  Radio                  
+  RadioGroup,            // <-- agregado
+  FormControlLabel,      // <-- agregado
+  Radio                  // <-- agregado
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -38,15 +38,15 @@ import {
   Share as ShareIcon,
   Notifications as NotificationsIcon,
   CalendarToday as CalendarTodayIcon,
-  HowToVote as HowToVoteIcon 
+  HowToVote as HowToVoteIcon  // <-- agregado
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
 import { api } from "../api/axios";
-import { storage } from "../utils/storage"; 
-import SuccessModal from "../components/modals/SuccessModal"; 
+import { storage } from "../utils/storage"; // <-- agregado
+import SuccessModal from "../components/modals/SuccessModal"; // <-- agregado
 
 export interface PollOption {
   id: number;
@@ -109,6 +109,7 @@ const POLL_CATEGORIES: PollCategory[] = [
   { id: 6, name: 'Seguridad' }
 ];
 
+// Tipos faltantes
 interface UserCountResponse {
   totalUsers: number;
 }
@@ -131,10 +132,10 @@ export default function VotesPrueba() {
   const [isVoting, setIsVoting] = useState(false);
   const [userVotes, setUserVotes] = useState<Set<number>>(new Set());
   const [showAlreadyVotedModal, setShowAlreadyVotedModal] = useState(false);
-  const [showVoteErrorModal, setShowVoteErrorModal] = useState(false);       
-  const [voteErrorMessage, setVoteErrorMessage] = useState<string>("");       
+  const [showVoteErrorModal, setShowVoteErrorModal] = useState(false);        // nuevo
+  const [voteErrorMessage, setVoteErrorMessage] = useState<string>("");       // nuevo
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [pollVoters, setPollVoters] = useState<Record<number, { userId: number; userName: string }[]>>({}); 
+  const [pollVoters, setPollVoters] = useState<Record<number, { userId: number; userName: string }[]>>({}); // <-- agregado
 
   // Estados para admin - NewVote modal interno y editar
   const [showNewVoteModal, setShowNewVoteModal] = useState(false);
@@ -154,12 +155,12 @@ export default function VotesPrueba() {
     title: '',
     description: '',
     categoryPoll_id: 1,
-    state: 'activa', 
+    state: 'activa', // mantener en minúscula para UI, luego se normaliza
     pollOptions: ['', '']
   });
   const [editErrors, setEditErrors] = useState<string[]>([]);
 
-  const { data: pollsData, loading, refetch } = useGet<Poll[]>(
+  const { data: pollsData, loading, error, refetch } = useGet<Poll[]>(
     "/polls/with-results"
   );
   const [selectedPollResults, setSelectedPollResults] = useState<Poll | null>(null);
@@ -200,10 +201,7 @@ export default function VotesPrueba() {
   }, []);
 
   useEffect(() => {
-    if (pollsData) {
-      setPolls(pollsData);
-      // Eliminar esta línea: setLoadError(null);
-    }
+    if (pollsData) setPolls(pollsData);
   }, [pollsData]);
 
   useEffect(() => {
@@ -227,6 +225,7 @@ export default function VotesPrueba() {
 
   // Handlers de votación
   const handleOpenVoteModal = (poll: Poll) => {
+    // Ya no bloqueamos aquí; dejamos que intente votar y el backend confirma duplicado
     setSelectedPoll(poll);
     setSelectedOption(null);
   };
@@ -275,7 +274,7 @@ export default function VotesPrueba() {
         return next;
       });
       handleCloseVoteModal();
-      setShowSuccessModal(true); 
+      setShowSuccessModal(true); // <-- agregado
     } catch (err: any) {
       const status = err?.response?.status;
       const data = err?.response?.data;
@@ -356,7 +355,7 @@ export default function VotesPrueba() {
       title: poll.title,
       description: poll.description,
       categoryPoll_id: poll.categoryPollId,
-      state: poll.state?.toLowerCase(), 
+      state: poll.state?.toLowerCase(), // guardar en minúscula para el Select
       startDate: poll.startDate,
       endDate: poll.endDate,
       pollOptions: poll.pollOptions.map(opt => opt.text)
@@ -423,7 +422,7 @@ export default function VotesPrueba() {
       categoryPollId: category,
       createdAt,
       deletedAt,
-      state: BACKEND_STATE_VALUES['activa'], 
+      state: BACKEND_STATE_VALUES['activa'], // queda "Activa"
       userId: localStorage.getItem("userId"),
       options,
     };
@@ -431,6 +430,7 @@ export default function VotesPrueba() {
     try {
       await createPoll(payload);
       
+      // Reset form
       setTitle("");
       setDescription("");
       setCategory(1);
@@ -444,10 +444,10 @@ export default function VotesPrueba() {
     }
   };
 
-  const fetchPollVoters = async (pollId: number) => {                
+  const fetchPollVoters = async (pollId: number) => {                 // <-- agregado
     if (!isAdministrador || pollVoters[pollId]) return;
     try {
-      const { data } = await api.get(`/votes/poll/${pollId}/users`);  
+      const { data } = await api.get(`/votes/poll/${pollId}/users`);  // ajustar si el endpoint difiere
       setPollVoters(prev => ({ ...prev, [pollId]: data }));
     } catch (e) {
       console.error("Error obteniendo votantes reales:", e);
@@ -473,7 +473,8 @@ export default function VotesPrueba() {
     }).sort((a, b) => b.votes - a.votes);
 
     const winner = optionsWithResults.length > 0 ? optionsWithResults[0] : null;
-    const participationPercent = totalUsers > 0 ? Math.round((totalVotes / totalUsers) * 100) : 0;
+    const participationPercent = totalUsers > 0 ? Math.min(Math.round((totalVotes / totalUsers) * 100), 100) : 0;
+
     return {
       totalVotes,
       participationPercent,
@@ -482,7 +483,7 @@ export default function VotesPrueba() {
     };
   };
 
-  const getRecentParticipants = (pollId: number) => {                
+  const getRecentParticipants = (pollId: number) => {                 // <-- reemplazado
     if (!isAdministrador) return [];
     const cached = pollVoters[pollId];
     if (cached) return cached.slice(-6);
@@ -497,9 +498,9 @@ export default function VotesPrueba() {
     const isDraft = stateLower === "borrador";
     const isRejected = stateLower === "rechazada";
     const { totalVotes, participationPercent } = getDetailedResults(poll);
-    const recentParticipants = getRecentParticipants(poll.id); 
+    const recentParticipants = getRecentParticipants(poll.id); // ahora usa reales o vacío
     const hasVoted = userVotes.has(poll.id);
-    const isPollOpen = isActive || isPending || isDraft; 
+    const isPollOpen = isActive || isPending || isDraft; // Agregado
 
     return (
       <Card 
@@ -744,7 +745,7 @@ export default function VotesPrueba() {
               </Stack>
             </Stack>
 
-            {isAdministrador && ( 
+            {isAdministrador && ( // <-- agregado: solo Admin ve la barra de participación
               <Box>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                   <Typography 
@@ -781,7 +782,7 @@ export default function VotesPrueba() {
               </Box>
             )}
 
-            {totalVotes > 0 && (isActive || isPending) && isAdministrador && recentParticipants.length > 0 && ( 
+            {totalVotes > 0 && (isActive || isPending) && isAdministrador && recentParticipants.length > 0 && ( // <-- condición actualizada
               <Stack direction="row" alignItems="center" spacing={2}>
                 <Typography variant="caption" color="text.secondary">
                   Votaron recientemente:
@@ -925,16 +926,8 @@ export default function VotesPrueba() {
     }
   }, []);
 
-  if (loading) {
-    return (
-      <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <CircularProgress />
-          <Typography>Cargando votaciones…</Typography>
-        </Stack>
-      </Box>
-    );
-  }
+  if (loading) return <p>Cargando votaciones...</p>;
+  if (error) return <p>Error al cargar: {error}</p>;
 
   return (
     <Box className="foraria-page-container">
@@ -1353,8 +1346,8 @@ export default function VotesPrueba() {
       </Dialog>
 
       <SuccessModal
-        open={showSuccessModal}                 
-        onClose={() => setShowSuccessModal(false)} 
+        open={showSuccessModal}                 // <-- agregado
+        onClose={() => setShowSuccessModal(false)} // <-- agregado
       />
     </Box>
   );
