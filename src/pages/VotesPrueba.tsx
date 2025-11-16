@@ -11,50 +11,43 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
-  RadioGroup,
-  FormControlLabel,
-  Radio,
   LinearProgress,
-  Divider,
   Alert,
+  Divider,
   Avatar,
   AvatarGroup,
   Tooltip,
   IconButton,
-  Skeleton,
   TextField,
   MenuItem,
   Select,
   FormControl,
   InputLabel,
-  CircularProgress
+  CircularProgress,
+  RadioGroup,            // <-- agregado
+  FormControlLabel,      // <-- agregado
+  Radio                  // <-- agregado
 } from "@mui/material";
 import {
   Add as AddIcon,
   Edit as EditIcon,
-  Delete as DeleteIcon,
   CheckCircle as CheckCircleIcon,
-  Cancel as CancelIcon,
-  Gavel as GavelIcon,
-  CalendarToday as CalendarTodayIcon,
-  HowToVote as HowToVoteIcon,
   BarChart as BarChartIcon,
   AccessTime as AccessTimeIcon,
   People as PeopleIcon,
   Share as ShareIcon,
   Notifications as NotificationsIcon,
-  Security as SecurityIcon
+  CalendarToday as CalendarTodayIcon,
+  HowToVote as HowToVoteIcon  // <-- agregado
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
-import ErrorModal from "../components/modals/ErrorModal";
-import SuccessModal from "../components/modals/SuccessModal";
-import { storage } from "../utils/storage";
-import { getEffectiveIds } from "../services/userService";
+import { api } from "../api/axios";
+import { storage } from "../utils/storage"; // <-- agregado
+import SuccessModal from "../components/modals/SuccessModal"; // <-- agregado
 
-// ...existing interfaces...
 export interface PollOption {
   id: number;
   text: string;
@@ -80,12 +73,6 @@ export interface Poll {
   endDate?: string;
 }
 
-interface VoteDto {
-  user_Id: number;
-  poll_Id: number;
-  pollOption_Id: number;
-}
-
 interface CreatePollDto {
   title: string;
   description: string;
@@ -96,35 +83,24 @@ interface CreatePollDto {
   pollOptions: string[];
 }
 
-interface UpdatePollDto {
-  title?: string;
-  description?: string;
-  categoryPoll_id?: number;
-  startDate?: string;
-  endDate?: string;
+// Agregar tipo para voto
+interface VoteDto {
+  user_Id: number;
+  poll_Id: number;
+  pollOption_Id: number;
 }
 
-interface PollStateChangeDto {
-  newState: string;
-}
-
-interface PollVoteResult {
-  pollId: number;
-  results: { pollOptionId: number; votesCount: number }[];
-}
-
-interface UserCountResponse {
-  totalUsers: number;
-}
-
-const POLL_STATES = {
-  PENDIENTE: 'Pendiente',
-  ACTIVA: 'Activa', 
-  FINALIZADA: 'Finalizada',
-  CANCELADA: 'Cancelada'
+const BACKEND_STATE_VALUES: Record<string, string> = {
+  pendiente: 'Pendiente',
+  borrador: 'Borrador',
+  activa: 'Activa',
+  rechazada: 'Rechazada',
+  cerrada: 'Cerrada'
 };
 
-const POLL_CATEGORIES = [
+interface PollCategory { id: number; name: string; }
+
+const POLL_CATEGORIES: PollCategory[] = [
   { id: 1, name: 'Administración' },
   { id: 2, name: 'Mantenimiento' },
   { id: 3, name: 'Mejoras' },
@@ -133,60 +109,89 @@ const POLL_CATEGORIES = [
   { id: 6, name: 'Seguridad' }
 ];
 
+// Tipos faltantes
+interface UserCountResponse {
+  totalUsers: number;
+}
+
+interface PollVoteResult {
+  pollId: number;
+  results: { pollOptionId: number; votesCount: number }[];
+}
+
 export default function VotesPrueba() {
-  const isAdmin = storage.role === "Administrador" || storage.role === "Consorcio";
+  const isAdministrador = storage.role === "Administrador";
   
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada" | "pendientes">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
-  const [showErrorModal, setShowErrorModal] = useState(false);
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [totalUsers, setTotalUsers] = useState<number>(0);
-  
-  // Estados para votación (igual que el original)
+
+  // Estados de votación (restaurados)
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [userVotes, setUserVotes] = useState<Set<number>>(new Set());
-  const [selectedPollResults, setSelectedPollResults] = useState<Poll | null>(null);
-  const [loadingVote, setLoadingVote] = useState<number | null>(null);
+  const [showAlreadyVotedModal, setShowAlreadyVotedModal] = useState(false);
+  const [showVoteErrorModal, setShowVoteErrorModal] = useState(false);        // nuevo
+  const [voteErrorMessage, setVoteErrorMessage] = useState<string>("");       // nuevo
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [pollVoters, setPollVoters] = useState<Record<number, { userId: number; userName: string }[]>>({}); // <-- agregado
 
-  // Estados para admin
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  // Estados para admin - NewVote modal interno y editar
+  const [showNewVoteModal, setShowNewVoteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [editingPoll, setEditingPoll] = useState<Poll | null>(null);
-  const [deletingPoll, setDeletingPoll] = useState<Poll | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
   
-  // Estados para crear/editar poll
-  const [newPoll, setNewPoll] = useState<Partial<CreatePollDto>>({
+  // Estados para crear nueva votación (como en Votes.tsx)
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<number>(1);
+  const [newOption, setNewOption] = useState("");
+  const [options, setOptions] = useState<string[]>(["Sí", "No"]);
+  const [formError, setFormError] = useState<string | null>(null);
+  
+  // Estados para editar poll - extender el tipo para incluir state
+  const [newPoll, setNewPoll] = useState<Partial<CreatePollDto & { state: string }>>({
     title: '',
     description: '',
     categoryPoll_id: 1,
+    state: 'activa', // mantener en minúscula para UI, luego se normaliza
     pollOptions: ['', '']
   });
+  const [editErrors, setEditErrors] = useState<string[]>([]);
 
   const { data: pollsData, loading, error, refetch } = useGet<Poll[]>(
-    "https://localhost:7245/api/polls/with-results"
+    "/polls/with-results"
   );
+  const [selectedPollResults, setSelectedPollResults] = useState<Poll | null>(null);
 
-  const { mutate: sendVote, error: voteError } = useMutation(
-    "https://localhost:7245/api/votes",
+  const handleOpenResultsModal = (poll: Poll) => {
+    setSelectedPollResults(poll);
+  };
+
+  const handleCloseResultsModal = () => {
+    setSelectedPollResults(null);
+  };
+
+  const { mutate: createPoll, loading: createLoading, error: createError } = useMutation(
+    "https://localhost:7245/api/polls", 
     "post"
   );
 
- 
+  // Mutación para enviar votos (restaurada)
+  const { mutate: sendVote } = useMutation(
+    "https://localhost:7245/api/votes",
+    "post"
+  );
 
   const { on, connected } = useSignalR({
     url: "https://localhost:7245/pollHub",
   });
 
-  // ...existing useEffects...
   useEffect(() => {
     const fetchUserCount = async () => {
       try {
-        const res = await fetch("https://localhost:7245/api/User/count");
-        const data: UserCountResponse = await res.json();
+        const { data } = await api.get<UserCountResponse>("/User/count");
         setTotalUsers(data.totalUsers);
       } catch (err) {
         console.error("Error al obtener total de usuarios:", err);
@@ -207,7 +212,7 @@ export default function VotesPrueba() {
           poll.id === voteData.pollId
             ? {
                 ...poll,
-                pollResults: voteData.results.map((r) => ({
+                pollResults: voteData.results.map((r: { pollOptionId: number; votesCount: number }) => ({
                   pollOptionId: r.pollOptionId,
                   votesCount: r.votesCount,
                 })),
@@ -218,8 +223,9 @@ export default function VotesPrueba() {
     });
   }, [connected, on]);
 
-  // Funciones originales de votación
+  // Handlers de votación
   const handleOpenVoteModal = (poll: Poll) => {
+    // Ya no bloqueamos aquí; dejamos que intente votar y el backend confirma duplicado
     setSelectedPoll(poll);
     setSelectedOption(null);
   };
@@ -229,155 +235,117 @@ export default function VotesPrueba() {
     setSelectedOption(null);
   };
 
-  const handleOpenResultsModal = (poll: Poll) => {
-    setSelectedPollResults(poll);
-  };
-
-  const handleCloseResultsModal = () => {
-    setSelectedPollResults(null);
-  };
-
   const handleSubmitVote = async () => {
     if (!selectedPoll || !selectedOption) return;
-    
+
+    const userIdRaw = localStorage.getItem("userId");
+    const userId = Number(userIdRaw);
+    if (!userIdRaw || isNaN(userId)) {
+      setVoteErrorMessage("Usuario inválido. Inicie sesión nuevamente.");
+      setShowVoteErrorModal(true);
+      return;
+    }
+
+    if (!["activa"].includes(selectedPoll.state.toLowerCase())) {
+      setVoteErrorMessage("La votación no está activa.");
+      setShowVoteErrorModal(true);
+      return;
+    }
+
     setIsVoting(true);
-    setLoadingVote(selectedPoll.id);
+
     const vote: VoteDto = {
-      user_Id: Number(localStorage.getItem("userId")),
+      user_Id: userId,
       poll_Id: selectedPoll.id,
       pollOption_Id: selectedOption,
     };
-    
+
+    console.group("Enviando voto");
+    console.log("Payload:", vote);
+    console.log("Poll options disponibles:", selectedPoll.pollOptions);
+    console.groupEnd();
+
     try {
       await sendVote(vote);
-      setUserVotes(prev => new Set(Array.from(prev).concat(selectedPoll.id)));
-      setShowSuccessModal(true);
+      setUserVotes(prev => {
+        const next = new Set(prev);
+        next.add(selectedPoll.id);
+        localStorage.setItem("votedPollIds", JSON.stringify(Array.from(next)));
+        return next;
+      });
       handleCloseVoteModal();
-    } catch (err) {
-      console.error("Error al enviar voto:", err);
-      setShowErrorModal(true);
+      setShowSuccessModal(true); // <-- agregado
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const data = err?.response?.data;
+      console.group("Error al enviar voto");
+      console.log("Status:", status);
+      console.log("Response data:", data);
+      console.log("Config:", err?.config);
+      console.groupEnd();
+
+      const payloadText = JSON.stringify(data || "").toLowerCase();
+      const isAlready =
+        (status === 400 || status === 409) &&
+        /ya\s*vot(o|ó)|already\s*vot(ed)?|voto\s*duplicado/.test(payloadText);
+
+      if (isAlready) {
+        handleCloseVoteModal();
+        setShowAlreadyVotedModal(true);
+        setUserVotes(prev => {
+          if (prev.has(selectedPoll.id)) return prev;
+          const next = new Set(prev);
+          next.add(selectedPoll.id);
+          localStorage.setItem("votedPollIds", JSON.stringify(Array.from(next)));
+          return next;
+        });
+      } else {
+        let msg = "Error inesperado al votar.";
+        if (status === 404) msg = "Votación u opción no encontrada.";
+        else if (status === 500) msg = "Error interno del servidor.";
+        else if (typeof data === "string") msg = data;
+        else if (data?.message) msg = data.message;
+        setVoteErrorMessage(msg);
+        setShowVoteErrorModal(true);
+      }
     } finally {
       setIsVoting(false);
-      setLoadingVote(null);
-    }
-  };
-
-  // Corregir las funciones para admin
-  const handleCreatePoll = async () => {
-    try {
-      const { userId } = await getEffectiveIds();
-      const pollData: CreatePollDto = {
-        ...newPoll as CreatePollDto,
-        user_id: userId,
-        startDate: newPoll.startDate || new Date().toISOString(),
-        endDate: newPoll.endDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
-        pollOptions: (newPoll.pollOptions || []).filter(opt => opt.trim())
-      };
-
-      const response = await fetch("https://localhost:7245/api/polls", {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(pollData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al crear votación');
-      }
-
-      setShowSuccessModal(true);
-      setShowCreateModal(false);
-      setNewPoll({ title: '', description: '', categoryPoll_id: 1, pollOptions: ['', ''] });
-      refetch();
-    } catch (err) {
-      console.error("Error al crear votación:", err);
-      setShowErrorModal(true);
     }
   };
 
   const handleEditPoll = async () => {
     if (!editingPoll) return;
-    
+    setEditErrors([]);
     try {
-      const updateData: UpdatePollDto = {
+      const normalizedState = newPoll.state
+        ? BACKEND_STATE_VALUES[newPoll.state.toLowerCase()] || newPoll.state
+        : undefined;
+
+      const updateData: any = {
         title: newPoll.title,
         description: newPoll.description,
-        categoryPoll_id: newPoll.categoryPoll_id,
-        startDate: newPoll.startDate,
-        endDate: newPoll.endDate
+        state: normalizedState,
+        categoryPollId: newPoll.categoryPoll_id,
+        userId: Number(localStorage.getItem("userId"))
       };
+      if (newPoll.startDate) updateData.startDate = newPoll.startDate;
+      if (newPoll.endDate) updateData.endDate = newPoll.endDate;
 
-      const response = await fetch(`https://localhost:7245/api/polls/${editingPoll.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updateData)
-      });
+      await api.put(`/polls/${editingPoll.id}`, updateData);
 
-      if (!response.ok) {
-        throw new Error('Error al actualizar votación');
-      }
-
-      setShowSuccessModal(true);
       setShowEditModal(false);
       setEditingPoll(null);
       refetch();
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error al editar votación:", err);
-      setShowErrorModal(true);
-    }
-  };
-
-  // Cambiar funciones de eliminación por cancelación
-  const [showCancelModal, setShowCancelModal] = useState(false);
-  const [cancelingPoll, setCancelingPoll] = useState<Poll | null>(null);
-  const [isCanceling, setIsCanceling] = useState(false);
-
-  const openCancelModal = (poll: Poll) => {
-    setCancelingPoll(poll);
-    setShowCancelModal(true);
-  };
-
-  const handleCancelPoll = async () => {
-    if (!cancelingPoll) return;
-    
-    setIsCanceling(true);
-    try {
-      await handleChangeState(cancelingPoll.id, POLL_STATES.CANCELADA);
-      setShowSuccessModal(true);
-      setShowCancelModal(false);
-      setCancelingPoll(null);
-    } catch (err) {
-      console.error("Error al cancelar votación:", err);
-      setShowErrorModal(true);
-    } finally {
-      setIsCanceling(false);
-    }
-  };
-
-  const handleChangeState = async (pollId: number, newState: string) => {
-    try {
-      const stateData: PollStateChangeDto = { newState };
-      
-      const response = await fetch(`https://localhost:7245/api/polls/${pollId}/state`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(stateData)
-      });
-
-      if (!response.ok) {
-        throw new Error('Error al cambiar estado');
+      const backendErrors = err?.response?.data?.errors;
+      if (backendErrors) {
+        const collected: string[] = [];
+        Object.keys(backendErrors).forEach(k => {
+          backendErrors[k].forEach((m: string) => collected.push(`${k}: ${m}`));
+        });
+        setEditErrors(collected);
       }
-
-      setShowSuccessModal(true);
-      refetch();
-    } catch (err) {
-      console.error("Error al cambiar estado:", err);
-      setShowErrorModal(true);
     }
   };
 
@@ -387,14 +355,105 @@ export default function VotesPrueba() {
       title: poll.title,
       description: poll.description,
       categoryPoll_id: poll.categoryPollId,
+      state: poll.state?.toLowerCase(), // guardar en minúscula para el Select
       startDate: poll.startDate,
       endDate: poll.endDate,
       pollOptions: poll.pollOptions.map(opt => opt.text)
     });
+    setEditErrors([]);
     setShowEditModal(true);
   };
 
-  // ...existing helper functions...
+  const handleAddOption = () => {
+    setFormError(null);
+    const trimmed = newOption.trim();
+    if (!trimmed) return;
+    if (options.includes(trimmed)) {
+      setFormError("La opción ya existe.");
+      return;
+    }
+    if (options.length >= 8) {
+      setFormError("No se pueden tener más de 8 opciones.");
+      return;
+    }
+    setOptions((prev) => [...prev, trimmed]);
+    setNewOption("");
+  };
+
+  const handleRemoveOption = (index: number) => {
+    setFormError(null);
+    setOptions((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const validateBeforeSubmit = (): boolean => {
+    if (!title.trim()) {
+      setFormError("El título es obligatorio.");
+      return false;
+    }
+    if (!description.trim()) {
+      setFormError("La descripción es obligatoria.");
+      return false;
+    }
+    if (options.length < 2) {
+      setFormError("Debe haber al menos 2 opciones.");
+      return false;
+    }
+    if (options.length > 8) {
+      setFormError("No se pueden tener más de 8 opciones.");
+      return false;
+    }
+    return true;
+  };
+
+  const handleCreateVote = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormError(null);
+
+    if (!validateBeforeSubmit()) return;
+
+    const now = new Date();
+    const createdAt = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString();
+    const deletedAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000 - now.getTimezoneOffset() * 60000).toISOString();
+
+    const payload = {
+      id: 0,
+      title,
+      description,
+      categoryPollId: category,
+      createdAt,
+      deletedAt,
+      state: BACKEND_STATE_VALUES['activa'], // queda "Activa"
+      userId: localStorage.getItem("userId"),
+      options,
+    };
+
+    try {
+      await createPoll(payload);
+      
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setCategory(1);
+      setOptions(["Sí", "No"]);
+      setNewOption("");
+      
+      setShowNewVoteModal(false);
+      refetch();
+    } catch (err) {
+      console.error("Error al crear votación:", err);
+    }
+  };
+
+  const fetchPollVoters = async (pollId: number) => {                 // <-- agregado
+    if (!isAdministrador || pollVoters[pollId]) return;
+    try {
+      const { data } = await api.get(`/votes/poll/${pollId}/users`);  // ajustar si el endpoint difiere
+      setPollVoters(prev => ({ ...prev, [pollId]: data }));
+    } catch (e) {
+      console.error("Error obteniendo votantes reales:", e);
+    }
+  };
+
   const getDetailedResults = (poll: Poll) => {
     const resultsMap = new Map<number, number>();
     (poll.pollResults || []).forEach((r) =>
@@ -424,23 +483,24 @@ export default function VotesPrueba() {
     };
   };
 
-  const getRecentParticipants = (pollId: number) => {
-    return [
-      { id: 1, name: "María García", avatar: "MG" },
-      { id: 2, name: "Juan López", avatar: "JL" },
-      { id: 3, name: "Ana Martín", avatar: "AM" },
-      { id: 4, name: "Carlos Ruiz", avatar: "CR" },
-      { id: 5, name: "Laura Silva", avatar: "LS" },
-    ];
+  const getRecentParticipants = (pollId: number) => {                 // <-- reemplazado
+    if (!isAdministrador) return [];
+    const cached = pollVoters[pollId];
+    if (cached) return cached.slice(-6);
+    fetchPollVoters(pollId);
+    return [];
   };
 
   const renderPollCard = (poll: Poll) => {
-    const isActive = poll.state?.toLowerCase().trim() === "activa";
-    const isPending = poll.state?.toLowerCase().trim() === "pendiente";
-    const hasVoted = userVotes.has(poll.id);
+    const stateLower = poll.state?.toLowerCase().trim();
+    const isActive = stateLower === "activa";
+    const isPending = stateLower === "pendiente";
+    const isDraft = stateLower === "borrador";
+    const isRejected = stateLower === "rechazada";
     const { totalVotes, participationPercent } = getDetailedResults(poll);
-    const recentParticipants = getRecentParticipants(poll.id);
-    const isLoading = loadingVote === poll.id;
+    const recentParticipants = getRecentParticipants(poll.id); // ahora usa reales o vacío
+    const hasVoted = userVotes.has(poll.id);
+    const isPollOpen = isActive || isPending || isDraft; // Agregado
 
     return (
       <Card 
@@ -466,52 +526,19 @@ export default function VotesPrueba() {
           }
         }}
       >
-        {/* Admin Actions */}
-        {isAdmin && (
-          <Stack
-            direction="row"
-            spacing={1}
+        {/* Admin Actions - mover abajo derecha */}
+        {isAdministrador && (
+          <Box
             sx={{
               position: 'absolute',
-              top: 8,
-              right: 8,
-              zIndex: 2,
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              borderRadius: 2,
-              p: 0.5
+              bottom: 12,
+              right: 12,
+              display: 'flex',
+              gap: 0.5,
+              zIndex: 2
             }}
           >
-            {isPending && (
-              <Tooltip title="Aprobar votación">
-                <IconButton
-                  size="small"
-                  color="success"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleChangeState(poll.id, POLL_STATES.ACTIVA);
-                  }}
-                >
-                  <CheckCircleIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-            
-            {isActive && (
-              <Tooltip title="Finalizar votación">
-                <IconButton
-                  size="small"
-                  color="info"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleChangeState(poll.id, POLL_STATES.FINALIZADA);
-                  }}
-                >
-                  <GavelIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-
-            <Tooltip title="Editar">
+            <Tooltip title="Editar votación">
               <IconButton
                 size="small"
                 color="primary"
@@ -519,59 +546,20 @@ export default function VotesPrueba() {
                   e.stopPropagation();
                   openEditModal(poll);
                 }}
+                sx={{
+                  backgroundColor: 'white',
+                  boxShadow: 1,
+                  '&:hover': { boxShadow: 2 }
+                }}
               >
                 <EditIcon fontSize="small" />
               </IconButton>
             </Tooltip>
-
-            {/* Cambiar botón Eliminar por Cancelar */}
-            <Tooltip title="Cancelar votación">
-              <IconButton
-                size="small"
-                color="error"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  openCancelModal(poll);
-                }}
-              >
-                <CancelIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-
-            {isPending && (
-              <Tooltip title="Cancelar">
-                <IconButton
-                  size="small"
-                  color="error"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleChangeState(poll.id, POLL_STATES.CANCELADA);
-                  }}
-                >
-                  <CancelIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-
-            {(isActive || poll.state === POLL_STATES.FINALIZADA) && (
-              <Tooltip title="Notarizar en blockchain">
-                <IconButton
-                  size="small"
-                  color="secondary"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    // Implementar notarización
-                  }}
-                >
-                  <SecurityIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            )}
-          </Stack>
+          </Box>
         )}
 
         {/* Estado indicator */}
-        {!isActive && !isPending && (
+        {!isActive && !isPending && !isDraft && (
           <Box
             sx={{
               position: 'absolute',
@@ -580,7 +568,7 @@ export default function VotesPrueba() {
               display: 'flex',
               alignItems: 'center',
               gap: 0.5,
-              backgroundColor: poll.state === POLL_STATES.CANCELADA ? 'error.main' : 'grey.600',
+              backgroundColor: isRejected ? 'error.main' : 'grey.600',
               color: 'white',
               px: 1,
               py: 0.5,
@@ -591,7 +579,7 @@ export default function VotesPrueba() {
             }}
           >
             <CheckCircleIcon sx={{ fontSize: 14 }} />
-            {poll.state?.toUpperCase() || 'FINALIZADA'}
+            {poll.state?.toUpperCase() || 'CERRADA'}
           </Box>
         )}
 
@@ -616,7 +604,7 @@ export default function VotesPrueba() {
           />
         )}
 
-        {/* ...existing card content with same styling... */}
+        {/* ...existing card content... */}
         <CardContent>
           <Stack spacing={2.5}>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
@@ -651,34 +639,27 @@ export default function VotesPrueba() {
               
               <Stack direction="row" spacing={1}>
                 <Chip 
-                  label={poll.state || "Finalizada"}
+                  label={poll.state || "Cerrada"}
                   color={
                     isPending ? "warning" : 
-                    isActive ? "success" : 
-                    poll.state === POLL_STATES.CANCELADA ? "error" : "default"
+                    isActive ? "success" :
+                    isRejected ? "error" :
+                    isDraft ? "info" :
+                    "default"
                   }
                   size="small"
                   variant={isActive || isPending ? "filled" : "outlined"}
                   sx={{
                     fontWeight: 600,
-                    backgroundColor: !isActive && !isPending && poll.state !== POLL_STATES.CANCELADA ? 'grey.200' : undefined,
-                    color: !isActive && !isPending && poll.state !== POLL_STATES.CANCELADA ? 'grey.700' : undefined
+                    backgroundColor: (!isActive && !isPending && !isDraft && !isRejected) ? 'grey.200' : undefined,
+                    color: (!isActive && !isPending && !isDraft && !isRejected) ? 'grey.700' : undefined
                   }}
                 />
-                {hasVoted && (isActive || isPending) && (
-                  <Chip 
-                    label="Votaste" 
-                    color="info" 
-                    size="small"
-                    icon={<CheckCircleIcon />}
-                    variant="filled"
-                  />
-                )}
               </Stack>
             </Stack>
 
-            {/* ...existing content sections with same styling... */}
-            {(isActive || isPending) && poll.endDate && (
+            {/* ...existing content sections... */}
+            {(isActive || isPending || isDraft) && poll.endDate && (
               <Alert 
                 severity={isPending ? "warning" : "info"}
                 icon={<AccessTimeIcon />}
@@ -701,20 +682,20 @@ export default function VotesPrueba() {
             )}
 
             {/* ...rest of existing card content... */}
-            {!isActive && !isPending && (
+            {!isActive && !isPending && !isDraft && (
               <Alert 
-                severity={poll.state === POLL_STATES.CANCELADA ? "error" : "success"}
+                severity={isRejected ? "error" : "success"}
                 sx={{ 
-                  backgroundColor: poll.state === POLL_STATES.CANCELADA ? 'error.50' : 'grey.100',
+                  backgroundColor: isRejected ? 'error.50' : 'grey.100',
                   border: '1px solid',
-                  borderColor: poll.state === POLL_STATES.CANCELADA ? 'error.200' : 'grey.300',
+                  borderColor: isRejected ? 'error.200' : 'grey.300',
                   '& .MuiAlert-icon': {
-                    color: poll.state === POLL_STATES.CANCELADA ? 'error.main' : 'grey.600'
+                    color: isRejected ? 'error.main' : 'grey.600'
                   }
                 }}
               >
-                <Typography variant="body2" fontWeight={600} color={poll.state === POLL_STATES.CANCELADA ? 'error.dark' : 'grey.700'}>
-                  Votación {poll.state === POLL_STATES.CANCELADA ? 'cancelada' : 'finalizada'} el {new Date(poll.endDate || poll.createdAt).toLocaleDateString('es-ES', {
+                <Typography variant="body2" fontWeight={600} color={isRejected ? 'error.dark' : 'grey.700'}>
+                  Votación {isRejected ? 'rechazada' : 'cerrada'} el {new Date(poll.endDate || poll.createdAt).toLocaleDateString('es-ES', {
                     day: 'numeric',
                     month: 'short',
                     year: 'numeric'
@@ -764,117 +745,99 @@ export default function VotesPrueba() {
               </Stack>
             </Stack>
 
-            <Box>
-              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                <Typography 
-                  variant="caption" 
-                  color={isActive || isPending ? "text.secondary" : "text.disabled"}
-                >
-                  Participación
-                </Typography>
-                <Typography 
-                  variant="caption" 
-                  color={isActive || isPending ? "text.secondary" : "text.disabled"}
-                  fontWeight={600}
-                >
-                  {totalVotes}/{totalUsers}
-                </Typography>
-              </Stack>
-              <LinearProgress 
-                variant="determinate" 
-                value={participationPercent} 
-                sx={{ 
-                  height: 10, 
-                  borderRadius: 5,
-                  backgroundColor: isActive || isPending ? 'grey.200' : 'grey.100',
-                  '& .MuiLinearProgress-bar': {
+            {isAdministrador && ( // <-- agregado: solo Admin ve la barra de participación
+              <Box>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
+                  <Typography 
+                    variant="caption" 
+                    color={isActive || isPending ? "text.secondary" : "text.disabled"}
+                  >
+                    Participación
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color={isActive || isPending ? "text.secondary" : "text.disabled"}
+                    fontWeight={600}
+                  >
+                    {totalVotes}/{totalUsers}
+                  </Typography>
+                </Stack>
+                <LinearProgress 
+                  variant="determinate" 
+                  value={participationPercent} 
+                  sx={{ 
+                    height: 10, 
                     borderRadius: 5,
-                    background: isActive || isPending
-                      ? (participationPercent > 50 
-                          ? 'linear-gradient(90deg, #4caf50 0%, #81c784 100%)'
-                          : 'linear-gradient(90deg, #ff9800 0%, #ffb74d 100%)')
-                      : 'linear-gradient(90deg, #9e9e9e 0%, #bdbdbd 100%)'
-                  }
-                }}
-              />
-            </Box>
+                    backgroundColor: isActive || isPending ? 'grey.200' : 'grey.100',
+                    '& .MuiLinearProgress-bar': {
+                      borderRadius: 5,
+                      background: isActive || isPending
+                        ? (participationPercent > 50 
+                            ? 'linear-gradient(90deg, #4caf50 0%, #81c784 100%)'
+                            : 'linear-gradient(90deg, #ff9800 0%, #ffb74d 100%)')
+                        : 'linear-gradient(90deg, #9e9e9e 0%, #bdbdbd 100%)'
+                    }
+                  }}
+                />
+              </Box>
+            )}
 
-            {totalVotes > 0 && (isActive || isPending) && (
+            {totalVotes > 0 && (isActive || isPending) && isAdministrador && recentParticipants.length > 0 && ( // <-- condición actualizada
               <Stack direction="row" alignItems="center" spacing={2}>
                 <Typography variant="caption" color="text.secondary">
                   Votaron recientemente:
                 </Typography>
-                <AvatarGroup max={4} sx={{ '& .MuiAvatar-root': { width: 24, height: 24, fontSize: 12 } }}>
-                  {recentParticipants.slice(0, Math.min(totalVotes, 5)).map((participant: { id: number; name: string; avatar: string }) => (
-                    <Tooltip key={participant.id} title={participant.name}>
-                      <Avatar sx={{ bgcolor: 'primary.main' }}>
-                        {participant.avatar}
-                      </Avatar>
-                    </Tooltip>
-                  ))}
+                <AvatarGroup max={6} sx={{ '& .MuiAvatar-root': { width: 24, height: 24, fontSize: 11 } }}>
+                  {recentParticipants.map((participant) => {
+                    const initials = participant.userName
+                      .split(" ")
+                      .map(p => p[0])
+                      .join("")
+                      .slice(0,2)
+                      .toUpperCase();
+                    return (
+                      <Tooltip key={participant.userId} title={participant.userName}>
+                        <Avatar sx={{ bgcolor: 'primary.main' }}>{initials}</Avatar>
+                      </Tooltip>
+                    );
+                  })}
                 </AvatarGroup>
-                {totalVotes > 5 && (
+                {pollVoters[poll.id] && pollVoters[poll.id].length > 6 && (
                   <Typography variant="caption" color="text.secondary">
-                    +{totalVotes - 5} más
+                    +{pollVoters[poll.id].length - 6} más
                   </Typography>
                 )}
               </Stack>
             )}
 
             <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-              {isActive && hasVoted && !isLoading && (
-                <Alert 
-                  severity="success" 
-                  sx={{ 
-                    flex: 1,
-                    '& .MuiAlert-message': { fontSize: '0.875rem' }
-                  }}
-                >
-                  ¡Gracias por participar! Tu voto ha sido registrado.
-                </Alert>
-              )}
-
-              {isLoading && (
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
-                  <Skeleton variant="rectangular" width={40} height={20} />
-                  <Typography variant="body2" color="text.secondary">
-                    Enviando tu voto...
-                  </Typography>
-                </Stack>
-              )}
-              
               <Stack direction="row" spacing={1}>
-                {isActive && !hasVoted && !isLoading && (
+                {/* Botón "Votar Ahora" */}
+                {isActive && !hasVoted && (
                   <Button
                     variant="contained"
                     color="success"
                     startIcon={<HowToVoteIcon />}
                     onClick={() => handleOpenVoteModal(poll)}
+                    disabled={isVoting}
                     sx={{ 
                       borderRadius: 999,
                       px: 3,
                       py: 1,
                       fontWeight: 600,
-                      textTransform: 'none',
-                      boxShadow: 2,
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      '&:hover': {
-                        boxShadow: '0 8px 16px rgba(76, 175, 80, 0.3)',
-                        transform: 'translateY(-2px) scale(1.05)',
-                        backgroundColor: 'success.dark',
-                      }
+                      textTransform: 'none'
                     }}
                   >
-                    Votar Ahora
+                    {isVoting ? "Enviando..." : "Votar Ahora"}
                   </Button>
                 )}
 
                 <Button
-                  variant={isActive || isPending ? "outlined" : "contained"}
-                  color={isActive || isPending ? "primary" : "inherit"}
+                  variant={isActive || isPending || isDraft ? "outlined" : "contained"}
+                  color={isActive || isPending || isDraft ? "primary" : "inherit"}
                   startIcon={<BarChartIcon />}
                   onClick={() => handleOpenResultsModal(poll)}
-                  sx={{ 
+                  sx={{
                     borderRadius: 999,
                     px: 2.5,
                     fontWeight: 500,
@@ -890,10 +853,20 @@ export default function VotesPrueba() {
                     }
                   }}
                 >
-                  {isActive || isPending ? "Resultados" : "Ver Resultado Final"}
+                  {(isActive || isPending || isDraft) ? "Participación" : "Resultado Final"}
                 </Button>
 
-                {(isActive || isPending) && (
+                {(isPollOpen && hasVoted) && (
+                  <Chip
+                    label="Ya votaste"
+                    color="info"
+                    size="small"
+                    variant="outlined"
+                    sx={{ fontWeight: 600 }}
+                  />
+                )}
+
+                {(isActive || isPending || isDraft) && (
                   <Tooltip title="Recibir notificaciones">
                     <IconButton 
                       size="small" 
@@ -921,24 +894,37 @@ export default function VotesPrueba() {
   const filteredPolls = useMemo(() => {
     let filtered = [...polls];
 
-    if (tab === "actives") {
-      filtered = filtered.filter(
-        (p) => p.state.toLowerCase().trim() === "activa"
-      );
-    } else if (tab === "finalizada") {
-      filtered = filtered.filter(
-        (p) => p.state.toLowerCase().trim() === "finalizada"
-      );
-    } else if (tab === "pendientes") {
-      filtered = filtered.filter(
-        (p) => p.state.toLowerCase().trim() === "pendiente"
-      );
+    // Si no es Administrador, solo Activas y Cerradas
+    if (!isAdministrador) {
+      filtered = filtered.filter(p => {
+        const s = p.state?.toLowerCase().trim();
+        return s === "activa" || s === "cerrada";
+      });
     }
 
-    return filtered.sort(
-      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
-  }, [polls, tab]);
+    if (tab === "actives") {
+      filtered = filtered.filter(p => p.state.toLowerCase().trim() === "activa");
+    } else if (tab === "finalizada") { // mantiene etiqueta "Finalizadas" pero filtra 'cerrada'
+      filtered = filtered.filter(p => p.state.toLowerCase().trim() === "cerrada");
+    } else if (tab === "pendientes") {
+      filtered = filtered.filter(p => p.state.toLowerCase().trim() === "pendiente");
+    }
+
+    return filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [polls, tab, isAdministrador]);
+
+  useEffect(() => {
+    // Cargar votos previos del usuario desde localStorage
+    const raw = localStorage.getItem("votedPollIds");
+    if (raw) {
+      try {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) {
+          setUserVotes(new Set(arr.map(Number)));
+        }
+      } catch {}
+    }
+  }, []);
 
   if (loading) return <p>Cargando votaciones...</p>;
   if (error) return <p>Error al cargar: {error}</p>;
@@ -951,17 +937,17 @@ export default function VotesPrueba() {
           { label: "Todas", value: "todas" },
           { label: "Activas", value: "actives" },
           { label: "Finalizadas", value: "finalizada" },
-          ...(isAdmin ? [{ label: "Pendientes", value: "pendientes" }] : [])
+          ...(isAdministrador ? [{ label: "Pendientes", value: "pendientes" }] : [])
         ]}
         selectedTab={tab}
         onTabChange={(v) => setTab(v as typeof tab)}
         actions={
-          isAdmin && (
+          isAdministrador && (
             <Button
               variant="contained"
               color="secondary"
               startIcon={<AddIcon />}
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => setShowNewVoteModal(true)}
               sx={{ borderRadius: 999, fontWeight: 600 }}
             >
               Nueva Votación
@@ -980,123 +966,117 @@ export default function VotesPrueba() {
         </Stack>
       )}
 
-      {/* ...existing modals (vote, results)... */}
-      
-      {/* Modal Crear Votación */}
+      {/* Modal NewVote interno - Como en Votes.tsx */}
       <Dialog
-        open={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        open={showNewVoteModal}
+        onClose={() => setShowNewVoteModal(false)}
         maxWidth="md"
         fullWidth
       >
         <DialogTitle>Crear Nueva Votación</DialogTitle>
         <DialogContent>
-          <Stack spacing={3} sx={{ mt: 1 }}>
-            <TextField
-              fullWidth
-              label="Título"
-              value={newPoll.title || ''}
-              onChange={(e) => setNewPoll(prev => ({ ...prev, title: e.target.value }))}
-            />
-            
-            <TextField
-              fullWidth
-              label="Descripción"
-              multiline
-              rows={3}
-              value={newPoll.description || ''}
-              onChange={(e) => setNewPoll(prev => ({ ...prev, description: e.target.value }))}
-            />
-
-            <FormControl fullWidth>
-              <InputLabel>Categoría</InputLabel>
-              <Select
-                value={newPoll.categoryPoll_id || 1}
-                label="Categoría"
-                onChange={(e) => setNewPoll(prev => ({ ...prev, categoryPoll_id: Number(e.target.value) }))}
-              >
-                {POLL_CATEGORIES.map((cat) => (
-                  <MenuItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <Stack direction="row" spacing={2}>
+          <form onSubmit={handleCreateVote}>
+            <Stack spacing={3} sx={{ mt: 1 }}>
               <TextField
                 fullWidth
-                label="Fecha de inicio"
-                type="datetime-local"
-                value={newPoll.startDate || ''}
-                onChange={(e) => setNewPoll(prev => ({ ...prev, startDate: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
+                label="Título"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                placeholder="Ej: Reparación de la pileta"
+                required
               />
+              
+              <FormControl fullWidth>
+                <InputLabel>Categoría</InputLabel>
+                <Select
+                  value={category}
+                  label="Categoría"
+                  onChange={(e) => setCategory(Number(e.target.value))}
+                >
+                  <MenuItem value={1}>General</MenuItem>
+                  <MenuItem value={2}>Mantenimiento</MenuItem>
+                  <MenuItem value={3}>Eventos</MenuItem>
+                </Select>
+              </FormControl>
+
               <TextField
                 fullWidth
-                label="Fecha de fin"
-                type="datetime-local"
-                value={newPoll.endDate || ''}
-                onChange={(e) => setNewPoll(prev => ({ ...prev, endDate: e.target.value }))}
-                InputLabelProps={{ shrink: true }}
+                label="Descripción"
+                multiline
+                minRows={3}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Describe el motivo de la votación..."
+                required
               />
-            </Stack>
 
-            <Typography variant="subtitle1">Opciones de votación</Typography>
-            {(newPoll.pollOptions || []).map((option, index) => (
-              <Stack key={index} direction="row" spacing={1} alignItems="center">
-                <TextField
-                  fullWidth
-                  label={`Opción ${index + 1}`}
-                  value={option}
-                  onChange={(e) => {
-                    const newOptions = [...(newPoll.pollOptions || [])];
-                    newOptions[index] = e.target.value;
-                    setNewPoll(prev => ({ ...prev, pollOptions: newOptions }));
-                  }}
-                />
-                {(newPoll.pollOptions || []).length > 2 && (
-                  <IconButton
-                    color="error"
-                    onClick={() => {
-                      const newOptions = (newPoll.pollOptions || []).filter((_, i) => i !== index);
-                      setNewPoll(prev => ({ ...prev, pollOptions: newOptions }));
-                    }}
+              <Box>
+                <Typography variant="subtitle1" gutterBottom>Opciones</Typography>
+                <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+                  <TextField
+                    fullWidth
+                    value={newOption}
+                    onChange={(e) => setNewOption(e.target.value)}
+                    placeholder="Nueva opción"
+                  />
+                  <Button
+                    variant="contained"
+                    onClick={handleAddOption}
+                    disabled={!newOption.trim()}
                   >
-                    <DeleteIcon />
-                  </IconButton>
+                    Añadir
+                  </Button>
+                </Stack>
+
+                <Stack spacing={1}>
+                  {options.map((opt, i) => (
+                    <Stack key={i} direction="row" alignItems="center" spacing={1}>
+                      <Typography sx={{ flex: 1 }}>{opt}</Typography>
+                      <Button
+                        size="small"
+                        color="error"
+                        onClick={() => handleRemoveOption(i)}
+                      >
+                        ✖
+                      </Button>
+                    </Stack>
+                  ))}
+                </Stack>
+
+                {formError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    {formError}
+                  </Alert>
                 )}
-              </Stack>
-            ))}
-            
-            <Button
-              variant="outlined"
-              startIcon={<AddIcon />}
-              onClick={() => setNewPoll(prev => ({ 
-                ...prev, 
-                pollOptions: [...(prev.pollOptions || []), '']
-              }))}
-              sx={{ alignSelf: 'flex-start' }}
-            >
-              Agregar Opción
-            </Button>
-          </Stack>
+
+                {createError && (
+                  <Alert severity="error" sx={{ mt: 2 }}>
+                    Error: {createError}
+                  </Alert>
+                )}
+              </Box>
+            </Stack>
+          </form>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setShowCreateModal(false)}>
+          <Button 
+            onClick={() => setShowNewVoteModal(false)}
+            disabled={createLoading}
+          >
             Cancelar
           </Button>
           <Button
             variant="contained"
-            onClick={handleCreatePoll}
-            disabled={!newPoll.title || !newPoll.description || (newPoll.pollOptions || []).filter(opt => opt.trim()).length < 2}
+            onClick={handleCreateVote}
+            disabled={createLoading || !title.trim() || !description.trim() || options.length < 2}
+            startIcon={createLoading ? <CircularProgress size={16} /> : undefined}
           >
-            Crear Votación
+            {createLoading ? "Creando..." : "Crear Votación"}
           </Button>
         </DialogActions>
       </Dialog>
 
-      {/* Modal Editar */}
+      {/* Modal Editar - Usar estados en minúscula como en NewVote */}
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -1105,7 +1085,15 @@ export default function VotesPrueba() {
       >
         <DialogTitle>Editar Votación</DialogTitle>
         <DialogContent>
-          {/* Similar content to create modal but for editing */}
+          {editErrors.length > 0 && (
+            <Stack sx={{ mb: 2 }} spacing={1}>
+              {editErrors.map((e, i) => (
+                <Alert key={i} severity="error" variant="outlined">
+                  {e}
+                </Alert>
+              ))}
+            </Stack>
+          )}
           <Stack spacing={3} sx={{ mt: 1 }}>
             <TextField
               fullWidth
@@ -1113,7 +1101,6 @@ export default function VotesPrueba() {
               value={newPoll.title || ''}
               onChange={(e) => setNewPoll(prev => ({ ...prev, title: e.target.value }))}
             />
-            
             <TextField
               fullWidth
               label="Descripción"
@@ -1122,7 +1109,20 @@ export default function VotesPrueba() {
               value={newPoll.description || ''}
               onChange={(e) => setNewPoll(prev => ({ ...prev, description: e.target.value }))}
             />
-
+            <FormControl fullWidth>
+              <InputLabel>Estado</InputLabel>
+              <Select
+                value={newPoll.state || 'activa'}
+                label="Estado"
+                onChange={(e) => setNewPoll(prev => ({ ...prev, state: e.target.value }))}
+              >
+                <MenuItem value="borrador">Borrador</MenuItem>
+                <MenuItem value="pendiente">Pendiente</MenuItem>
+                <MenuItem value="activa">Activa</MenuItem>
+                <MenuItem value="rechazada">Rechazada</MenuItem>
+                <MenuItem value="cerrada">Cerrada</MenuItem>
+              </Select>
+            </FormControl>
             <FormControl fullWidth>
               <InputLabel>Categoría</InputLabel>
               <Select
@@ -1130,20 +1130,17 @@ export default function VotesPrueba() {
                 label="Categoría"
                 onChange={(e) => setNewPoll(prev => ({ ...prev, categoryPoll_id: Number(e.target.value) }))}
               >
-                {POLL_CATEGORIES.map((cat) => (
-                  <MenuItem key={cat.id} value={cat.id}>
-                    {cat.name}
-                  </MenuItem>
+                {POLL_CATEGORIES.map((cat: { id: number; name: string }) => (
+                  <MenuItem key={cat.id} value={cat.id}>{cat.name}</MenuItem>
                 ))}
               </Select>
             </FormControl>
-
             <Stack direction="row" spacing={2}>
               <TextField
                 fullWidth
                 label="Fecha de inicio"
                 type="datetime-local"
-                value={newPoll.startDate || ''}
+                value={newPoll.startDate ? new Date(newPoll.startDate).toISOString().slice(0,16) : ''}
                 onChange={(e) => setNewPoll(prev => ({ ...prev, startDate: e.target.value }))}
                 InputLabelProps={{ shrink: true }}
               />
@@ -1151,7 +1148,7 @@ export default function VotesPrueba() {
                 fullWidth
                 label="Fecha de fin"
                 type="datetime-local"
-                value={newPoll.endDate || ''}
+                value={newPoll.endDate ? new Date(newPoll.endDate).toISOString().slice(0,16) : ''}
                 onChange={(e) => setNewPoll(prev => ({ ...prev, endDate: e.target.value }))}
                 InputLabelProps={{ shrink: true }}
               />
@@ -1159,9 +1156,7 @@ export default function VotesPrueba() {
           </Stack>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setShowEditModal(false)}>
-            Cancelar
-          </Button>
+          <Button onClick={() => setShowEditModal(false)}>Cancelar</Button>
           <Button
             variant="contained"
             onClick={handleEditPoll}
@@ -1171,43 +1166,98 @@ export default function VotesPrueba() {
           </Button>
         </DialogActions>
       </Dialog>
+      
+       {/* Modal de Resultados */}
+              <Dialog
+                open={!!selectedPollResults}
+                onClose={handleCloseResultsModal}
+                maxWidth="md"
+                fullWidth
+              >
+                {selectedPollResults && (() => {
+                  const results = getDetailedResults(selectedPollResults);
+                  return (
+                    <>
+                      <DialogTitle>
+                        <Typography variant="h6">Resultados: {selectedPollResults.title}</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                          {selectedPollResults.description}
+                        </Typography>
+                      </DialogTitle>
+                      
+                      <DialogContent>
+                        <Divider sx={{ mb: 3 }} />
+                        
+                        {/* Resumen */}
+                        <Stack spacing={2} sx={{ mb: 3 }}>
+                          <Stack direction="row" spacing={4}>
+                            <Box>
+                              <Typography variant="overline" color="text.secondary">Total Votos</Typography>
+                              <Typography variant="h4" color="primary">{results.totalVotes}</Typography>
+                            </Box>
+                            <Box>
+                              <Typography variant="overline" color="text.secondary">Participación</Typography>
+                              <Typography variant="h4" color="secondary">{results.participationPercent}%</Typography>
+                            </Box>
+                            <Box sx={{ flex: 1 }}>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={results.participationPercent} 
+                                sx={{ height: 12, borderRadius: 6, mt: 1 }}
+                              />
+                              <Typography variant="caption" color="text.secondary">
+                                de {totalUsers} usuarios totales
+                              </Typography>
+                            </Box>
+                          </Stack>
+      
+                          {results.winner && (
+                            <Alert severity="success" sx={{ mt: 2 }}>
+                              <Typography variant="subtitle1">
+                                <strong>Opción ganadora:</strong> "{results.winner.text}" 
+                                ({results.winner.votes} votos - {results.winner.percentage}%)
+                              </Typography>
+                            </Alert>
+                          )}
+                        </Stack>
+      
+                        {/* Desglose por opción */}
+                        <Typography variant="h6" gutterBottom>Desglose de votos</Typography>
+                        <Stack spacing={2}>
+                          {results.optionsWithResults.map((option, index) => (
+                            <Card key={option.id} variant="outlined" sx={{ p: 2 }}>
+                              <Stack spacing={1}>
+                                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                                  <Typography variant="subtitle1">
+                                    {index === 0 && results.winner ? '🏆 ' : ''}{option.text}
+                                  </Typography>
+                                  <Typography variant="h6" color="primary">
+                                    {option.votes} votos ({option.percentage}%)
+                                  </Typography>
+                                </Stack>
+                                <LinearProgress 
+                                  variant="determinate" 
+                                  value={option.percentage} 
+                                  sx={{ height: 8, borderRadius: 4 }}
+                                  color={index === 0 ? "success" : "primary"}
+                                />
+                              </Stack>
+                            </Card>
+                          ))}
+                        </Stack>
+                      </DialogContent>
+                      
+                      <DialogActions sx={{ p: 2 }}>
+                        <Button onClick={handleCloseResultsModal} variant="contained">
+                          Cerrar
+                        </Button>
+                      </DialogActions>
+                    </>
+                  );
+                })()}
+              </Dialog>
 
-      {/* Modal Cancelar (reemplaza Modal Eliminar) */}
-      <Dialog
-        open={showCancelModal}
-        onClose={() => setShowCancelModal(false)}
-        maxWidth="xs"
-        fullWidth
-      >
-        <DialogTitle>Cancelar Votación</DialogTitle>
-        <DialogContent>
-          <Typography variant="body1" sx={{ mb: 1 }}>
-            ¿Estás seguro de que quieres cancelar esta votación?
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            <strong>"{cancelingPoll?.title}"</strong>
-          </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-            La votación aparecerá como cancelada para todos los usuarios.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setShowCancelModal(false)} disabled={isCanceling}>
-            No, mantener
-          </Button>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleCancelPoll}
-            disabled={isCanceling}
-            startIcon={isCanceling ? <CircularProgress size={16} /> : <CancelIcon />}
-          >
-            {isCanceling ? 'Cancelando...' : 'Sí, cancelar'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* ...existing vote and results modals... */}
+      {/* Modal de Votación (restaurado) */}
       <Dialog
         open={!!selectedPoll}
         onClose={handleCloseVoteModal}
@@ -1222,15 +1272,13 @@ export default function VotesPrueba() {
                 {selectedPoll.description}
               </Typography>
             </DialogTitle>
-            
+
             <DialogContent>
-              <Divider sx={{ mb: 2 }} />
               <Typography variant="subtitle1" gutterBottom>
                 Selecciona tu opción:
               </Typography>
-              
               <RadioGroup
-                value={selectedOption || ''}
+                value={selectedOption ?? ''}
                 onChange={(e) => setSelectedOption(Number(e.target.value))}
               >
                 {selectedPoll.pollOptions?.map((option) => (
@@ -1238,17 +1286,13 @@ export default function VotesPrueba() {
                     key={option.id}
                     value={option.id}
                     control={<Radio />}
-                    label={
-                      <Typography variant="body1">
-                        {option.text}
-                      </Typography>
-                    }
+                    label={<Typography variant="body1">{option.text}</Typography>}
                     sx={{ mb: 1 }}
                   />
                 ))}
               </RadioGroup>
             </DialogContent>
-            
+
             <DialogActions sx={{ p: 2 }}>
               <Button onClick={handleCloseVoteModal}>
                 Cancelar
@@ -1266,100 +1310,44 @@ export default function VotesPrueba() {
         )}
       </Dialog>
 
+      {/* Modal Ya Votaste */}
       <Dialog
-        open={!!selectedPollResults}
-        onClose={handleCloseResultsModal}
-        maxWidth="md"
-        fullWidth
+        open={showAlreadyVotedModal}
+        onClose={() => setShowAlreadyVotedModal(false)}
+        maxWidth="xs"
       >
-        {selectedPollResults && (() => {
-          const results = getDetailedResults(selectedPollResults);
-          return (
-            <>
-              <DialogTitle>
-                <Typography variant="h6">Resultados: {selectedPollResults.title}</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-                  {selectedPollResults.description}
-                </Typography>
-              </DialogTitle>
-              
-              <DialogContent>
-                <Divider sx={{ mb: 3 }} />
-                
-                <Stack spacing={2} sx={{ mb: 3 }}>
-                  <Stack direction="row" spacing={4}>
-                    <Box>
-                      <Typography variant="overline" color="text.secondary">Total Votos</Typography>
-                      <Typography variant="h4" color="primary">{results.totalVotes}</Typography>
-                    </Box>
-                    <Box>
-                      <Typography variant="overline" color="text.secondary">Participación</Typography>
-                      <Typography variant="h4" color="secondary">{results.participationPercent}%</Typography>
-                    </Box>
-                    <Box sx={{ flex: 1 }}>
-                      <LinearProgress 
-                        variant="determinate" 
-                        value={results.participationPercent} 
-                        sx={{ height: 12, borderRadius: 6, mt: 1 }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        de {totalUsers} usuarios totales
-                      </Typography>
-                    </Box>
-                  </Stack>
-
-                  {results.winner && (
-                    <Alert severity="success" sx={{ mt: 2 }}>
-                      <Typography variant="subtitle1">
-                        <strong>Opción ganadora:</strong> "{results.winner.text}" 
-                        ({results.winner.votes} votos - {results.winner.percentage}%)
-                      </Typography>
-                    </Alert>
-                  )}
-                </Stack>
-                <Typography variant="h6" gutterBottom>Desglose de votos</Typography>
-                <Stack spacing={2}>
-                  {results.optionsWithResults.map((option, index) => (
-                    <Card key={option.id} variant="outlined" sx={{ p: 2 }}>
-                      <Stack spacing={1}>
-                        <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography variant="subtitle1">
-                            {index === 0 && results.winner ? '🏆 ' : ''}{option.text}
-                          </Typography>
-                          <Typography variant="h6" color="primary">
-                            {option.votes} votos ({option.percentage}%)
-                          </Typography>
-                        </Stack>
-                        <LinearProgress
-                          variant="determinate"
-                          value={option.percentage}
-                          sx={{ height: 8, borderRadius: 4 }}
-                        />
-                      </Stack>
-                    </Card>
-                  ))}
-                </Stack>
-              </DialogContent>
-              
-              <DialogActions sx={{ p: 2 }}>
-                <Button onClick={handleCloseResultsModal} variant="contained">
-                  Cerrar
-                </Button>
-              </DialogActions>
-            </>
-          );
-        })()}
+        <DialogTitle>Ya participaste</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            Ya emitiste tu voto en esta votación. Solo se permite un voto por usuario.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowAlreadyVotedModal(false)}>Cerrar</Button>
+        </DialogActions>
       </Dialog>
 
-      <SuccessModal 
-        open={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
-      />
-      
-      <ErrorModal
-        errorMessage={voteError as string}
-        onClose={() => setShowErrorModal(false)}
-        open={showErrorModal && !!voteError}
+      {/* Modal Error Genérico Voto */}
+      <Dialog
+        open={showVoteErrorModal}
+        onClose={() => setShowVoteErrorModal(false)}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Error al votar</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="error">
+            {voteErrorMessage || "Ocurrió un error procesando el voto."}
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setShowVoteErrorModal(false)}>Cerrar</Button>
+        </DialogActions>
+      </Dialog>
+
+      <SuccessModal
+        open={showSuccessModal}                 // <-- agregado
+        onClose={() => setShowSuccessModal(false)} // <-- agregado
       />
     </Box>
   );

@@ -15,7 +15,6 @@ import UpdateData from "./pages/UpdateData";
 import Profile from "./pages/Profile";
 import ChangeData from "./pages/ChangeData";
 import Votes from "./pages/Votes";
-import VotesPrueba from "./pages/VotesPrueba";
 import Meetings from "./pages/Meetings";
 import Documents from "./pages/Documents";
 import ExpensesPage from "./pages/Expenses";
@@ -30,7 +29,6 @@ import SelectConsortium from "./pages/SelectConsortium";
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import AdminAudit from "./pages/admin/AdminAudit";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
-import AdminVotes from "./pages/admin/AdminVotes";
 import AdminSuppliers from "./pages/admin/AdminSuppliers";
 import AdminFactura from "./pages/admin/AdminExpenses";
 import AdminDocuments from "./pages/admin/AdminDocuments";
@@ -53,7 +51,6 @@ export default function App() {
             <Route path="perfil" element={<Profile />} />
             <Route path="editarInformacion" element={<ChangeData />} />
             <Route path="votaciones" element={<Votes />} />
-            <Route path="votaciones-prueba" element={<VotesPrueba />} />
             <Route path="reuniones" element={<Meetings />} />
             <Route path="documentos" element={<Documents />} />
             <Route path="expensas" element={<ExpensesPage />} />
@@ -65,6 +62,7 @@ export default function App() {
             {["todas","general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"]
             .map(f => <Route key={f} path={`forums/${f}`} element={<Forums />} />)}
             <Route path="forums/comentarios" element={<Comentarios />} />
+
           </Route>
 
           <Route path="/admin" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><Layout /></RequireRoles></RequireAuth>}>
@@ -75,8 +73,7 @@ export default function App() {
             <Route path="foros" element={<Forums />} />
             <Route path="auditoria" element={<AdminAudit />} />
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
-            <Route path="votaciones" element={<AdminVotes />} />
-            <Route path="votaciones-prueba" element={<VotesPrueba />} />
+            <Route path="votaciones" element={<Votes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
             <Route path="expensas" element={<AdminFactura />} />
             <Route path="documents" element={<AdminDocuments />} />
