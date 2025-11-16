@@ -1,45 +1,15 @@
 // src/pages/Forums.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Button,
-  Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  CircularProgress,
-  Avatar,
-  TextField,
-  Collapse,
-  Divider,
-  Paper,
-  IconButton,
-  Tabs,
-  Tab,
+  Box, Card, CardContent, Typography, Chip, Button, Stack, Dialog, DialogContent,
+  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton, Tabs, Tab
 } from "@mui/material";
 import {
-  Add as AddIcon,
-  ChatBubbleOutline as ChatIcon,
-  Groups as GroupsIcon,
-  TrendingUp as TrendingIcon,
-  ThumbUp as ThumbUpIcon,
-  ThumbDown as ThumbDownIcon,
-  Reply as ReplyIcon,
-  ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
-  Send as SendIcon,
-  VisibilityOutlined,
-  PushPinOutlined,
-  PushPin,
-  EditOutlined,
-  DeleteOutline,
-  FilterList as FilterListIcon,
-  LockOutlined,
+  Add as AddIcon, ChatBubbleOutline as ChatIcon, Groups as GroupsIcon,
+  TrendingUp as TrendingIcon, ThumbUp as ThumbUpIcon, ThumbDown as ThumbDownIcon,
+  Reply as ReplyIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon,
+  Send as SendIcon, VisibilityOutlined, PushPinOutlined, PushPin,
+  EditOutlined, DeleteOutline, FilterList as FilterListIcon
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
 import NewPost from "../components/modals/NewPost";
@@ -93,20 +63,13 @@ function formatDateNumeric(dateString?: string | null) {
   const d = new Date(dateString);
   return Number.isNaN(d.getTime())
     ? dateString
-    : d.toLocaleDateString("es-AR", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      });
+    : d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
 function toSlug(text: string) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
+  return text.toLowerCase()
+    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
 
 const ADMIN_TAB_COLORS: Record<string, string> = {
@@ -145,6 +108,35 @@ const Forums: React.FC = () => {
   const [loadError, setLoadError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+useEffect(() => {
+ 
+  if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
+    setLoadError(null);
+  }
+  
+  
+  if (errorForums || errorThreads) {
+    const errorMsg = String(errorForums || errorThreads);
+    
+    
+    const is404 = errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found") ||
+                  errorMsg.toLowerCase().includes("status code 404");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
+                      errorMsg.toLowerCase().includes("no hay");
+    
+    if (is404 || isNotFound) {
+      
+      setLoadError(null);
+    } else {
+   
+      setLoadError("No se pudo cargar el foro. Intentá nuevamente más tarde.");
+    }
+  }
+}, [forumsRaw, threadsRaw, errorForums, errorThreads]);
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isAdminRole =
@@ -154,29 +146,14 @@ const Forums: React.FC = () => {
 
   const [open, setOpen] = useState(false);
   const currentUserId = Number(localStorage.getItem("userId") || 0);
+  const { mutate: toggleMutate } =
+    useMutation<ReactionResponse, { user_id: number; thread_id?: number; message_id?: number; reactionType: number }>("/Reactions/toggle", "post");
 
-  const { mutate: toggleMutate } = useMutation<
-    ReactionResponse,
-    { user_id: number; thread_id?: number; message_id?: number; reactionType: number }
-  >("/Reactions/toggle", "post");
-
-  const [enriched, setEnriched] = useState<
-    Record<
-      string,
-      {
-        likes: number;
-        dislikes: number;
-        totalReactions: number;
-        commentsCount: number;
-        comments?: Message[];
-        loading?: boolean;
-        error?: boolean;
-        reacting?: boolean;
-        userReaction?: 1 | -1 | 0;
-        pinned?: boolean;
-      }
-    >
-  >({});
+  const [enriched, setEnriched] = useState<Record<string, {
+    likes: number; dislikes: number; totalReactions: number; commentsCount: number;
+    comments?: Message[]; loading?: boolean; error?: boolean; reacting?: boolean;
+    userReaction?: 1 | -1 | 0; pinned?: boolean;
+  }>>({});
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
   const API_BASE =
@@ -304,9 +281,7 @@ const Forums: React.FC = () => {
         }
         const json: Forum = await res.json();
         if (mounted) setForumStats(json);
-      } catch {
-        if (mounted) setForumStats(null);
-      }
+      } catch { if (mounted) setForumStats(null); }
     })();
     return () => {
       mounted = false;
@@ -322,7 +297,6 @@ const Forums: React.FC = () => {
     }
     let mounted = true;
     const controllers: AbortController[] = [];
-
     const fetchForThread = async (threadId: number) => {
       const key = String(threadId);
       setEnriched((p) => ({
@@ -356,36 +330,25 @@ const Forums: React.FC = () => {
       } catch {}
 
       if (!mounted) return;
-
       setEnriched((prev) => ({
         ...prev,
         [key]: {
           ...prev[key],
           likes: reactions?.likes ?? 0,
           dislikes: reactions?.dislikes ?? 0,
-          totalReactions:
-            reactions?.total ??
-            (reactions?.likes ?? 0) + (reactions?.dislikes ?? 0),
+          totalReactions: reactions?.total ?? ((reactions?.likes ?? 0) + (reactions?.dislikes ?? 0)),
           commentsCount: Array.isArray(messages) ? messages.length : 0,
           comments: Array.isArray(messages) ? messages : [],
           loading: false,
           error: false,
           reacting: false,
-          userReaction:
-            typeof reactions.userReaction === "number"
-              ? (reactions.userReaction as 1 | -1 | 0)
-              : 0,
+          userReaction: typeof reactions.userReaction === "number" ? reactions.userReaction as 1 | -1 | 0 : 0,
           pinned: prev[key]?.pinned ?? false,
         },
       }));
     };
-
     postsRaw.forEach((p) => fetchForThread(p.id));
-
-    return () => {
-      mounted = false;
-      controllers.forEach((c) => c.abort());
-    };
+    return () => { mounted = false; controllers.forEach(c => c.abort()); };
   }, [postsRaw, API_BASE]);
 
   // Proyección de posts para UI
@@ -465,7 +428,7 @@ const Forums: React.FC = () => {
   const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
 
   const toggleThread = (threadId: number) => {
-    setExpandedThreads((prev) => {
+    setExpandedThreads(prev => {
       const s = new Set(prev);
       s.has(threadId) ? s.delete(threadId) : s.add(threadId);
       return s;
@@ -480,10 +443,7 @@ const Forums: React.FC = () => {
     }));
   };
 
-  const toggleReactionForThread = async (
-    threadId: number,
-    reactionType: 1 | -1
-  ) => {
+  const toggleReactionForThread = async (threadId: number, reactionType: 1 | -1) => {
     const key = String(threadId);
     const current =
       enriched[key] ?? {
@@ -502,12 +462,8 @@ const Forums: React.FC = () => {
     const willRemove = prevUser === reactionType;
     const newUser = (willRemove ? 0 : reactionType) as 1 | -1 | 0;
     const optimistic = {
-      likes:
-        current.likes +
-        (reactionType === 1 ? (willRemove ? -1 : 1) : 0),
-      dislikes:
-        current.dislikes +
-        (reactionType === -1 ? (willRemove ? -1 : 1) : 0),
+      likes: current.likes + (reactionType === 1 ? (willRemove ? -1 : 1) : 0),
+      dislikes: current.dislikes + (reactionType === -1 ? (willRemove ? -1 : 1) : 0),
       totalReactions: current.totalReactions + (willRemove ? -1 : 1),
       userReaction: newUser,
     };
@@ -529,14 +485,10 @@ const Forums: React.FC = () => {
             ...(p[key] ?? {}),
             likes: result.likes,
             dislikes: result.dislikes,
-            totalReactions:
-              result.total ?? result.likes + result.dislikes,
+            totalReactions: result.total ?? result.likes + result.dislikes,
             reacting: false,
             error: false,
-            userReaction:
-              typeof result.userReaction === "number"
-                ? (result.userReaction as 1 | -1 | 0)
-                : newUser,
+            userReaction: typeof result.userReaction === "number" ? result.userReaction as 1 | -1 | 0 : newUser,
           },
         }));
         return;
@@ -552,22 +504,15 @@ const Forums: React.FC = () => {
           ...(p[key] ?? {}),
           likes: reacJson.likes ?? 0,
           dislikes: reacJson.dislikes ?? 0,
-          totalReactions:
-            reacJson.total ??
-            (reacJson.likes ?? 0) + (reacJson.dislikes ?? 0),
+          totalReactions: reacJson.total ?? (reacJson.likes ?? 0) + (reacJson.dislikes ?? 0),
           reacting: false,
           error: false,
-          userReaction:
-            typeof reacJson.userReaction === "number"
-              ? (reacJson.userReaction as 1 | -1 | 0)
-              : newUser,
+          userReaction: typeof reacJson.userReaction === "number" ? reacJson.userReaction as 1 | -1 | 0 : newUser,
         },
       }));
     } catch {
       try {
-        const reacRes = await fetch(
-          `${API_BASE}/Reactions/thread/${threadId}`
-        );
+        const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`);
         if (reacRes.ok) {
           const reacJson: ReactionResponse = await reacRes.json();
           setEnriched((p) => ({
@@ -576,38 +521,17 @@ const Forums: React.FC = () => {
               ...(p[key] ?? {}),
               likes: reacJson.likes ?? 0,
               dislikes: reacJson.dislikes ?? 0,
-              totalReactions:
-                reacJson.total ??
-                (reacJson.likes ?? 0) + (reacJson.dislikes ?? 0),
+              totalReactions: reacJson.total ?? (reacJson.likes ?? 0) + (reacJson.dislikes ?? 0),
               reacting: false,
               error: false,
-              userReaction:
-                typeof reacJson.userReaction === "number"
-                  ? (reacJson.userReaction as 1 | -1 | 0)
-                  : prevUser,
+              userReaction: typeof reacJson.userReaction === "number" ? reacJson.userReaction as 1 | -1 | 0 : prevUser,
             },
           }));
         } else {
-          setEnriched((p) => ({
-            ...p,
-            [key]: {
-              ...(p[key] ?? {}),
-              reacting: false,
-              error: true,
-              userReaction: prevUser,
-            },
-          }));
+          setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), reacting: false, error: true, userReaction: prevUser } }));
         }
       } catch {
-        setEnriched((p) => ({
-          ...p,
-          [key]: {
-            ...(p[key] ?? {}),
-            reacting: false,
-            error: true,
-            userReaction: prevUser,
-          },
-        }));
+        setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), reacting: false, error: true, userReaction: prevUser } }));
       }
     }
   };
@@ -861,22 +785,10 @@ const Forums: React.FC = () => {
     const hasReplies = (meta.commentsCount ?? 0) > 0;
 
     return (
-      <Card
-        key={thread.id}
-        variant="outlined"
-        sx={{
-          borderRadius: 3,
-          transition: "all .2s",
-          "&:hover": { boxShadow: 2, transform: "translateY(-1px)" },
-        }}
-      >
+      <Card key={thread.id} variant="outlined" sx={{ borderRadius: 3, transition: "all .2s", "&:hover": { boxShadow: 2, transform: "translateY(-1px)" } }}>
         <CardContent>
           <Stack spacing={2}>
-            <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="flex-start"
-            >
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
               <Box sx={{ flex: 1 }}>
                 <Stack
                   direction="row"
@@ -888,12 +800,7 @@ const Forums: React.FC = () => {
                     {thread.title}
                   </Typography>
                   {thread.chips.map((chip: any, i: number) => (
-                    <Chip
-                      key={`${chip.label}-${i}`}
-                      label={chip.label}
-                      color={chip.color}
-                      size="small"
-                    />
+                    <Chip key={`${chip.label}-${i}`} label={chip.label} color={chip.color} size="small" />
                   ))}
 
                   {isAdmin && meta.pinned && (
@@ -912,6 +819,7 @@ const Forums: React.FC = () => {
                 </Typography>
               </Box>
 
+              {/* Herramientas SOLO admin */}
               {isAdmin && (
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
                   <IconButton
@@ -976,32 +884,10 @@ const Forums: React.FC = () => {
               )}
             </Stack>
 
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              justifyContent="space-between"
-            >
+            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
               <Stack direction="row" spacing={2} alignItems="center">
-                <Button
-                  size="small"
-                  startIcon={
-                    <ThumbUpIcon
-                      sx={{
-                        color:
-                          meta.userReaction === 1
-                            ? "success.main"
-                            : undefined,
-                      }}
-                    />
-                  }
-                  onClick={() =>
-                    !meta.reacting &&
-                    toggleReactionForThread(thread.threadId, 1)
-                  }
-                  disabled={!!meta.reacting}
-                  sx={{ minWidth: "auto", px: 1 }}
-                >
+                <Button size="small" startIcon={<ThumbUpIcon sx={{ color: meta.userReaction === 1 ? "success.main" : undefined }} />}
+                        onClick={() => !meta.reacting && toggleReactionForThread(thread.threadId, 1)} disabled={!!meta.reacting} sx={{ minWidth: "auto", px: 1 }}>
                   {meta.likes}
                 </Button>
                 <Button
@@ -1054,13 +940,7 @@ const Forums: React.FC = () => {
               <Box sx={{ mt: 2 }}>
                 <Divider sx={{ mb: 2 }} />
                 {meta.loading ? (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "center",
-                      py: 2,
-                    }}
-                  >
+                  <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
                     <CircularProgress size={24} />
                     <Typography variant="body2" sx={{ ml: 1 }}>
                       Cargando mensajes...
@@ -1408,17 +1288,10 @@ const Forums: React.FC = () => {
   return (
     <Box className="foraria-page-container" sx={{ ml: 0 }}>
       <PageHeader
-        title={`Foro ${
-          currentCategoryName !== "Todas" ? `- ${currentCategoryName}` : ""
-        }`}
+        title={`Foro ${currentCategoryName !== "Todas" ? `- ${currentCategoryName}` : ""}`}
+        // Unificamos estética: quitamos tabs "Todos/Populares/Recientes" para usuarios
         actions={
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<AddIcon />}
-            onClick={() => setOpen(true)}
-            sx={{ borderRadius: 999, fontWeight: 600 }}
-          >
+          <Button variant="contained" color="secondary" startIcon={<AddIcon />} onClick={() => setOpen(true)} sx={{ borderRadius: 999, fontWeight: 600 }}>
             Nuevo Post
           </Button>
         }
@@ -1490,19 +1363,14 @@ const Forums: React.FC = () => {
           sx={{ mb: 1.5 }}
         >
           <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
-          <Typography
-            variant="subtitle1"
-            color="primary"
-            sx={{ fontWeight: 600 }}
-          >
-            Filtros
-          </Typography>
+          <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>Filtros</Typography>
         </Stack>
         <Tabs
           value={currentTabKey}
           onChange={(_, v) => {
             if (isAdmin) setAdminCategory(v);
             else {
+              // navegar al slug correspondiente
               const slug = toSlug(v);
               navigate(`/forums/${slug}`);
             }
@@ -1520,7 +1388,7 @@ const Forums: React.FC = () => {
               borderColor: "divider",
               borderRadius: 2,
               color: "text.primary",
-              "&:hover": { backgroundColor: "action.hover" },
+              "&:hover": { backgroundColor: "action.hover" }
             },
             "& .Mui-selected": {
               color: "white !important",
@@ -1638,21 +1506,8 @@ const Forums: React.FC = () => {
         <DialogContent>
           {!resolvedForumId ? (
             <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ mb: 1 }}
-              >
-                No se pudo identificar el foro destino.
-              </Typography>
-              <Button
-                onClick={() => {
-                  refetchForums();
-                }}
-                variant="outlined"
-              >
-                Reintentar
-              </Button>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>No se pudo identificar el foro destino.</Typography>
+              <Button onClick={() => { refetchForums(); }} variant="outlined">Reintentar</Button>
             </Box>
           ) : (
             <NewPost
