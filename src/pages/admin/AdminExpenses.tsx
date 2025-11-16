@@ -25,7 +25,7 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoForaria from "../../assets/Isotipo-Color.png";
-
+const token = localStorage.getItem("accessToken");
 interface InvoiceItem {
   description: string;
   amount: number;
@@ -110,7 +110,7 @@ const handleCloseDetails = () => {
   const fetchInvoices = async () => {
     setLoadingInvoices(true);
     try {
-      const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice");
+      const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice", { headers: { Authorization: `Bearer ${token}` }});
       setInvoices(data || []);
     } catch (err) {
       console.error("Error al cargar facturas", err);
@@ -123,7 +123,7 @@ const handleCloseDetails = () => {
   const fetchExpenses = async () => {
     setLoadingExpenses(true);
     try {
-      const { data } = await axios.get<Expense[]>("https://localhost:7245/api/Expense");
+      const { data } = await axios.get<Expense[]>("https://localhost:7245/api/Expense", { headers: { Authorization: `Bearer ${token}` }});
       const sorted = (data || []).slice().sort((a, b) => {
         const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -183,10 +183,10 @@ const handleCloseDetails = () => {
       console.log("Enviando Expense payload:", JSON.stringify(expensePayload));
 
       const expenseResp = await axios.post(
-        "https://localhost:7245/api/Expense",
+        "https://localhost:7245/api/Expense" , 
         JSON.stringify(expensePayload),
         {
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           validateStatus: () => true,
         }
       );
@@ -210,7 +210,7 @@ const handleCloseDetails = () => {
           "https://localhost:7245/api/ExpenseDetail",
           JSON.stringify(detailPayload),
           {
-            headers: { "Content-Type": "application/json" },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             validateStatus: () => true,
           }
         );

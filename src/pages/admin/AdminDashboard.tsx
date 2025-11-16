@@ -79,21 +79,9 @@ const navigate = useNavigate();
   
   const { header, kpis, recentActivity, tasks } = data;
 
-  
-const handleLogout = async () => {
-    await authService.logout();
-    navigate("/iniciarSesion", { replace: true });
-  };
+
   return (
       <Box className="foraria-page-container">
-           <Button
-              onClick={handleLogout}
-              color="secondary"
-              variant="contained"
-              size="small"
-            >
-              Cerrar sesión
-            </Button>
         <PageHeader
           title={header.title}
           stats={[

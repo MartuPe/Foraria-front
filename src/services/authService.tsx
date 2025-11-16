@@ -39,7 +39,7 @@ export type LoginResponse = {
 export const authService = {
   async login(email: string, password: string): Promise<LoginResponse> {
     const { data } = await api.post<LoginResponse>("/User/login", { email, password });
-
+console.log("Login response data:", data);
     // 1) Guardar tokens
     const access = data.accessToken ?? data.token;
     if (access) storage.token = access;
