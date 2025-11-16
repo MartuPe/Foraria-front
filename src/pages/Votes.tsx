@@ -200,7 +200,10 @@ export default function VotesPrueba() {
   }, []);
 
   useEffect(() => {
-    if (pollsData) setPolls(pollsData);
+    if (pollsData) {
+      setPolls(pollsData);
+      // Eliminar esta línea: setLoadError(null);
+    }
   }, [pollsData]);
 
   useEffect(() => {
