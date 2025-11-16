@@ -159,7 +159,7 @@ export default function VotesPrueba() {
   });
   const [editErrors, setEditErrors] = useState<string[]>([]);
 
-  const { data: pollsData, loading, error, refetch } = useGet<Poll[]>(
+  const { data: pollsData, loading, refetch } = useGet<Poll[]>(
     "/polls/with-results"
   );
   const [selectedPollResults, setSelectedPollResults] = useState<Poll | null>(null);
@@ -926,17 +926,16 @@ export default function VotesPrueba() {
   }, []);
 
   if (loading) {
-  return (
-    <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
-      <Stack direction="row" spacing={2} alignItems="center">
-        <CircularProgress />
-        <Typography>Cargando votaciones…</Typography>
-      </Stack>
-    </Box>
-  );
-}
+    return (
+      <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <CircularProgress />
+          <Typography>Cargando votaciones…</Typography>
+        </Stack>
+      </Box>
+    );
+  }
 
-const isEmpty = polls.length === 0;
   return (
     <Box className="foraria-page-container">
       <PageHeader
