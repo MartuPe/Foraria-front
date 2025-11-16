@@ -69,7 +69,7 @@ export interface AdminResponseCard {
 
 export interface InfoCardProps {
   title: string;
-  subtitle?: string;
+  subtitle?:  React.ReactNode;
   description?: string;
   chips?: InfoChip[];
   fields?: InfoField[];

@@ -473,8 +473,7 @@ export default function VotesPrueba() {
     }).sort((a, b) => b.votes - a.votes);
 
     const winner = optionsWithResults.length > 0 ? optionsWithResults[0] : null;
-    const participationPercent = totalUsers > 0 ? Math.min(Math.round((totalVotes / totalUsers) * 100), 100) : 0;
-
+    const participationPercent = totalUsers > 0 ? Math.round((totalVotes / totalUsers) * 100) : 0;
     return {
       totalVotes,
       participationPercent,
@@ -926,9 +925,18 @@ export default function VotesPrueba() {
     }
   }, []);
 
-  if (loading) return <p>Cargando votaciones...</p>;
-  if (error) return <p>Error al cargar: {error}</p>;
+  if (loading) {
+  return (
+    <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <CircularProgress />
+        <Typography>Cargando votaciones…</Typography>
+      </Stack>
+    </Box>
+  );
+}
 
+const isEmpty = polls.length === 0;
   return (
     <Box className="foraria-page-container">
       <PageHeader

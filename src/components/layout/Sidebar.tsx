@@ -18,7 +18,7 @@ import {
   CalendarToday,
   HowToVote as VotacionesIcon,
   Groups as ReunionesIcon,
-  Description as DocumentosIcon,
+  // Description as DocumentosIcon,
   Forum as ForosIcon,
   Settings,
   ChevronRight,
@@ -31,7 +31,7 @@ import {
   DirectionsCar,
 } from "@mui/icons-material";
 import { useLocation, useNavigate } from "react-router-dom";
-import logoForaria from "../../assets/Isotipo-Color.png";
+import isotipoForaria from "../../assets/Isotipo-Color.png";
 
 interface MenuItem {
   id: string;
@@ -47,7 +47,7 @@ const menuItems: MenuItem[] = [
   { id: "calendario", label: "Calendario", icon: <CalendarToday />, path: "/calendario" },
   { id: "votaciones", label: "Votaciones", icon: <VotacionesIcon />, path: "/votaciones" },
   { id: "reuniones", label: "Reuniones", icon: <ReunionesIcon />, path: "/reuniones" },
-  { id: "documentos", label: "Documentos", icon: <DocumentosIcon />, path: "/documentos" },
+  // { id: "documentos", label: "Documentos", icon: <DocumentosIcon />, path: "/documentos" },
 ];
 
 interface ForumApiItem {
@@ -202,7 +202,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           minHeight: "auto",
         }}
       >
-        <Box component="img" src={logoForaria} alt="Foraria Logo" sx={{ width: 32, height: 32, objectFit: "contain" }} />
+        <Box component="img" src={isotipoForaria} alt="Foraria Logo" sx={{ width: 32, height: 32, objectFit: "contain" }} />
         <Box>
           <Typography variant="h6" sx={{ fontWeight: 700, color: "white", fontSize: "1.1rem" }}>
             Foraria

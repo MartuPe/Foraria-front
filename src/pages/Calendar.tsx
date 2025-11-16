@@ -19,7 +19,8 @@ export default function Calendar() {
   const [title, setTitle] = React.useState("");
   const [reserveDate, setReserveDate] = React.useState<Date | null>(null);
   const [fcLocale, setFcLocale] = React.useState<any>(undefined);
-  const { data: reserves, loading, refetch } = useGet<Reserve[]>("/Reserve");
+  const urlGetReserves = `/Reserve/${localStorage.getItem("consortiumId")}`;
+  const { data: reserves, loading, refetch } = useGet<Reserve[]>(urlGetReserves);
 
   const initialDate = React.useMemo(() => {
     const now = new Date();
