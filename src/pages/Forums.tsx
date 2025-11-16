@@ -64,8 +64,8 @@ interface Thread {
 
 interface Forum {
   id: number;
-  category: number; // 0 = General, 1..5 resto
-  categoryName: string | null;
+  category: number;
+  categoryName: string;
   countThreads: number;
   countResponses: number;
   countUserActives: number;
@@ -128,36 +128,6 @@ const CATEGORY_LABELS = [
   "Garage y Parking",
 ] as const;
 
-type CategoryLabel = (typeof CATEGORY_LABELS)[number];
-
-function resolveCategoryLabel(key: string): CategoryLabel {
-  const slug = toSlug(key);
-  switch (slug) {
-    case "administracion":
-      return "Administración";
-    case "seguridad":
-      return "Seguridad";
-    case "mantenimiento":
-      return "Mantenimiento";
-    case "espacios-comunes":
-    case "espacioscomunes":
-      return "Espacios Comunes";
-    case "garage-parking":
-    case "garageyparking":
-    case "garage-y-parking":
-      return "Garage y Parking";
-    default:
-      return "General";
-  }
-}
-
-// General => 0, Administración => 1, ..., Garage => 5
-function resolveNumericCategory(key: string): number | null {
-  const label = resolveCategoryLabel(key);
-  const idx = CATEGORY_LABELS.indexOf(label as CategoryLabel); // 0..5
-  return idx === -1 ? null : idx;
-}
-
 const Forums: React.FC = () => {
   const {
     data: forumsRaw,
@@ -165,35 +135,14 @@ const Forums: React.FC = () => {
     error: errorForums,
     refetch: refetchForums,
   } = useGet<Forum[]>("/Forum");
-
   const {
     data: threadsRaw,
     loading: loadingThreads,
     error: errorThreads,
     refetch: refetchThreads,
   } = useGet<Thread[]>("/Thread");
-
-  const forumsStatus = (errorForums as any)?.response?.status as
-    | number
-    | undefined;
-  const threadsStatus = (errorThreads as any)?.response?.status as
-    | number
-    | undefined;
-
-  const safeForums = useMemo(() => {
-    return forumsStatus === 404 ? [] : forumsRaw;
-  }, [forumsStatus, forumsRaw]);
-
-  const safeThreads = useMemo(() => {
-    return threadsStatus === 404 ? [] : threadsRaw;
-  }, [threadsStatus, threadsRaw]);
-
   const loading = loadingForums || loadingThreads;
-
-  const hasHardError =
-    (!!errorForums && forumsStatus !== 404) ||
-    (!!errorThreads && threadsStatus !== 404);
-
+  const [loadError, setLoadError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -204,21 +153,6 @@ const Forums: React.FC = () => {
   const isAdmin = isAdminRole || isAdminRoute;
 
   const [open, setOpen] = useState(false);
-  const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
-
-  const [editOpen, setEditOpen] = useState(false);
-  const [threadBeingEdited, setThreadBeingEdited] = useState<{
-    id: number;
-    title: string;
-    description: string;
-  } | null>(null);
-
-  const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [statusDialogMessage, setStatusDialogMessage] = useState("");
-
   const currentUserId = Number(localStorage.getItem("userId") || 0);
 
   const { mutate: toggleMutate } = useMutation<
@@ -245,10 +179,37 @@ const Forums: React.FC = () => {
   >({});
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
+  const API_BASE =
+    process.env.REACT_APP_API_URL || "http://localhost:7245/api";
 
-  const API_BASE = process.env.REACT_APP_API_URL || "http://localhost:5205/api";
+  // manejo de error de carga
+  useEffect(() => {
+    if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
+      setLoadError(null);
+    }
 
-  // ====== categoría actual (url o tab) ======
+    if (errorForums || errorThreads) {
+      const errorMsg = String(errorForums || errorThreads);
+
+      const is404 =
+        errorMsg.toLowerCase().includes("404") ||
+        errorMsg.toLowerCase().includes("not found") ||
+        errorMsg.toLowerCase().includes("status code 404");
+
+      const isNotFound =
+        errorMsg.toLowerCase().includes("no se encontraron") ||
+        errorMsg.toLowerCase().includes("no hay");
+
+      if (is404 || isNotFound) {
+        setLoadError(null);
+      } else {
+        setLoadError(
+          "No se pudo cargar el foro. Intentá nuevamente más tarde."
+        );
+      }
+    }
+  }, [forumsRaw, threadsRaw, errorForums, errorThreads]);
+
   const slugFromPath = useMemo(() => {
     const match = location.pathname.match(/\/forums\/([^/]+)/);
     return match ? match[1] : "general";
@@ -257,154 +218,117 @@ const Forums: React.FC = () => {
   const adminCategory =
     (searchParams.get("category") as keyof typeof ADMIN_TAB_COLORS | null) ||
     "Todas";
-
   const setAdminCategory = (cat: string) => setSearchParams({ category: cat });
 
-  const currentCategoryName = useMemo<CategoryLabel | "Todas">(() => {
-    if (isAdmin && adminCategory === "Todas") return "Todas";
-    const key = isAdmin ? adminCategory : slugFromPath;
-    return resolveCategoryLabel(key);
-  }, [isAdmin, adminCategory, slugFromPath]);
-
-  // ====== ids de foros para la categoría actual ======
-  const forumIdsForCategory = useMemo(() => {
-    if (!safeForums) return new Set<number>();
-
-    if (isAdmin && adminCategory === "Todas") {
-      return new Set(safeForums.map((f) => f.id));
+  const currentCategoryName = useMemo(() => {
+    if (!forumsRaw) {
+      switch (isAdmin ? adminCategory : slugFromPath) {
+        case "administracion":
+        case "Administración":
+          return "Administración";
+        case "seguridad":
+        case "Seguridad":
+          return "Seguridad";
+        case "mantenimiento":
+        case "Mantenimiento":
+          return "Mantenimiento";
+        case "espacios-comunes":
+        case "Espacios Comunes":
+          return "Espacios Comunes";
+        case "garage-parking":
+        case "Garage y Parking":
+          return "Garage y Parking";
+        case "Todas":
+          return "Todas";
+        default:
+          return "General";
+      }
     }
-
     const key = isAdmin ? adminCategory : slugFromPath;
-    const numericCategory = resolveNumericCategory(key);
-    if (numericCategory === null) return new Set<number>();
-
-    return new Set(
-      safeForums.filter((f) => f.category === numericCategory).map((f) => f.id)
+    if (key === "Todas") return "Todas";
+    const found = forumsRaw.find(
+      (f) => toSlug(f.categoryName) === toSlug(key)
     );
-  }, [safeForums, isAdmin, adminCategory, slugFromPath]);
+    return found?.categoryName ?? "General";
+  }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
 
-  // ====== forumId resuelto para crear post ======
+  // ids de foros para la categoría actual
+  const forumIdsForCategory = useMemo(() => {
+    if (!forumsRaw) return new Set<number>();
+    if (isAdmin && adminCategory === "Todas") {
+      return new Set(forumsRaw.map((f) => f.id));
+    }
+    const key = isAdmin ? adminCategory : slugFromPath;
+    return new Set(
+      forumsRaw
+        .filter((f) => toSlug(f.categoryName) === toSlug(key))
+        .map((f) => f.id)
+    );
+  }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
+
+  // forumId resuelto para crear post
   const resolvedForumId = useMemo(() => {
-    if (!safeForums || safeForums.length === 0) return null;
+    if (!forumsRaw) return null;
+    if (isAdmin && adminCategory === "Todas")
+      return forumsRaw[0]?.id ?? null;
+    const key = isAdmin ? adminCategory : currentCategoryName;
+    const found = forumsRaw.find(
+      (f) => toSlug(f.categoryName) === toSlug(key)
+    );
+    return found ? found.id : null;
+  }, [forumsRaw, isAdmin, adminCategory, currentCategoryName]);
 
-    // en admin + Todas: usamos General si existe, si no el primero
-    if (isAdmin && adminCategory === "Todas") {
-      const generalForum = safeForums.find((f) => f.category === 0);
-      return generalForum ? generalForum.id : safeForums[0].id;
-    }
-
-    const key = isAdmin ? adminCategory : slugFromPath;
-    const numericCategory = resolveNumericCategory(key);
-    if (numericCategory === null) return null;
-
-    const forum = safeForums.find((f) => f.category === numericCategory);
-    return forum ? forum.id : null;
-  }, [safeForums, isAdmin, adminCategory, slugFromPath]);
-
-  // ====== mapa etiqueta -> forumId para el modal ======
-  const forumIdByLabel = useMemo(() => {
-    const map: Partial<Record<CategoryLabel, number>> = {};
-    if (!safeForums) return map;
-
-    if (isAdmin && adminCategory === "Todas") {
-      // admin en Todas: todas las categorías disponibles
-      safeForums.forEach((f) => {
-        const idx = f.category; // 0..5
-        if (idx >= 0 && idx < CATEGORY_LABELS.length) {
-          const label = CATEGORY_LABELS[idx];
-          map[label] = f.id;
-        }
-      });
-      return map;
-    }
-
-    // resto de vistas: solo la categoría actual
-    const key = isAdmin ? adminCategory : slugFromPath;
-    const numericCategory = resolveNumericCategory(key);
-    if (numericCategory === null) return map;
-
-    const forum = safeForums.find((f) => f.category === numericCategory);
-    if (forum) {
-      const label = CATEGORY_LABELS[numericCategory];
-      map[label] = forum.id;
-    }
-
-    return map;
-  }, [safeForums, isAdmin, adminCategory, slugFromPath]);
-
-  // categoría inicial que muestra el modal
-  const initialCategoryLabel: CategoryLabel = useMemo(() => {
-    if (isAdmin) {
-      if (adminCategory === "Todas") return "General";
-      return resolveCategoryLabel(adminCategory);
-    }
-    return resolveCategoryLabel(slugFromPath);
-  }, [isAdmin, adminCategory, slugFromPath]);
-
-  // ====== threads filtrados por categoría actual ======
+  // threads filtrados por categoría actual
   const postsRaw = useMemo(() => {
-    if (!safeThreads) return [];
-    if (!safeForums) return safeThreads;
-    return safeThreads.filter((t) => forumIdsForCategory.has(t.forumId ?? -1));
-  }, [safeThreads, safeForums, forumIdsForCategory]);
+    if (!threadsRaw) return [];
+    if (!forumsRaw) return threadsRaw;
+    return threadsRaw.filter((t) => forumIdsForCategory.has(t.forumId ?? -1));
+  }, [threadsRaw, forumsRaw, forumIdsForCategory]);
 
-  // ====== Stats del foro ======
+  // Stats del foro
   useEffect(() => {
     let mounted = true;
-
     if (!resolvedForumId) {
       setForumStats(null);
       return;
     }
-
     const controller = new AbortController();
-
     (async () => {
       try {
         const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, {
           signal: controller.signal,
         });
-
         if (!res.ok) {
           setForumStats(null);
           return;
         }
-
         const json: Forum = await res.json();
         if (mounted) setForumStats(json);
       } catch {
         if (mounted) setForumStats(null);
       }
     })();
-
     return () => {
       mounted = false;
       controller.abort();
     };
   }, [resolvedForumId, API_BASE]);
 
-  // ====== Reacciones + mensajes por thread ======
+  // Reacciones + mensajes por thread
   useEffect(() => {
     if (!postsRaw || postsRaw.length === 0) {
       setEnriched({});
       return;
     }
-
     let mounted = true;
     const controllers: AbortController[] = [];
 
     const fetchForThread = async (threadId: number) => {
       const key = String(threadId);
-
       setEnriched((p) => ({
         ...p,
-        [key]: {
-          ...(p[key] ?? {}),
-          loading: true,
-          error: false,
-        },
+        [key]: { ...(p[key] ?? {}), loading: true, error: false },
       }));
-
       const ctl = new AbortController();
       controllers.push(ctl);
 
@@ -414,31 +338,22 @@ const Forums: React.FC = () => {
         dislikes: 0,
         userReaction: 0,
       };
-
       try {
         const r = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, {
           signal: ctl.signal,
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         });
         if (r.ok) reactions = await r.json();
-      } catch {
-        // ignore
-      }
+      } catch {}
 
       let messages: Message[] = [];
       try {
         const m = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
           signal: ctl.signal,
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers: { "Content-Type": "application/json" },
         });
         if (m.ok) messages = await m.json();
-      } catch {
-        // ignore
-      }
+      } catch {}
 
       if (!mounted) return;
 
@@ -473,22 +388,23 @@ const Forums: React.FC = () => {
     };
   }, [postsRaw, API_BASE]);
 
-  // ====== Proyección de posts ======
+  // Proyección de posts para UI
   const posts = useMemo(() => {
     if (!postsRaw) return [];
-
-    return postsRaw.map((p) => {
-      const categoryLabel =
-        safeForums?.find((f) => f.id === p.forumId)?.categoryName ??
-        (p.forumId === 0 ? "General" : String(p.forumId ?? "-"));
-
-      const isClosed =
-        typeof p.state === "string" &&
-        p.state.toLowerCase() === "cerrado";
-
-      const chips: any[] = [
+    return postsRaw.map((p) => ({
+      id: String(p.id),
+      threadId: p.id,
+      title: p.theme ?? "Sin título",
+      subtitle: `Usuario ${p.userId ?? "-"} · ${formatDateNumeric(
+        p.createdAt
+      )}`,
+      description: p.description ?? "",
+      state: p.state,
+      chips: [
         {
-          label: categoryLabel,
+          label:
+            forumsRaw?.find((f) => f.id === p.forumId)?.categoryName ??
+            String(p.forumId ?? "-"),
           color:
             p.state === "Activo"
               ? "success"
@@ -496,48 +412,21 @@ const Forums: React.FC = () => {
               ? "warning"
               : "default",
         },
-      ];
+      ],
+    }));
+  }, [postsRaw, forumsRaw]);
 
-      if (isClosed) {
-        chips.push({
-          label: "Cerrado",
-          color: "default",
-        });
-      }
-
-      return {
-        id: String(p.id),
-        threadId: p.id,
-        title: p.theme ?? "Sin título",
-        subtitle: `Usuario ${p.userId ?? "-"} · ${formatDateNumeric(
-          p.createdAt
-        )}`,
-        description: p.description ?? "",
-        state: p.state,
-        chips,
-      };
-    });
-  }, [postsRaw, safeForums]);
-
-  // ====== KPIs ======
+  // KPIs
   const computedStats = useMemo(() => {
     const totalPosts = posts.length;
     const activeUsers =
       new Set(postsRaw?.map((p) => p.userId).filter(Boolean)).size || 0;
-
     const totalResponses = Object.values(enriched).reduce(
       (acc, e) => acc + (e?.commentsCount ?? 0),
       0
     );
-
     const pinned = Object.values(enriched).filter((e) => e?.pinned).length;
-
-    return {
-      totalPosts,
-      activeUsers,
-      totalResponses,
-      pinned,
-    };
+    return { totalPosts, activeUsers, totalResponses, pinned };
   }, [posts, postsRaw, enriched]);
 
   const headerStats = useMemo(
@@ -551,7 +440,7 @@ const Forums: React.FC = () => {
     [forumStats, computedStats]
   );
 
-  // ====== Reacciones / respuestas ======
+  // Reacciones / respuestas
   const [expandedThreads, setExpandedThreads] = useState<Set<number>>(
     new Set()
   );
@@ -560,6 +449,20 @@ const Forums: React.FC = () => {
 
   // edición de mensajes individuales
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+
+  // edición de threads y borrado
+  const [editOpen, setEditOpen] = useState(false);
+  const [threadBeingEdited, setThreadBeingEdited] = useState<{
+    id: number;
+    title: string;
+    description: string;
+  } | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
+  const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
+  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
+  const [statusDialogMessage, setStatusDialogMessage] = useState("");
+  const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
 
   const toggleThread = (threadId: number) => {
     setExpandedThreads((prev) => {
@@ -573,10 +476,7 @@ const Forums: React.FC = () => {
     const key = String(threadId);
     setEnriched((prev) => ({
       ...prev,
-      [key]: {
-        ...(prev[key] ?? {}),
-        pinned: !prev[key]?.pinned,
-      },
+      [key]: { ...(prev[key] ?? {}), pinned: !prev[key]?.pinned },
     }));
   };
 
@@ -593,21 +493,14 @@ const Forums: React.FC = () => {
         reacting: false,
         userReaction: 0,
       };
-
     if (current.reacting) return;
-
     setEnriched((p) => ({
       ...p,
-      [key]: {
-        ...(p[key] ?? {}),
-        reacting: true,
-      },
+      [key]: { ...(p[key] ?? {}), reacting: true },
     }));
-
     const prevUser = current.userReaction ?? 0;
     const willRemove = prevUser === reactionType;
     const newUser = (willRemove ? 0 : reactionType) as 1 | -1 | 0;
-
     const optimistic = {
       likes:
         current.likes +
@@ -618,24 +511,17 @@ const Forums: React.FC = () => {
       totalReactions: current.totalReactions + (willRemove ? -1 : 1),
       userReaction: newUser,
     };
-
     setEnriched((p) => ({
       ...p,
-      [key]: {
-        ...(p[key] ?? {}),
-        ...optimistic,
-      },
+      [key]: { ...(p[key] ?? {}), ...optimistic },
     }));
-
     try {
       const payload = {
         user_id: currentUserId,
         thread_id: threadId,
         reactionType,
       };
-
       const result = await toggleMutate(payload);
-
       if (result && typeof result.likes === "number") {
         setEnriched((p) => ({
           ...p,
@@ -655,14 +541,11 @@ const Forums: React.FC = () => {
         }));
         return;
       }
-
       const reacRes = await fetch(
         `${API_BASE}/Reactions/thread/${threadId}`
       );
       if (!reacRes.ok) throw new Error("Reactions fallback failed");
-
       const reacJson: ReactionResponse = await reacRes.json();
-
       setEnriched((p) => ({
         ...p,
         [key]: {
@@ -732,11 +615,14 @@ const Forums: React.FC = () => {
   // helper para recargar comentarios de un hilo
   const reloadComments = async (threadId: number) => {
     try {
-      const listRes = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
+      const listRes = await fetch(
+        `${API_BASE}/Message/thread/${threadId}`,
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (listRes.ok) {
         const messages: Message[] = await listRes.json();
@@ -755,13 +641,11 @@ const Forums: React.FC = () => {
     }
   };
 
-  // ====== enviar respuesta (POST /Message con FormData) ======
+  // enviar respuesta (POST /Message con FormData)
   const handleSendReply = async (threadId: number) => {
     const text = replyText[threadId]?.trim();
     if (!text || sendingReply === threadId) return;
-
     setSendingReply(threadId);
-
     try {
       const form = new FormData();
       form.append("Content", text);
@@ -778,7 +662,6 @@ const Forums: React.FC = () => {
         throw new Error(txt || "Error al crear mensaje");
       }
 
-      // limpiar input
       setReplyText((p) => ({
         ...p,
         [threadId]: "",
@@ -786,18 +669,23 @@ const Forums: React.FC = () => {
 
       await reloadComments(threadId);
     } catch (e: any) {
-      alert(`Error al enviar la respuesta: ${e?.message || "desconocido"}`);
+      alert(
+        `Error al enviar la respuesta: ${e?.message || "desconocido"}`
+      );
     } finally {
       setSendingReply(null);
     }
   };
 
-  // ====== borrar respuesta individual ======
-  const handleDeleteComment = async (threadId: number, messageId: number) => {
-    const confirm = window.confirm(
+  // borrar respuesta individual
+  const handleDeleteComment = async (
+    threadId: number,
+    messageId: number
+  ) => {
+    const confirmDelete = window.confirm(
       "¿Eliminar esta respuesta? Esta acción no se puede deshacer."
     );
-    if (!confirm) return;
+    if (!confirmDelete) return;
 
     try {
       await deleteMessageApi(messageId, currentUserId);
@@ -812,14 +700,14 @@ const Forums: React.FC = () => {
     }
   };
 
-  // ====== abrir diálogo de borrado de thread ======
+  // abrir diálogo de borrado de thread
   const openDeleteDialog = (threadId: number) => {
     if (!isAdmin) return;
     setThreadToDelete(threadId);
     setDeleteDialogOpen(true);
   };
 
-  // ====== borrar thread (confirmado desde el diálogo) ======
+  // borrar thread (confirmado desde el diálogo)
   const handleDeleteThread = async () => {
     if (!isAdmin) return;
     if (threadToDelete == null) return;
@@ -828,7 +716,6 @@ const Forums: React.FC = () => {
     const key = String(threadId);
     const hasReplies = (enriched[key]?.commentsCount ?? 0) > 0;
 
-    // chequeo front igual que el back
     if (hasReplies) {
       setStatusDialogMessage(
         "No se puede eliminar un thread que contiene mensajes. Eliminá primero las respuestas."
@@ -869,7 +756,6 @@ const Forums: React.FC = () => {
         alert("El post ya no existe o fue borrado.");
         refetchThreads();
       } else if (res.status === 409) {
-        // mensaje de negocio del back
         const text = await res.text();
         console.error("Error al borrar el post:", text);
         setStatusDialogMessage(
@@ -891,7 +777,7 @@ const Forums: React.FC = () => {
     }
   };
 
-  // ====== cerrar hilo (PATCH /Thread/{id}/close) ======
+  // cerrar hilo (PATCH /Thread/{id}/close)
   const handleCloseThread = async (threadId: number) => {
     if (!isAdmin) return;
 
@@ -905,46 +791,43 @@ const Forums: React.FC = () => {
         },
       });
 
-      // 409: ya estaba cerrado
       if (res.status === 409) {
         let msg = "El hilo ya se encuentra cerrado.";
         try {
           const json = await res.json();
           if (json?.error) msg = json.error;
-        } catch {
-          // si no viene JSON, usamos el mensaje por defecto
-        }
-
+        } catch {}
         setStatusDialogMessage(msg);
         setStatusDialogOpen(true);
-
         await refetchThreads();
         return;
       }
 
-      // cualquier otro error
       if (!res.ok) {
         const text = await res.text();
         console.error("Error al cerrar el hilo:", text);
-        setStatusDialogMessage("No se pudo cerrar el hilo. Probá de nuevo.");
+        setStatusDialogMessage(
+          "No se pudo cerrar el hilo. Probá de nuevo."
+        );
         setStatusDialogOpen(true);
         return;
       }
 
-      // éxito
       setStatusDialogMessage("El hilo se cerró correctamente.");
       setStatusDialogOpen(true);
       await refetchThreads();
     } catch (e) {
       console.error(e);
-      setStatusDialogMessage("Ocurrió un error al cerrar el hilo.");
+      setStatusDialogMessage(
+        "Ocurrió un error al cerrar el hilo."
+      );
       setStatusDialogOpen(true);
     } finally {
       setClosingThreadId(null);
     }
   };
 
-  // ====== abrir modal de edición de thread ======
+  // abrir modal de edición de thread
   const openEditDialog = (thread: {
     threadId: number;
     title: string;
@@ -959,7 +842,7 @@ const Forums: React.FC = () => {
     setEditOpen(true);
   };
 
-  // ====== Render thread ======
+  // Render cada thread
   const renderThread = (thread: any) => {
     const key = String(thread.threadId);
     const meta =
@@ -971,13 +854,10 @@ const Forums: React.FC = () => {
         comments: [],
         userReaction: 0,
       };
-
     const isExpanded = expandedThreads.has(thread.threadId);
-
     const isClosed =
       typeof thread.state === "string" &&
       thread.state.toLowerCase() === "cerrado";
-
     const hasReplies = (meta.commentsCount ?? 0) > 0;
 
     return (
@@ -1007,7 +887,6 @@ const Forums: React.FC = () => {
                   <Typography variant="h6" color="primary">
                     {thread.title}
                   </Typography>
-
                   {thread.chips.map((chip: any, i: number) => (
                     <Chip
                       key={`${chip.label}-${i}`}
@@ -1021,7 +900,6 @@ const Forums: React.FC = () => {
                     <Chip label="Fijado" size="small" color="warning" />
                   )}
                 </Stack>
-
                 <Typography
                   variant="body2"
                   color="text.secondary"
@@ -1029,7 +907,6 @@ const Forums: React.FC = () => {
                 >
                   {thread.subtitle}
                 </Typography>
-
                 <Typography variant="body1" sx={{ mb: 2 }}>
                   {thread.description}
                 </Typography>
@@ -1039,13 +916,13 @@ const Forums: React.FC = () => {
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
                   <IconButton
                     size="small"
-                    onClick={() => {}}
+                    onClick={() => {
+                      /* vista detalle */
+                    }}
                     sx={{ color: "primary.main" }}
                   >
                     <VisibilityOutlined fontSize="small" />
                   </IconButton>
-
-                  {/* Fijar / Desfijar */}
                   <IconButton
                     size="small"
                     onClick={() => togglePinLocal(thread.threadId)}
@@ -1058,19 +935,19 @@ const Forums: React.FC = () => {
                     )}
                   </IconButton>
 
-                  {/* Cerrar hilo */}
                   <IconButton
                     size="small"
                     onClick={() => handleCloseThread(thread.threadId)}
                     sx={{
                       color: isClosed ? "text.secondary" : "warning.main",
                     }}
-                    disabled={closingThreadId === thread.threadId || isClosed}
+                    disabled={
+                      closingThreadId === thread.threadId || isClosed
+                    }
                   >
                     <LockOutlined fontSize="small" />
                   </IconButton>
 
-                  {/* Editar */}
                   <IconButton
                     size="small"
                     onClick={() =>
@@ -1085,12 +962,13 @@ const Forums: React.FC = () => {
                     <EditOutlined fontSize="small" />
                   </IconButton>
 
-                  {/* Eliminar */}
                   <IconButton
                     size="small"
                     onClick={() => openDeleteDialog(thread.threadId)}
                     sx={{ color: "error.main" }}
-                    disabled={deletingThreadId === thread.threadId || hasReplies}
+                    disabled={
+                      deletingThreadId === thread.threadId || hasReplies
+                    }
                   >
                     <DeleteOutline fontSize="small" />
                   </IconButton>
@@ -1126,7 +1004,6 @@ const Forums: React.FC = () => {
                 >
                   {meta.likes}
                 </Button>
-
                 <Button
                   size="small"
                   startIcon={
@@ -1162,24 +1039,20 @@ const Forums: React.FC = () => {
                   {meta.commentsCount === 1 ? "respuesta" : "respuestas"}
                 </Button>
               </Stack>
-
-              {!isClosed && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<ReplyIcon />}
-                  onClick={() => toggleThread(thread.threadId)}
-                  sx={{ textTransform: "none" }}
-                >
-                  Responder
-                </Button>
-              )}
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={<ReplyIcon />}
+                onClick={() => toggleThread(thread.threadId)}
+                sx={{ textTransform: "none" }}
+              >
+                Responder
+              </Button>
             </Stack>
 
             <Collapse in={isExpanded} timeout="auto" unmountOnExit>
               <Box sx={{ mt: 2 }}>
                 <Divider sx={{ mb: 2 }} />
-
                 {meta.loading ? (
                   <Box
                     sx={{
@@ -1213,7 +1086,8 @@ const Forums: React.FC = () => {
                         {meta.comments.map(
                           (comment: Message, index: number) => {
                             const canEdit =
-                              isAdmin || comment.user_id === currentUserId;
+                              isAdmin ||
+                              comment.user_id === currentUserId;
 
                             return (
                               <Box
@@ -1253,7 +1127,6 @@ const Forums: React.FC = () => {
                                   />
                                 )}
 
-                                {/* Íconos editar / borrar de respuesta */}
                                 {canEdit && (
                                   <Stack
                                     direction="row"
@@ -1306,7 +1179,10 @@ const Forums: React.FC = () => {
                                     borderRadius: 2,
                                   }}
                                 >
-                                  <Stack direction="row" spacing={2}>
+                                  <Stack
+                                    direction="row"
+                                    spacing={2}
+                                  >
                                     <Avatar
                                       sx={{
                                         width: 36,
@@ -1379,8 +1255,8 @@ const Forums: React.FC = () => {
                         color="text.secondary"
                         sx={{ textAlign: "center", py: 3 }}
                       >
-                        Este hilo está cerrado. No se pueden agregar nuevas
-                        respuestas.
+                        Este hilo está cerrado. No se pueden agregar
+                        nuevas respuestas.
                       </Typography>
                     ) : (
                       <Box
@@ -1460,7 +1336,9 @@ const Forums: React.FC = () => {
                                 }
                                 variant="outlined"
                                 size="small"
-                                disabled={sendingReply === thread.threadId}
+                                disabled={
+                                  sendingReply === thread.threadId
+                                }
                                 onKeyDown={(e) => {
                                   if (
                                     e.key === "Enter" &&
@@ -1493,7 +1371,9 @@ const Forums: React.FC = () => {
                                       <SendIcon />
                                     )
                                   }
-                                  onClick={() => handleSendReply(thread.threadId)}
+                                  onClick={() =>
+                                    handleSendReply(thread.threadId)
+                                  }
                                   disabled={
                                     !replyText[thread.threadId]?.trim() ||
                                     sendingReply === thread.threadId
@@ -1523,7 +1403,6 @@ const Forums: React.FC = () => {
     );
   };
 
-  // ====== UI ======
   const currentTabKey = isAdmin ? adminCategory : currentCategoryName;
 
   return (
@@ -1545,6 +1424,7 @@ const Forums: React.FC = () => {
         }
       />
 
+      {/* KPIs */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         spacing={2}
@@ -1565,7 +1445,6 @@ const Forums: React.FC = () => {
             </Stack>
           </CardContent>
         </Card>
-
         <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
           <CardContent>
             <Stack direction="row" alignItems="center" spacing={1}>
@@ -1581,7 +1460,6 @@ const Forums: React.FC = () => {
             </Stack>
           </CardContent>
         </Card>
-
         <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
           <CardContent>
             <Stack direction="row" alignItems="center" spacing={1}>
@@ -1599,8 +1477,18 @@ const Forums: React.FC = () => {
         </Card>
       </Stack>
 
-      <Paper elevation={0} variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2 }}>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ mb: 1.5 }}>
+      {/* Filtros */}
+      <Paper
+        elevation={0}
+        variant="outlined"
+        sx={{ p: 2, borderRadius: 2, mb: 2 }}
+      >
+        <Stack
+          direction="row"
+          alignItems="center"
+          gap={1}
+          sx={{ mb: 1.5 }}
+        >
           <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
           <Typography
             variant="subtitle1"
@@ -1610,7 +1498,6 @@ const Forums: React.FC = () => {
             Filtros
           </Typography>
         </Stack>
-
         <Tabs
           value={currentTabKey}
           onChange={(_, v) => {
@@ -1638,16 +1525,14 @@ const Forums: React.FC = () => {
             "& .Mui-selected": {
               color: "white !important",
               backgroundColor: (t) =>
-                ADMIN_TAB_COLORS[currentTabKey as string] ||
+                ADMIN_TAB_COLORS[currentTabKey] ||
                 t.palette.primary.main,
               borderColor: (t) =>
-                ADMIN_TAB_COLORS[currentTabKey as string] ||
+                ADMIN_TAB_COLORS[currentTabKey] ||
                 t.palette.primary.main,
               boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
             },
-            "& .MuiTabs-indicator": {
-              display: "none",
-            },
+            "& .MuiTabs-indicator": { display: "none" },
           }}
         >
           {isAdmin && <Tab label="Todas" value="Todas" />}
@@ -1663,37 +1548,71 @@ const Forums: React.FC = () => {
         </Box>
       )}
 
-      {hasHardError && !loading && (
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography variant="h6" color="error">
-            Error cargando el foro
+      {loadError && !loading && (
+        <Paper
+          sx={{
+            p: 6,
+            textAlign: "center",
+            border: "1px dashed #d0d0d0",
+            borderRadius: 3,
+            backgroundColor: "#fafafa",
+          }}
+        >
+          <ChatIcon
+            sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+          />
+          <Typography variant="h5" color="text.primary" gutterBottom>
+            Error al cargar el foro
+          </Typography>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ mb: 2 }}
+          >
+            {loadError}
           </Typography>
           <Button
+            variant="contained"
             onClick={() => {
               refetchForums();
               refetchThreads();
             }}
-            sx={{ mt: 2 }}
+            sx={{ mt: 1 }}
           >
             Reintentar
           </Button>
-        </Box>
+        </Paper>
       )}
 
-      {!loading && !hasHardError && posts.length === 0 && (
-        <Card
-          variant="outlined"
-          sx={{ textAlign: "center", py: 6, borderRadius: 3 }}
+      {!loading && !loadError && posts.length === 0 && (
+        <Paper
+          sx={{
+            p: 6,
+            textAlign: "center",
+            border: "1px dashed #d0d0d0",
+            borderRadius: 3,
+            backgroundColor: "#fafafa",
+          }}
         >
-          <Typography variant="h6" color="text.secondary">
-            No hay posts en {currentCategoryName} aún
+          <ChatIcon
+            sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+          />
+          <Typography variant="h5" color="text.primary" gutterBottom>
+            No hay posts en {currentCategoryName}
+          </Typography>
+          <Typography
+            variant="body1"
+            color="text.secondary"
+            sx={{ mb: 1 }}
+          >
+            Aún no se han creado posts en esta categoría.
           </Typography>
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{ mt: 1, mb: 2 }}
+            sx={{ mb: 3 }}
           >
-            ¡Sé el primero en crear un post en esta categoría!
+            ¡Sé el primero en crear un post!
           </Typography>
           <Button
             variant="contained"
@@ -1702,19 +1621,28 @@ const Forums: React.FC = () => {
           >
             Crear primer post
           </Button>
-        </Card>
+        </Paper>
       )}
 
-      {!loading && !hasHardError && posts.length > 0 && (
+      {!loading && !loadError && posts.length > 0 && (
         <Stack spacing={2}>{posts.map(renderThread)}</Stack>
       )}
 
       {/* Dialog para crear nuevo post */}
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={open}
+        onClose={() => setOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogContent>
           {!resolvedForumId ? (
             <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ mb: 1 }}
+              >
                 No se pudo identificar el foro destino.
               </Typography>
               <Button
@@ -1731,8 +1659,6 @@ const Forums: React.FC = () => {
               onClose={() => setOpen(false)}
               forumId={resolvedForumId}
               userId={currentUserId}
-              forumIdByLabel={forumIdByLabel}
-              initialCategoryLabel={initialCategoryLabel}
               onCreated={() => {
                 refetchThreads();
                 setOpen(false);
@@ -1743,7 +1669,12 @@ const Forums: React.FC = () => {
       </Dialog>
 
       {/* Dialog para editar post */}
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} maxWidth="md" fullWidth>
+      <Dialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
         <DialogContent>
           {threadBeingEdited ? (
             <EditThread
@@ -1757,13 +1688,7 @@ const Forums: React.FC = () => {
                 setEditOpen(false);
               }}
             />
-          ) : (
-            <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography variant="body1" color="text.secondary">
-                No se encontró el post a editar.
-              </Typography>
-            </Box>
-          )}
+          ) : null}
         </DialogContent>
       </Dialog>
 
@@ -1826,7 +1751,11 @@ const Forums: React.FC = () => {
             onClick={handleDeleteThread}
             disabled={!!deletingThreadId}
             startIcon={
-              deletingThreadId ? <CircularProgress size={16} /> : <DeleteOutline />
+              deletingThreadId ? (
+                <CircularProgress size={16} />
+              ) : (
+                <DeleteOutline />
+              )
             }
           >
             {deletingThreadId ? "Eliminando..." : "Eliminar"}
@@ -1843,7 +1772,9 @@ const Forums: React.FC = () => {
       >
         <DialogTitle>Estado del hilo</DialogTitle>
         <DialogContent>
-          <Typography variant="body1">{statusDialogMessage}</Typography>
+          <Typography variant="body1">
+            {statusDialogMessage}
+          </Typography>
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setStatusDialogOpen(false)} autoFocus>
