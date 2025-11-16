@@ -2,15 +2,19 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box, Card, CardContent, Typography, Chip, Button, Stack, Dialog, DialogContent,
-  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton, Tabs, Tab
+  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton, Tabs, Tab,
+  DialogTitle, DialogActions
 } from "@mui/material";
+
 import {
   Add as AddIcon, ChatBubbleOutline as ChatIcon, Groups as GroupsIcon,
   TrendingUp as TrendingIcon, ThumbUp as ThumbUpIcon, ThumbDown as ThumbDownIcon,
   Reply as ReplyIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon,
   Send as SendIcon, VisibilityOutlined, PushPinOutlined, PushPin,
-  EditOutlined, DeleteOutline, FilterList as FilterListIcon
+  EditOutlined, DeleteOutline, FilterList as FilterListIcon,
+  LockOutlined
 } from "@mui/icons-material";
+
 import PageHeader from "../components/SectionHeader";
 import NewPost from "../components/modals/NewPost";
 import EditThread from "../components/modals/EditThread";
