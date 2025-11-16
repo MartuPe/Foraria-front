@@ -108,6 +108,7 @@ export default function ClaimForm({ onSuccess, onCancel }: ClaimFormProps) {
         archive: base64File,
         user_id: Number(localStorage.getItem("userId")),
         residenceId: localStorage.getItem("residenceId"),
+        consortiumId: localStorage.getItem("consortiumId"),
       };
 
       await mutate(payload);

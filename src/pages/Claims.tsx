@@ -22,7 +22,9 @@ interface ClaimItem {
 type TabKey = "todas" | "enproceso" | "resuelto" | "cerrado" | "rechazado";
 
 const Claims: React.FC = () => {
-  const { data: claimData, loading, error, refetch } = useGet<ClaimItem[]>("/Claim");
+  const consortiumId = Number(localStorage.getItem("consortiumId"));
+  const urlGetClaims = `/Claim?consortiumId=${consortiumId}`;
+  const { data: claimData, loading, error, refetch } = useGet<ClaimItem[]>(urlGetClaims);
   const [tab, setTab] = useState<TabKey>("todas");
   const [search, setSearch] = useState<string>("");
   const [openNew, setOpenNew] = useState(false);
