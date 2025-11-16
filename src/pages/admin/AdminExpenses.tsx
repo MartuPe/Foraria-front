@@ -24,8 +24,9 @@ import IconButton from "@mui/material/IconButton";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import logoForaria from "../../assets/Isotipo-Color.png";
 const token = localStorage.getItem("accessToken");
+import isotipoForaria from "../../assets/Isotipo-Color.png";
+
 interface InvoiceItem {
   description: string;
   amount: number;
@@ -258,7 +259,7 @@ const generateAdminPdf = (exp: Expense) => {
   const logoHeight = 80;
   const logoX = pageWidth / 2 - logoWidth / 2;
   const logoY = 0;
-  pdf.addImage(logoForaria, "PNG", logoX, logoY, logoWidth, logoHeight);
+  pdf.addImage(isotipoForaria, "PNG", logoX, logoY, logoWidth, logoHeight);
 
   pdf.setFontSize(22);
   pdf.setTextColor(255, 255, 255);
