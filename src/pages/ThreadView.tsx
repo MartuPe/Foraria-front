@@ -1,4 +1,3 @@
-// src/pages/ThreadView.tsx
 import React, { useEffect, useState } from "react";
 import {
   Box,
@@ -11,6 +10,9 @@ import {
   Dialog,
   IconButton,
   Tooltip,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
 import ThumbDownOutlinedIcon from "@mui/icons-material/ThumbDownOutlined";
@@ -30,6 +32,7 @@ import {
   deleteMessage as deleteMessageApi,
 } from "../services/messageService";
 import EditMessage from "../components/modals/EditMessage";
+import { ForariaStatusModal } from "../components/StatCardForms";
 
 interface Thread {
   id: number;
@@ -74,13 +77,30 @@ const ThreadView: React.FC = () => {
   });
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
+
   const [showCommentBox, setShowCommentBox] = useState(false);
   const [commentText, setCommentText] = useState("");
+  const [commentError, setCommentError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [reacting, setReacting] = useState(false);
-  const [/*error*/, setError] = useState(false);
 
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
+
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [messageToDelete, setMessageToDelete] = useState<Message | null>(null);
+  const [deletingMessage, setDeletingMessage] = useState(false);
+
+  const [statusModal, setStatusModal] = useState<{
+    open: boolean;
+    variant: "success" | "error";
+    title: string;
+    message: string;
+  }>({
+    open: false,
+    variant: "error",
+    title: "",
+    message: "",
+  });
 
   const { mutate: toggleMutate } =
     useMutation<
@@ -177,13 +197,13 @@ const ThreadView: React.FC = () => {
   const toggleReactionForThread = async (reactionType: 1 | -1) => {
     if (!thread || reacting) return;
     setReacting(true);
-    setError(false);
 
+    const prevReactions = reactions;
     const prevUserReaction = reactions.userReaction ?? 0;
     const willRemove = prevUserReaction === reactionType;
-    const newUserReaction = willRemove ? 0 : reactionType;
+    const newUserReaction = (willRemove ? 0 : reactionType) as 1 | -1 | 0;
 
-    const optimistic = {
+    const optimistic: ReactionResponse = {
       likes:
         reactions.likes +
         (reactionType === 1 && !willRemove
@@ -199,7 +219,7 @@ const ThreadView: React.FC = () => {
           ? -1
           : 0),
       total: reactions.total + (willRemove ? -1 : 1),
-      userReaction: newUserReaction as 1 | -1 | 0,
+      userReaction: newUserReaction,
     };
     setReactions(optimistic);
 
@@ -230,6 +250,7 @@ const ThreadView: React.FC = () => {
         const reacRes = await fetch(
           `${API_BASE}/Reactions/thread/${thread.id}`
         );
+        if (!reacRes.ok) throw new Error("Reactions fallback failed");
         const reacJson: ReactionResponse = await reacRes.json();
         setReactions({
           likes: reacJson.likes ?? 0,
@@ -245,7 +266,37 @@ const ThreadView: React.FC = () => {
       }
     } catch (err) {
       console.error("Error al enviar reacción", err);
-      setError(true);
+
+      try {
+        const reacRes = await fetch(
+          `${API_BASE}/Reactions/thread/${thread.id}`
+        );
+        if (reacRes.ok) {
+          const reacJson: ReactionResponse = await reacRes.json();
+          setReactions({
+            likes: reacJson.likes ?? 0,
+            dislikes: reacJson.dislikes ?? 0,
+            total:
+              reacJson.total ??
+              (reacJson.likes ?? 0) + (reacJson.dislikes ?? 0),
+            userReaction:
+              typeof reacJson.userReaction === "number"
+                ? (reacJson.userReaction as 1 | -1 | 0)
+                : prevUserReaction,
+          });
+        } else {
+          setReactions(prevReactions);
+        }
+      } catch {
+        setReactions(prevReactions);
+      }
+
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo registrar tu reacción",
+        message: "No pudimos guardar tu reacción. Intentá nuevamente más tarde.",
+      });
     } finally {
       setReacting(false);
     }
@@ -264,11 +315,20 @@ const ThreadView: React.FC = () => {
   };
 
   const handleSendComment = async () => {
-    if (!commentText.trim() || !thread) return;
+    if (!thread) return;
+
+    const text = commentText.trim();
+    if (!text) {
+      setCommentError("El comentario no puede estar vacío.");
+      return;
+    }
+
     setSending(true);
+    setCommentError(null);
+
     try {
       const form = new FormData();
-      form.append("Content", commentText);
+      form.append("Content", text);
       form.append("Thread_id", String(thread.id));
       form.append("User_id", String(currentUserId));
 
@@ -283,11 +343,24 @@ const ThreadView: React.FC = () => {
         setCommentText("");
         setShowCommentBox(false);
       } else {
-        const txt = await res.text();
-        console.error("Error al enviar comentario", txt);
+        console.error("Error al enviar comentario", await res.text());
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "No se pudo publicar el comentario",
+          message:
+            "No pudimos guardar tu comentario. Intentá nuevamente más tarde.",
+        });
       }
     } catch (err) {
       console.error("Error de red al comentar", err);
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo publicar el comentario",
+        message:
+          "Ocurrió un problema al enviar tu comentario. Intentá nuevamente más tarde.",
+      });
     } finally {
       setSending(false);
     }
@@ -296,20 +369,39 @@ const ThreadView: React.FC = () => {
   const canEditOrDelete = (msg: Message) =>
     isAdmin || msg.user_id === currentUserId;
 
-  const handleDeleteMessage = async (msg: Message) => {
+  const handleDeleteMessage = (msg: Message) => {
     if (!canEditOrDelete(msg)) return;
+    setMessageToDelete(msg);
+    setDeleteDialogOpen(true);
+  };
 
-    const ok = window.confirm(
-      "¿Eliminar esta respuesta? Esta acción no se puede deshacer."
-    );
-    if (!ok) return;
+  const handleConfirmDeleteMessage = async () => {
+    if (!messageToDelete) return;
 
     try {
-      await deleteMessageApi(msg.id, currentUserId);
-      setMessages((prev) => prev.filter((m) => m.id !== msg.id));
+      setDeletingMessage(true);
+      await deleteMessageApi(messageToDelete.id, currentUserId);
+      setMessages((prev) => prev.filter((m) => m.id !== messageToDelete.id));
+
+      setStatusModal({
+        open: true,
+        variant: "success",
+        title: "Respuesta eliminada",
+        message: "La respuesta se eliminó correctamente.",
+      });
     } catch (err) {
       console.error("Error eliminando mensaje", err);
-      alert("No se pudo eliminar el mensaje.");
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo eliminar la respuesta",
+        message:
+          "No pudimos eliminar la respuesta. Intentá nuevamente más tarde.",
+      });
+    } finally {
+      setDeletingMessage(false);
+      setDeleteDialogOpen(false);
+      setMessageToDelete(null);
     }
   };
 
@@ -410,17 +502,22 @@ const ThreadView: React.FC = () => {
             minRows={3}
             label="Escribí tu comentario"
             value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
+            onChange={(e) => {
+              setCommentText(e.target.value);
+              if (commentError) setCommentError(null);
+            }}
             disabled={sending}
+            error={!!commentError}
+            helperText={commentError ?? ""}
           />
           <Stack direction="row" spacing={1} sx={{ mt: 1 }}>
             <Button
               variant="contained"
               color="primary"
               onClick={handleSendComment}
-              disabled={sending || !commentText.trim()}
+              disabled={sending}
             >
-              Enviar
+              {sending ? "Enviando..." : "Enviar"}
             </Button>
             <Button
               variant="text"
@@ -539,6 +636,68 @@ const ThreadView: React.FC = () => {
           />
         )}
       </Dialog>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => {
+          if (!deletingMessage) {
+            setDeleteDialogOpen(false);
+            setMessageToDelete(null);
+          }
+        }}
+        maxWidth="xs"
+        fullWidth
+      >
+        <DialogTitle>Eliminar respuesta</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            ¿Seguro que querés eliminar esta respuesta?
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Esta acción no se puede deshacer.
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setDeleteDialogOpen(false);
+              setMessageToDelete(null);
+            }}
+            disabled={deletingMessage}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirmDeleteMessage}
+            disabled={deletingMessage}
+            startIcon={
+              deletingMessage ? (
+                <CircularProgress size={16} />
+              ) : (
+                <DeleteOutlineOutlinedIcon />
+              )
+            }
+          >
+            {deletingMessage ? "Eliminando..." : "Eliminar"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <ForariaStatusModal
+        open={statusModal.open}
+        onClose={() =>
+          setStatusModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        variant={statusModal.variant}
+        title={statusModal.title}
+        message={statusModal.message}
+        primaryActionLabel="Aceptar"
+      />
     </Box>
   );
 };
