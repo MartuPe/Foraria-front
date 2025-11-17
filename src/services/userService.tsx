@@ -1,4 +1,3 @@
-import { api } from "../api/axios";
 import { jwtDecode } from "jwt-decode";
 import { storage } from "../utils/storage";
 
@@ -23,7 +22,6 @@ export type UserProfile = {
   residences?: ResidenceDto[];
 };
 
-// --- helpers ---
 function normalizeRole(r: any): string | undefined {
   if (Array.isArray(r) && r.length) return String(r[0]);
   if (typeof r === "string") return r;
@@ -47,23 +45,21 @@ function claimsToUserProfile(token: string): Partial<UserProfile> {
   }
 }
 
-/** Persiste datos útiles en storage */
 function saveUserToStorage(u: UserProfile | Partial<UserProfile>) {
-  const userId = Number(u.id ?? storage.userId ?? 0) || null;
-  const consortiumId =
-    (u.consortiumId != null ? Number(u.consortiumId) : null) ??
-    (u.residences && u.residences[0]?.consortiumId ? Number(u.residences[0].consortiumId) : null) ??
-    storage.consortiumId;
-
-  const role = (u as any).role ?? storage.role ?? "";
-
-  storage.user = {
-    ...(storage.user ?? {}),
-    ...u,
+  const prev: any = storage.user ?? {};
+  const userId = Number(u.id ?? storage.userId ?? prev.id ?? 0) || null;
+  const consortiumId = (u.consortiumId != null ? Number(u.consortiumId) : null) ?? storage.consortiumId ?? prev.consortiumId ?? null;
+  const role = (u as any).role ?? storage.role ?? prev.role ?? "";
+  const minimal = {
     id: userId ?? 0,
     role,
     consortiumId: consortiumId ?? null,
+    firstName: (u as any).firstName ?? prev.firstName ?? "",
+    lastName: (u as any).lastName ?? prev.lastName ?? "",
+    email: (u as any).email ?? prev.email ?? "",
   };
+
+  storage.user = minimal;
   storage.userId = userId;
   storage.role = role || null;
   storage.consortiumId = consortiumId ?? null;
@@ -73,7 +69,6 @@ function saveUserToStorage(u: UserProfile | Partial<UserProfile>) {
   }
 }
 
-/** Decodifica el token actual y deja el perfil básico persistido */
 export function initSessionFromToken(): UserProfile | null {
   const token = storage.token;
   if (!token) return null;
@@ -97,80 +92,47 @@ export function initSessionFromToken(): UserProfile | null {
 }
 
 export async function getCurrentUser(): Promise<UserProfile> {
-  // 1)/User/me.
-  try {
-    const { data } = await api.get<UserProfile>("/User/me");
-    saveUserToStorage(data);
-    return data;
-  } catch {
-    // seguimos
-  }
-
-  // 2) Decodificar token + mezclar con lo que ya haya en storage.user
-  const raw = localStorage.getItem("user");
   const token = storage.token;
-  let base: Partial<UserProfile> = raw ? JSON.parse(raw) : {};
-  if (token) base = { ...claimsToUserProfile(token), ...base };
+  const base = token ? claimsToUserProfile(token) : {};
 
-  const role = (base.role as string) || storage.role || "";
-  const userId = Number((base.id as number) || storage.userId || 0);
+  const prev: any = storage.user ?? {};
+  const id = Number(base.id ?? storage.userId ?? prev.id ?? 0) || 0;
+  const role = (base.role as any) ?? storage.role ?? prev.role ?? "Inquilino";
+  const consortiumId =
+    base.consortiumId ??
+    storage.consortiumId ??
+    prev.consortiumId ??
+    null;
 
-  // 3) Si es Admin/Consorcio, enriquecer con /User?id=... (tu back lo permite para esos roles)
-  if ((role === "Administrador" || role === "Consorcio") && userId > 0) {
-    try {
-      const { data } = await api.get("/User", { params: { id: userId } });
-      const merged: UserProfile = {
-        id: data.id ?? userId,
-        firstName: data.firstName ?? base.firstName ?? "",
-        lastName: data.lastName ?? base.lastName ?? "",
-        email: data.email ?? base.email ?? "",
-        phoneNumber: data.phoneNumber ?? base.phoneNumber ?? null,
-        role: (base.role as any) || "Administrador",
-        consortiumId: base.consortiumId ?? null,
-        hasPermission: base.hasPermission,
-        dni: (base as any).dni ?? null,
-        residences: (base as any).residences ?? [],
-        photo: (base as any).photo ?? null,
-      };
-      saveUserToStorage(merged);
-      return merged;
-    } catch {
-      // si no hay permiso (403) o no existe, seguimos con claims
-    }
-  }
-
-  // 4) Perfil armado solo con claims + storage
   const prof: UserProfile = {
-    id: Number(base.id) || 0,
-    firstName: base.firstName ?? "",
-    lastName: base.lastName ?? "",
-    email: base.email ?? "",
+    id,
+    firstName: base.firstName ?? prev.firstName ?? "",
+    lastName: base.lastName ?? prev.lastName ?? "",
+    email: base.email ?? prev.email ?? "",
     phoneNumber: base.phoneNumber ?? null,
-    role: (base.role as any) ?? "Inquilino",
-    consortiumId: base.consortiumId ?? null,
+    role,
+    consortiumId,
     hasPermission: base.hasPermission,
     dni: (base as any).dni ?? null,
-    residences: (base as any).residences ?? [],
+    residences: [],
     photo: (base as any).photo ?? null,
   };
+
   saveUserToStorage(prof);
   return prof;
 }
 
-/** Devuelve IDs listos para usar (y asegura que queden en storage) */
 export async function getEffectiveIds(): Promise<{ userId: number; consortiumId: number }> {
   const prof = storage.user ?? initSessionFromToken() ?? (await getCurrentUser());
-  const userId = Number(prof?.id ?? storage.userId ?? 0);
+  const userId = Number((prof as any)?.id ?? storage.userId ?? 0);
   const consortiumId = Number(
-    prof?.consortiumId ??
-      prof?.residences?.[0]?.consortiumId ??
+    (prof as any)?.consortiumId ??
       storage.consortiumId ??
       0
   );
   if (!userId || !consortiumId) {
     throw new Error("No pude resolver userId/consortiumId desde el token/storage.");
   }
-  // asegurar persistencia
   storage.userId = userId;
   storage.consortiumId = consortiumId;
   return { userId, consortiumId };
