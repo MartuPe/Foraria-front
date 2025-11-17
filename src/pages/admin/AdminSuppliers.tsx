@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, } from "@mui/material";
+import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, Paper } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
@@ -176,7 +176,7 @@ export default function Suppliers() {
   );
 
   return (
-    <div className="page">
+    <Box className="foraria-page-container">
       <PageHeader
         title="Proveedores del Consorcio"
         actions={
@@ -190,162 +190,147 @@ export default function Suppliers() {
         }
       />
 
-      <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} mb={2}>
-        <TextField
-          placeholder="Buscar por nombre, razón social, email, teléfono…"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          fullWidth
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        />
-        <TextField
-          select
-          label="Categoría"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          sx={{ minWidth: 200 }}
-        >
-          <MenuItem value="">Todas</MenuItem>
-          {CATEGORIES.map((c) => (
-            <MenuItem key={c} value={c}>
-              {c}
-            </MenuItem>
-          ))}
-        </TextField>
-        <TextField
-          select
-          label="Ordenar"
-          value={sort}
-          onChange={(e) => setSort(e.target.value as SortKey)}
-          sx={{ minWidth: 220 }}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SortIcon fontSize="small" />
-              </InputAdornment>
-            ),
-          }}
-        >
-          <MenuItem value="nameAsc">Nombre (A→Z)</MenuItem>
-          <MenuItem value="nameDesc">Nombre (Z→A)</MenuItem>
-          <MenuItem value="dateNew">Alta (más nuevo)</MenuItem>
-          <MenuItem value="dateOld">Alta (más viejo)</MenuItem>
-          <MenuItem value="category">Categoría</MenuItem>
-        </TextField>
-      </Stack>
+      <Paper
+        variant="outlined"
+        elevation={0}
+        className="foraria-profile-section"
+        sx={{ mt: 2, p: 2.5, borderRadius: 3 }}
+      >
+        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} mb={2}>
+          <TextField
+            placeholder="Buscar por nombre, razón social, email, teléfono…"
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            fullWidth
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          />
+          <TextField
+            select
+            label="Categoría"
+            value={category}
+            onChange={(e) => setCategory(e.target.value)}
+            sx={{ minWidth: 200 }}
+          >
+            <MenuItem value="">Todas</MenuItem>
+            {CATEGORIES.map((c) => (
+              <MenuItem key={c} value={c}>
+                {c}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            select
+            label="Ordenar"
+            value={sort}
+            onChange={(e) => setSort(e.target.value as SortKey)}
+            sx={{ minWidth: 220 }}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SortIcon fontSize="small" />
+                </InputAdornment>
+              ),
+            }}
+          >
+            <MenuItem value="nameAsc">Nombre (A→Z)</MenuItem>
+            <MenuItem value="nameDesc">Nombre (Z→A)</MenuItem>
+            <MenuItem value="dateNew">Alta (más nuevo)</MenuItem>
+            <MenuItem value="dateOld">Alta (más viejo)</MenuItem>
+            <MenuItem value="category">Categoría</MenuItem>
+          </TextField>
+        </Stack>
 
-      <Stack spacing={2}>
-        {loading ? (
-          <>
-            <SkeletonCard />
-            <SkeletonCard />
-            <SkeletonCard />
-          </>
-        ) : filtered.length === 0 ? (
-          <Card variant="outlined" sx={{ borderRadius: 2 }}>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                No encontramos proveedores
-              </Typography>
-              <Typography color="text.secondary" paragraph>
-                Probá limpiar filtros o crear un nuevo proveedor.
-              </Typography>
-              <Button
-                variant="contained"
-                onClick={() => {
-                  setQ("");
-                  setCategory("");
-                  setSort("nameAsc");
-                }}
-                sx={{ mr: 1 }}
-              >
-                Limpiar filtros
-              </Button>
-              <Button variant="outlined" onClick={() => setOpenNew(true)}>
-                Crear proveedor
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          paged.map((s) => (
-            <Card key={s.id} variant="outlined" sx={{ borderRadius: 2 }}>
+        <Stack spacing={2}>
+          {loading ? (
+            <>
+              <SkeletonCard />
+              <SkeletonCard />
+              <SkeletonCard />
+            </>
+          ) : filtered.length === 0 ? (
+            <Card variant="outlined" sx={{ borderRadius: 2 }}>
               <CardContent>
-                <Stack
-                  direction={{ xs: "column", sm: "row" }}
-                  justifyContent="space-between"
-                  alignItems={{ xs: "flex-start", sm: "center" }}
-                  spacing={1}
+                <Typography variant="h6" gutterBottom>
+                  No encontramos proveedores
+                </Typography>
+                <Typography color="text.secondary" paragraph>
+                  Probá limpiar filtros o crear un nuevo proveedor.
+                </Typography>
+                <Button
+                  variant="contained"
+                  onClick={() => {
+                    setQ("");
+                    setCategory("");
+                    setSort("nameAsc");
+                  }}
+                  sx={{ mr: 1 }}
                 >
-                  <div>
-                    <Typography
-                      variant="h6"
-                      color="primary"
-                      sx={{
-                        cursor: "pointer",
-                        textDecoration: "none",
-                        "&:hover": { textDecoration: "underline" },
-                        wordBreak: "break-word",
-                      }}
-                      onClick={() => openDetailFor(s.id!)}
-                      title="Ver detalle"
-                    >
-                      {s.commercialName}
-                    </Typography>
-
-                    <Typography color="text.secondary">
-                      {s.businessName} – {s.supplierCategory}
-                    </Typography>
-
-                    <Typography variant="body2" color="text.secondary">
-                      {s.email && <>{s.email} </>}
-                      {s.phone && <>| {s.phone}</>}
-                    </Typography>
-                  </div>
-
-                  <Stack direction="row" spacing={1}>
-                    <Button
-                      variant="outlined"
-                      startIcon={<VisibilityIcon />}
-                      onClick={() => openDetailFor(s.id!)}
-                    >
-                      Ver detalle
-                    </Button>
-
-                    <Button
-                      variant="outlined"
-                      color="error"
-                      startIcon={<DeleteOutlineIcon />}
-                      onClick={() => askDelete(s.id!)}
-                    >
-                      Eliminar
-                    </Button>
-                  </Stack>
-                </Stack>
+                  Limpiar filtros
+                </Button>
+                <Button variant="outlined" onClick={() => setOpenNew(true)}>
+                  Crear proveedor
+                </Button>
               </CardContent>
             </Card>
-          ))
-        )}
-      </Stack>
+          ) : (
+            paged.map((s) => (
+              <Card key={s.id} variant="outlined" sx={{ borderRadius: 2 }}>
+                <CardContent>
+                  <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} >
+                    <div>
+                      <Typography
+                        variant="h6"
+                        color="primary"
+                        sx={{
+                          cursor: "pointer",
+                          textDecoration: "none",
+                          "&:hover": { textDecoration: "underline" },
+                          wordBreak: "break-word",
+                        }}
+                        onClick={() => openDetailFor(s.id!)}
+                        title="Ver detalle"
+                      >
+                        {s.commercialName}
+                      </Typography>
 
-      {!loading && filtered.length > pageSize && (
-        <Stack alignItems="center" mt={2}>
-          <Pagination
-            count={totalPages}
-            page={page}
-            onChange={(_, p) => setPage(p)}
-            color="primary"
-            shape="rounded"
-            showFirstButton
-            showLastButton
-          />
+                      <Typography color="text.secondary">
+                        {s.businessName} – {s.supplierCategory}
+                      </Typography>
+
+                      <Typography variant="body2" color="text.secondary">
+                        {s.email && <>{s.email} </>}
+                        {s.phone && <>| {s.phone}</>}
+                      </Typography>
+                    </div>
+
+                    <Stack direction="row" spacing={1}>
+                      <Button variant="outlined" startIcon={<VisibilityIcon />} onClick={() => openDetailFor(s.id!)} >
+                        Ver detalle
+                      </Button>
+
+                      <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => askDelete(s.id!)} >
+                        Eliminar
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
+            ))
+          )}
         </Stack>
-      )}
+
+        {!loading && filtered.length > pageSize && (
+          <Stack alignItems="center" mt={2}>
+            <Pagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} color="primary" shape="rounded" showFirstButton showLastButton />
+          </Stack>
+        )}
+      </Paper>
 
       <Dialog
         open={openNew}
@@ -359,7 +344,7 @@ export default function Suppliers() {
             onSuccess={() => {
               setOpenNew(false);
               fetchSuppliers();
-              openSnack("Proveedor creado correctamente ✅", "success"); // 🔧 mensaje afinado
+              openSnack("Proveedor creado correctamente ✅", "success");
             }}
           />
         </DialogContent>
@@ -411,6 +396,6 @@ export default function Suppliers() {
           {snack.msg}
         </Alert>
       </Snackbar>
-    </div>
+    </Box>
   );
 }
