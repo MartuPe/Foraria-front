@@ -36,7 +36,7 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
   const [supplierAddress, setSupplierAddress] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [ocrItems, setOcrItems] = useState<any[]>([]); // <--- guardamos items OCR
-
+const token = localStorage.getItem("accessToken");
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
@@ -61,7 +61,7 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
 
     try {
       const { data } = await axios.post("https://localhost:7245/api/Ocr/process-invoice", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
+        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
       });
 
       if (!data.success) throw new Error(data.errorMessage || "Error procesando OCR");
