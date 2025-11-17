@@ -1,12 +1,11 @@
-import { useState, useEffect } from "react";
-import { Button, Dialog, DialogContent, DialogActions, DialogTitle, Box, Stack, Typography, MenuItem, Select, FormControl, InputLabel, Divider, Paper, } from "@mui/material";
+import { useState, useEffect, useCallback } from "react";
+import { Button, Dialog, DialogContent, DialogActions, DialogTitle, Box, Stack, Typography, MenuItem, Select, FormControl, InputLabel, Divider, Paper, IconButton, Snackbar,  Alert, } from "@mui/material";
 import PageHeader from "../../components/SectionHeader";
 import InvoiceUploadForm from "../../components/modals/UploadInvoice";
 import InfoCard, { InfoFile } from "../../components/InfoCard";
 import DownloadIcon from "@mui/icons-material/Download";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import Money from "../../components/Money";
-import IconButton from "@mui/material/IconButton";
 import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
@@ -72,9 +71,24 @@ export default function AdminCargaFactura() {
   const [loadingInvoices, setLoadingInvoices] = useState(false);
   const [loadingExpenses, setLoadingExpenses] = useState(false);
   const [selectedTab, setSelectedTab] = useState<TabKey>("facturas");
-
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
+  const [generatingExpense, setGeneratingExpense] = useState(false);
+  const [snack, setSnack] = useState<{
+    open: boolean;
+    msg: string;
+    sev: "success" | "error" | "info" | "warning";
+  }>({ open: false, msg: "", sev: "success" });
+
+  const openSnack = useCallback(
+    (
+      msg: string,
+      sev: "success" | "error" | "info" | "warning" = "success"
+    ) => {
+      setSnack({ open: true, msg, sev });
+    },
+    []
+  );
 
   const handleViewExpense = (exp: any) => {
     setSelectedExpense(exp);
@@ -93,39 +107,48 @@ export default function AdminCargaFactura() {
     return parseNullableNumber(localStorage.getItem("consortiumId"));
   };
 
-  const fetchInvoices = async () => {
+const fetchInvoices = useCallback(async () => {
     setLoadingInvoices(true);
     try {
-      const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice");
-      setInvoices(data || []);
-    } catch (err) {
-      console.error("Error al cargar facturas", err);
+      const { data } = await axios.get<Invoice[]>(
+        "https://localhost:7245/api/Invoice"
+      );
+      setInvoices(Array.isArray(data) ? data : []);
+    } catch {
+      openSnack("No se pudieron cargar las facturas.", "error");
+      setInvoices([]);
     } finally {
       setLoadingInvoices(false);
     }
-  };
+  }, [openSnack]);
 
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback(async () => {
     setLoadingExpenses(true);
     try {
-      const { data } = await axios.get<Expense[]>("https://localhost:7245/api/Expense");
-      const sorted = (data || []).slice().sort((a, b) => {
-        const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return db - da;
-      });
-      setExpenses(sorted);
-    } catch (err) {
-      console.error("Error al cargar expensas", err);
+      const { data } = await axios.get<Expense[]>(
+        "https://localhost:7245/api/Expense"
+      );
+      const list = Array.isArray(data) ? data : [];
+      setExpenses(
+        list.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() -
+            new Date(a.createdAt).getTime()
+        )
+      );
+    } catch {
+      openSnack("No se pudieron cargar las expensas.", "error");
+      setExpenses([]);
     } finally {
       setLoadingExpenses(false);
     }
-  };
+  }, [openSnack]);
 
-  useEffect(() => {
+
+useEffect(() => {
     fetchInvoices();
     fetchExpenses();
-  }, []);
+  }, [fetchInvoices, fetchExpenses]);
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
   const months = [
@@ -152,14 +175,18 @@ export default function AdminCargaFactura() {
   const handleGenerateExpense = async () => {
     try {
       if (!selectedYear || !selectedMonth) {
+        openSnack("Seleccioná año y mes para generar la expensa.", "info");
         return;
       }
 
       const input = `${selectedYear}-${selectedMonth}`;
       const consortiumId = getStoredConsortiumId();
       if (!consortiumId) {
+        openSnack("No se encontró un consorcio asociado para generar la expensa.", "error");
         return;
       }
+
+      setGeneratingExpense(true);
 
       const expensePayload = { consortiumId, month: input };
       console.log("Enviando Expense payload:", JSON.stringify(expensePayload));
@@ -198,20 +225,24 @@ export default function AdminCargaFactura() {
         console.log("ExpenseDetail response:", detailResp.status, detailResp.data);
 
         if (detailResp.status === 200 || detailResp.status === 201) {
-          fetchInvoices();
-          fetchExpenses();
+          await Promise.all([fetchInvoices(), fetchExpenses()]);
           setOpenMonthModal(false);
-        } else {
+          openSnack("Expensa generada correctamente.", "success");
           console.error("Error en ExpenseDetail", detailResp);
-          alert(`Error al crear ExpenseDetail (status ${detailResp.status}).`);
+          openSnack(
+            "No se pudo generar el detalle de la expensa. Intentá nuevamente.",
+            "error"
+          );
         }
       } else {
         console.error("Error en Expense", expenseResp);
-        alert(`Error al generar expensa (status ${expenseResp.status}).`);
+        openSnack("No se pudo generar la expensa. Intentá nuevamente.", "error");
       }
     } catch (err) {
       console.error("Excepción en generar expensa", err);
-      alert("Ocurrió un error al generar la expensa. Revisá la consola para más detalles.");
+      openSnack("Ocurrió un error al generar la expensa. Intentá nuevamente.", "error");
+    } finally {
+      setGeneratingExpense(false);
     }
   };
 
@@ -323,6 +354,7 @@ export default function AdminCargaFactura() {
               handleClose();
               fetchInvoices();
               fetchExpenses();
+              openSnack("Factura cargada correctamente.", "success");
             }}
           />
         </DialogContent>
@@ -357,8 +389,8 @@ export default function AdminCargaFactura() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenMonthModal(false)}>Cancelar</Button>
-          <Button variant="contained" color="primary" onClick={handleGenerateExpense} disabled={!selectedYear || !selectedMonth} >
-            Generar
+          <Button variant="contained" color="primary" onClick={handleGenerateExpense} disabled={!selectedYear || !selectedMonth || generatingExpense} >
+            {generatingExpense ? "Generando..." : "Generar"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -369,10 +401,14 @@ export default function AdminCargaFactura() {
             <>
               <Typography variant="h6">Facturas</Typography>
               {loadingInvoices && <div>Cargando facturas...</div>}
-              {!loadingInvoices && sortedInvoices.length === 0 && <div>No hay facturas.</div>}
+              {!loadingInvoices && sortedInvoices.length === 0 && (
+                <div>No hay facturas.</div>
+              )}
               {!loadingInvoices &&
                 sortedInvoices.map((inv) => {
-                  const files: InfoFile[] = inv.filePath ? inv.filePath.split(",").map((name) => ({ url: name, type: name.split(".").pop(), })) : [];
+                  const files: InfoFile[] = inv.filePath ? inv.filePath.split(",").map((name) => ({
+                    url: name,
+                    type: name.split(".").pop(), })) : [];
 
                   return (
                     <InfoCard
@@ -409,7 +445,9 @@ export default function AdminCargaFactura() {
               </Typography>
 
               {loadingExpenses && <div>Cargando expensas...</div>}
-              {!loadingExpenses && expenses.length === 0 && <div>No hay expensas.</div>}
+              {!loadingExpenses && expenses.length === 0 && (
+                <div>No hay expensas.</div>
+              )}
 
               {!loadingExpenses &&
                 expenses.map((exp) => {
@@ -440,9 +478,7 @@ export default function AdminCargaFactura() {
                         },
                         {
                           label: "Vence:",
-                          value: exp.expirationDate
-                            ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
-                            : "-",
+                          value: exp.expirationDate ? new Date(exp.expirationDate).toLocaleDateString( "es-AR" ) : "-",
                         },
                       ]}
                       showDivider
@@ -483,8 +519,14 @@ export default function AdminCargaFactura() {
                           <Typography>No hay facturas.</Typography>
                         )}
                         {selectedExpense.invoices.map((inv: any) => (
-                          <Box key={`dlg-inv-${inv.id}`} sx={{ borderRadius: 1, p: 1.25, bgcolor: "background.paper", }} >
-                            <Box sx={{ display: "flex", gap: 1, alignItems: "center", }} >
+                          <Box
+                            key={`dlg-inv-${inv.id}`}
+                            sx={{
+                              borderRadius: 1,
+                              p: 1.25,
+                              bgcolor: "background.paper",
+                            }} >
+                            <Box sx={{  display: "flex", gap: 1, alignItems: "center", }} >
                               <Box sx={{ flex: 1 }}>
                                 <Typography variant="subtitle2" noWrap>
                                   {inv.concept ||
@@ -519,6 +561,22 @@ export default function AdminCargaFactura() {
           )}
         </Stack>
       </Paper>
+
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={3500}
+        onClose={() => setSnack((s) => ({ ...s, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnack((s) => ({ ...s, open: false }))}
+          severity={snack.sev}
+          variant="filled"
+          sx={{ borderRadius: 2 }}
+        >
+          {snack.msg}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

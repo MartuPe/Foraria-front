@@ -1,36 +1,15 @@
 import React, { useState, useMemo } from "react";
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  DialogTitle,
-  Stack,
-  TextField,
-  MenuItem,
-  Paper,
-  Typography,
-  Chip,
-  Card,
-  CardContent,
-  IconButton,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-} from "@mui/material";
+import { Box, Button, Dialog, DialogContent, DialogActions, DialogTitle, Stack, TextField, MenuItem, Paper, Typography, Chip, Card, CardContent, IconButton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, CircularProgress, } from "@mui/material";
 import {
   AddOutlined,
   EditOutlined,
   DeleteOutline,
-  VisibilityOutlined
+  VisibilityOutlined,
 } from "@mui/icons-material";
 import PageHeader from "../../components/SectionHeader";
 import { useGet } from "../../hooks/useGet";
 import NewDocument from "../../components/modals/NewDocument";
+import { ForariaStatusModal } from "../../components/StatCardForms";
 
 // Tipos actualizados según el backend
 interface Document {
@@ -46,13 +25,16 @@ interface Document {
 
 const categories = [
   "Reglamentos",
-  "Actas", 
+  "Actas",
   "Presupuestos",
   "Manuales",
   "Escrituras",
   "Comprobantes",
-  "Otros"
+  "Otros",
 ];
+
+const API_BASE =
+  process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
 export default function AdminDocuments() {
   const [tab, setTab] = useState<"todos" | "publicos" | "privados">("todos");
@@ -60,29 +42,44 @@ export default function AdminDocuments() {
   const [categoryFilter, setCategoryFilter] = useState<string>("Todas");
   const [openNew, setOpenNew] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<Document | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
-  // 🔧 CORREGIDO: Usar endpoint correcto del backend
-  const { data: documents, loading, error, refetch } = useGet<Document[]>("/UserDocument");
+  const [statusModal, setStatusModal] = useState<{
+    open: boolean;
+    variant: "success" | "error";
+    title: string;
+    message: string;
+  }>({
+    open: false,
+    variant: "error",
+    title: "",
+    message: "",
+  });
 
-  // Debug: mostrar qué está devolviendo el backend
-  console.log("📄 UserDocuments data:", documents);
-  console.log("⚠️ UserDocuments error:", error);
+  const {
+    data: documents,
+    loading,
+    error,
+    refetch,
+  } = useGet<Document[]>("/UserDocument");
 
-  // Filtros (solo si hay datos)
+  // Filtros
   const filteredDocuments = useMemo(() => {
     if (!documents || !Array.isArray(documents)) return [];
-    
-    return documents.filter(doc => {
-      const matchesSearch = !searchQuery || 
+
+    return documents.filter((doc) => {
+      const matchesSearch =
+        !searchQuery ||
         doc.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doc.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         doc.category?.toLowerCase().includes(searchQuery.toLowerCase());
-      
-      const matchesCategory = categoryFilter === "Todas" || doc.category === categoryFilter;
-      
-      // Para tabs: como no hay campo isPublic, usar todos por ahora
-      const matchesTab = tab === "todos"; // TODO: implementar lógica de público/privado
-      
+
+      const matchesCategory =
+        categoryFilter === "Todas" || doc.category === categoryFilter;
+
+      // De momento todos se consideran "públicos"
+      const matchesTab = tab === "todos" || tab === "publicos";
+
       return matchesSearch && matchesCategory && matchesTab;
     });
   }, [documents, searchQuery, categoryFilter, tab]);
@@ -93,98 +90,153 @@ export default function AdminDocuments() {
 
   // Handlers básicos
   const handleView = (doc: Document) => {
-    console.log("👁️ Viewing document:", doc);
     if (doc.url) {
-      window.open(doc.url, '_blank');
+      window.open(doc.url, "_blank", "noopener,noreferrer");
+    } else {
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo abrir el documento",
+        message: "Este documento no tiene un archivo asociado para visualizar.",
+      });
     }
   };
 
   const handleEdit = (doc: Document) => {
-    console.log("✏️ Edit document:", doc);
-    alert(`Editar documento: ${doc.title}\n(Funcionalidad pendiente)`);
+    console.log("Editar documento (pendiente):", doc);
+    setStatusModal({
+      open: true,
+      variant: "error",
+      title: "Edición no disponible",
+      message:
+        "La edición de documentos estará disponible próximamente desde esta pantalla.",
+    });
   };
 
   const handleDelete = (doc: Document) => {
-    console.log("🗑️ Delete document:", doc);
     setDeleteConfirm(doc);
   };
 
-  const confirmDelete = () => {
-    if (deleteConfirm) {
-      alert("Funcionalidad de eliminación pendiente");
-      setDeleteConfirm(null);
+  const confirmDelete = async () => {
+    if (!deleteConfirm) return;
+
+    try {
+      setDeleting(true);
+      const res = await fetch(
+        `${API_BASE}/UserDocument/${deleteConfirm.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      if (res.status === 204 || res.ok) {
+        setStatusModal({
+          open: true,
+          variant: "success",
+          title: "Documento eliminado",
+          message: "El documento se eliminó correctamente.",
+        });
+        setDeleteConfirm(null);
+        await refetch();
+      } else if (res.status === 404) {
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "Documento no disponible",
+          message:
+            "El documento ya no existe o fue eliminado previamente.",
+        });
+        setDeleteConfirm(null);
+        await refetch();
+      } else {
+        console.error("Error al eliminar documento", await res.text());
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "No se pudo eliminar el documento",
+          message:
+            "Ocurrió un problema al eliminar el documento. Intentá nuevamente más tarde.",
+        });
+      }
+    } catch (e) {
+      console.error("Error de red al eliminar documento", e);
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo eliminar el documento",
+        message:
+          "No pudimos conectarnos con el servidor. Intentá nuevamente más tarde.",
+      });
+    } finally {
+      setDeleting(false);
     }
   };
 
-  // 🚨 Debug del estado de carga
   if (loading) {
     return (
       <div className="page">
         <PageHeader title="Gestión de Documentos" />
-        <Paper sx={{ p: 4, textAlign: "center" }}>
-          <Typography>⏳ Cargando documentos desde backend...</Typography>
-          <Typography variant="caption" color="text.secondary">
-            Endpoint: /UserDocument
-          </Typography>
+        <Paper
+          sx={{
+            p: 4,
+            textAlign: "center",
+            borderRadius: 2,
+            mt: 2,
+          }}
+        >
+          <CircularProgress sx={{ mb: 2 }} />
+          <Typography>Cargando documentos…</Typography>
         </Paper>
       </div>
     );
   }
 
-  // 🚨 Debug de errores de conexión
   if (error) {
+    console.error("Error cargando documentos", error);
     return (
       <div className="page">
         <PageHeader title="Gestión de Documentos" />
-        <Paper sx={{ p: 4, textAlign: "center", bgcolor: "error.light" }}>
-          <Typography variant="h6" color="error">
-            ❌ Error de conexión con backend
+        <Paper
+          sx={{
+            p: 4,
+            textAlign: "center",
+            borderRadius: 2,
+            mt: 2,
+          }}
+        >
+          <Typography variant="h6" color="error" gutterBottom>
+            No se pudieron cargar los documentos
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            <strong>Error:</strong> {error}
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Hubo un problema al conectar con el servidor. Intentá nuevamente.
           </Typography>
-          <Typography variant="caption" display="block" sx={{ mt: 2 }}>
-            💡 Posibles causas:
-          </Typography>
-          <Box component="ul" sx={{ textAlign: "left", mt: 1 }}>
-            <li>Endpoint incorrecto: <code>/UserDocument</code></li>
-            <li>Backend no funcionando en puerto 7245</li>
-            <li>Token de autenticación faltante</li>
-            <li>CORS mal configurado</li>
-          </Box>
-          
-          <Button 
-            variant="contained" 
-            onClick={() => refetch()} 
-            sx={{ mt: 2 }}
-          >
-            🔄 Reintentar
+          <Button variant="contained" onClick={() => refetch()}>
+            Reintentar
           </Button>
         </Paper>
       </div>
     );
   }
 
-  // 🚨 Debug de estructura de datos
   if (!Array.isArray(documents)) {
+    console.error("Estructura de datos inesperada en /UserDocument", documents);
     return (
       <div className="page">
         <PageHeader title="Gestión de Documentos" />
-        <Paper sx={{ p: 4, textAlign: "center", bgcolor: "warning.light" }}>
-          <Typography variant="h6" color="warning.dark">
-            ⚠️ Estructura de datos inesperada
+        <Paper sx={{ p: 4, textAlign: "center", borderRadius: 2, mt: 2, }} >
+          <Typography variant="h6" color="error" gutterBottom>
+            No se pudo mostrar la información
           </Typography>
-          <Typography variant="body2" sx={{ mt: 1 }}>
-            El backend devolvió: <code>{typeof documents}</code>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Recibimos un formato de datos inesperado. Intentá recargar la
+            página más tarde.
           </Typography>
-          <Box sx={{ mt: 2, p: 2, bgcolor: "grey.100", borderRadius: 1 }}>
-            <Typography variant="caption">
-              <strong>Datos recibidos:</strong>
-            </Typography>
-            <pre style={{ fontSize: '12px', textAlign: 'left' }}>
-              {JSON.stringify(documents, null, 2)}
-            </pre>
-          </Box>
+          <Button variant="contained" onClick={() => refetch()}>
+            Reintentar
+          </Button>
         </Paper>
       </div>
     );
@@ -201,7 +253,7 @@ export default function AdminDocuments() {
             startIcon={<AddOutlined />}
             onClick={() => setOpenNew(true)}
           >
-            + Nuevo Documento
+            Nuevo documento
           </Button>
         }
         tabs={[
@@ -213,27 +265,15 @@ export default function AdminDocuments() {
         onTabChange={(v) => setTab(v as typeof tab)}
       />
 
-      {/* 🐛 Debug info */}
-      <Paper sx={{ p: 2, mb: 2, bgcolor: "info.light" }}>
-        <Typography variant="subtitle2" color="info.dark">
-          📊 Estado del backend:
-        </Typography>
-        <Typography variant="body2">
-          • Total documentos: {totalDocs} 
-          • Públicos: {publicDocs}
-          • Endpoint: <code>/UserDocument</code>
-        </Typography>
-      </Paper>
-
       {/* KPIs simplificados */}
-      <Stack direction="row" spacing={2} sx={{ mb: 2 }}>
+      <Stack direction="row" spacing={2} sx={{ mb: 2, mt: 1 }}>
         <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
           <CardContent sx={{ p: 2, textAlign: "center" }}>
             <Typography variant="h6" color="primary.main">
               {totalDocs}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Total Documentos
+              Total de documentos
             </Typography>
           </CardContent>
         </Card>
@@ -244,19 +284,19 @@ export default function AdminDocuments() {
               {publicDocs}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Públicos
+              Documentos visibles
             </Typography>
           </CardContent>
         </Card>
       </Stack>
 
       {/* Filtros básicos */}
-      <Paper elevation={0} variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2 }}>
+      <Paper elevation={0} variant="outlined" sx={{ p: 2, borderRadius: 2, mb: 2 }} >
         <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
           <TextField
             fullWidth
             size="small"
-            placeholder="Buscar documentos..."
+            placeholder="Buscar documentos…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
@@ -269,14 +309,15 @@ export default function AdminDocuments() {
             sx={{ minWidth: { xs: "100%", md: 200 } }}
           >
             <MenuItem value="Todas">Todas</MenuItem>
-            {categories.map(cat => (
-              <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+            {categories.map((cat) => (
+              <MenuItem key={cat} value={cat}>
+                {cat}
+              </MenuItem>
             ))}
           </TextField>
         </Stack>
       </Paper>
 
-      {/* Tabla actualizada */}
       <Paper elevation={0} variant="outlined" sx={{ borderRadius: 2 }}>
         <TableContainer>
           <Table>
@@ -294,17 +335,17 @@ export default function AdminDocuments() {
                 <TableRow key={doc.id} hover>
                   <TableCell>
                     <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                        {doc.title || 'Sin título'}
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }} >
+                        {doc.title || "Sin título"}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {doc.description || 'Sin descripción'}
+                        {doc.description || "Sin descripción"}
                       </Typography>
                     </Box>
                   </TableCell>
                   <TableCell>
                     <Chip
-                      label={doc.category || 'Sin categoría'}
+                      label={doc.category || "Sin categoría"}
                       size="small"
                       variant="outlined"
                     />
@@ -316,7 +357,7 @@ export default function AdminDocuments() {
                   </TableCell>
                   <TableCell>
                     <Typography variant="body2">
-                      {new Date(doc.createdAt).toLocaleDateString()}
+                      {new Date(doc.createdAt).toLocaleDateString("es-AR")}
                     </Typography>
                   </TableCell>
                   <TableCell>
@@ -350,9 +391,7 @@ export default function AdminDocuments() {
                 <TableRow>
                   <TableCell colSpan={5} sx={{ textAlign: "center", py: 3 }}>
                     <Typography variant="body2" color="text.secondary">
-                      {totalDocs === 0 
-                        ? "🚀 Aún no hay documentos. ¡Crea el primero!" 
-                        : "No se encontraron documentos con los filtros aplicados"}
+                      {totalDocs === 0 ? "Todavía no hay documentos cargados." : "No se encontraron documentos con los filtros seleccionados."}
                     </Typography>
                   </TableCell>
                 </TableRow>
@@ -362,8 +401,7 @@ export default function AdminDocuments() {
         </TableContainer>
       </Paper>
 
-      {/* Modal básico */}
-      <Dialog open={openNew} onClose={() => setOpenNew(false)} maxWidth="md" fullWidth>
+      <Dialog open={openNew} onClose={() => setOpenNew(false)} maxWidth="md" fullWidth >
         <DialogContent>
           <NewDocument
             onSuccess={() => {
@@ -376,20 +414,52 @@ export default function AdminDocuments() {
       </Dialog>
 
       {/* Modal de confirmación de eliminación */}
-      <Dialog open={!!deleteConfirm} onClose={() => setDeleteConfirm(null)}>
-        <DialogTitle>Confirmar eliminación</DialogTitle>
+      <Dialog
+        open={!!deleteConfirm}
+        onClose={() => {
+          if (!deleting) setDeleteConfirm(null);
+        }}
+      >
+        <DialogTitle>Eliminar documento</DialogTitle>
         <DialogContent>
-          <Typography>
-            ¿Estás seguro de que deseas eliminar el documento "{deleteConfirm?.title}"?
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            ¿Seguro que querés eliminar este documento?
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            {deleteConfirm?.title}
           </Typography>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteConfirm(null)}>Cancelar</Button>
-          <Button onClick={confirmDelete} color="error" variant="contained">
-            Eliminar
+          <Button
+            onClick={() => setDeleteConfirm(null)}
+            disabled={deleting}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={confirmDelete}
+            color="error"
+            variant="contained"
+            disabled={deleting}
+          >
+            {deleting ? "Eliminando…" : "Eliminar"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ForariaStatusModal
+        open={statusModal.open}
+        onClose={() =>
+          setStatusModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        variant={statusModal.variant}
+        title={statusModal.title}
+        message={statusModal.message}
+        primaryActionLabel="Aceptar"
+      />
     </div>
   );
 }
