@@ -66,9 +66,10 @@ export default function App() {
           <Route path="/admin" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><Layout /></RequireRoles></RequireAuth>}>
             <Route path="dashboard" element={<AdminDashboard />} />
             <Route path="reclamos" element={<Claims />} />
-            <Route path="calendario" element={<Calendar />} />
+            <Route path="eventos" element={<Calendar />} />
             <Route path="perfil" element={<Profile />} />
             <Route path="foros" element={<Forums />} />
+            <Route path="reuniones" element={<Meetings />} />
             {/* <Route path="auditoria" element={<AdminAudit />} /> */}
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<Votes />} />
