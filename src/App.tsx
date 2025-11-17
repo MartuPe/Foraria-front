@@ -25,7 +25,6 @@ import Forums from "./pages/Forums";
 import Comentarios from "./pages/ThreadView";
 import Configuration from "./pages/Configuration";
 import SelectConsortium from "./pages/SelectConsortium";
-import AdminDashboard from "./pages/admin/AdminDashboard";
 // import AdminAudit from "./pages/admin/AdminAudit";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminSuppliers from "./pages/admin/AdminSuppliers";
@@ -64,7 +63,7 @@ export default function App() {
           </Route>
 
           <Route path="/admin" element={<RequireAuth><RequireRoles roles={[Role.ADMIN, Role.CONSORCIO]}><Layout /></RequireRoles></RequireAuth>}>
-            <Route path="dashboard" element={<AdminDashboard />} />
+            <Route path="dashboard" element={<Dashboard />} />
             <Route path="reclamos" element={<Claims />} />
             <Route path="eventos" element={<Calendar />} />
             <Route path="perfil" element={<Profile />} />
