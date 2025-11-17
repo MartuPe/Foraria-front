@@ -25,6 +25,7 @@ import { useMutation } from "../hooks/useMutation";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import { deleteMessage as deleteMessageApi } from "../services/messageService";
+import { ForariaStatusModal } from "../components/StatCardForms";
 
 interface Thread {
   id: number;
@@ -108,39 +109,11 @@ const Forums: React.FC = () => {
     error: errorThreads,
     refetch: refetchThreads,
   } = useGet<Thread[]>("/Thread");
+
   const loading = loadingForums || loadingThreads;
   const [loadError, setLoadError] = useState<string | null>(null);
   const location = useLocation();
   const navigate = useNavigate();
-
-useEffect(() => {
- 
-  if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
-    setLoadError(null);
-  }
-  
-  
-  if (errorForums || errorThreads) {
-    const errorMsg = String(errorForums || errorThreads);
-    
-    
-    const is404 = errorMsg.toLowerCase().includes("404") || 
-                  errorMsg.toLowerCase().includes("not found") ||
-                  errorMsg.toLowerCase().includes("status code 404");
-    
-    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
-                      errorMsg.toLowerCase().includes("no hay");
-    
-    if (is404 || isNotFound) {
-      
-      setLoadError(null);
-    } else {
-   
-      setLoadError("No se pudo cargar el foro. Intentá nuevamente más tarde.");
-    }
-  }
-}, [forumsRaw, threadsRaw, errorForums, errorThreads]);
-
   const [searchParams, setSearchParams] = useSearchParams();
 
   const isAdminRole =
@@ -150,6 +123,7 @@ useEffect(() => {
 
   const [open, setOpen] = useState(false);
   const currentUserId = Number(localStorage.getItem("userId") || 0);
+
   const { mutate: toggleMutate } =
     useMutation<ReactionResponse, { user_id: number; thread_id?: number; message_id?: number; reactionType: number }>("/Reactions/toggle", "post");
 
@@ -163,7 +137,39 @@ useEffect(() => {
   const API_BASE =
     process.env.REACT_APP_API_URL || "http://localhost:7245/api";
 
-  // manejo de error de carga
+  // Modal de estado general (éxito / error)
+  const [statusModal, setStatusModal] = useState<{
+    open: boolean;
+    variant: "success" | "error";
+    title: string;
+    message: string;
+  }>({
+    open: false,
+    variant: "error",
+    title: "",
+    message: "",
+  });
+
+  // Validaciones de respuesta por hilo
+  const [replyErrors, setReplyErrors] = useState<Record<number, string>>({});
+
+  // Diálogo de eliminación de respuesta individual
+  const [deleteCommentDialogOpen, setDeleteCommentDialogOpen] = useState(false);
+  const [commentToDelete, setCommentToDelete] = useState<{
+    threadId: number;
+    messageId: number;
+  } | null>(null);
+  const [deletingComment, setDeletingComment] = useState(false);
+
+  // Diálogo de eliminación de thread
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
+  const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
+
+  // Estado para cerrar hilo
+  const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
+
+  // Manejo de error de carga de foros / threads
   useEffect(() => {
     if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
       setLoadError(null);
@@ -182,11 +188,10 @@ useEffect(() => {
         errorMsg.toLowerCase().includes("no hay");
 
       if (is404 || isNotFound) {
+        // Caso "no hay datos": se muestra estado vacío, sin error crítico.
         setLoadError(null);
       } else {
-        setLoadError(
-          "No se pudo cargar el foro. Intentá nuevamente más tarde."
-        );
+        setLoadError("No se pudo cargar el foro. Intentá nuevamente más tarde.");
       }
     }
   }, [forumsRaw, threadsRaw, errorForums, errorThreads]);
@@ -285,7 +290,9 @@ useEffect(() => {
         }
         const json: Forum = await res.json();
         if (mounted) setForumStats(json);
-      } catch { if (mounted) setForumStats(null); }
+      } catch {
+        if (mounted) setForumStats(null);
+      }
     })();
     return () => {
       mounted = false;
@@ -322,7 +329,7 @@ useEffect(() => {
           headers: { "Content-Type": "application/json" },
         });
         if (r.ok) reactions = await r.json();
-      } catch {}
+      } catch { }
 
       let messages: Message[] = [];
       try {
@@ -331,7 +338,7 @@ useEffect(() => {
           headers: { "Content-Type": "application/json" },
         });
         if (m.ok) messages = await m.json();
-      } catch {}
+      } catch { }
 
       if (!mounted) return;
       setEnriched((prev) => ({
@@ -370,14 +377,13 @@ useEffect(() => {
       chips: [
         {
           label:
-            forumsRaw?.find((f) => f.id === p.forumId)?.categoryName ??
-            String(p.forumId ?? "-"),
+            forumsRaw?.find((f) => f.id === p.forumId)?.categoryName ?? String(p.forumId ?? "-"),
           color:
             p.state === "Activo"
               ? "success"
               : p.state === "Pendiente"
-              ? "warning"
-              : "default",
+                ? "warning"
+                : "default",
         },
       ],
     }));
@@ -417,19 +423,13 @@ useEffect(() => {
   // edición de mensajes individuales
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
 
-  // edición de threads y borrado
+  // edición de threads
   const [editOpen, setEditOpen] = useState(false);
   const [threadBeingEdited, setThreadBeingEdited] = useState<{
     id: number;
     title: string;
     description: string;
   } | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
-  const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
-  const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [statusDialogMessage, setStatusDialogMessage] = useState("");
-  const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
 
   const toggleThread = (threadId: number) => {
     setExpandedThreads(prev => {
@@ -532,10 +532,26 @@ useEffect(() => {
             },
           }));
         } else {
-          setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), reacting: false, error: true, userReaction: prevUser } }));
+          setEnriched((p) => ({
+            ...p,
+            [key]: {
+              ...(p[key] ?? {}),
+              reacting: false,
+              error: true,
+              userReaction: prevUser,
+            },
+          }));
         }
       } catch {
-        setEnriched((p) => ({ ...p, [key]: { ...(p[key] ?? {}), reacting: false, error: true, userReaction: prevUser } }));
+        setEnriched((p) => ({
+          ...p,
+          [key]: {
+            ...(p[key] ?? {}),
+            reacting: false,
+            error: true,
+            userReaction: prevUser,
+          },
+        }));
       }
     }
   };
@@ -571,9 +587,23 @@ useEffect(() => {
 
   // enviar respuesta (POST /Message con FormData)
   const handleSendReply = async (threadId: number) => {
-    const text = replyText[threadId]?.trim();
-    if (!text || sendingReply === threadId) return;
+    const text = replyText[threadId]?.trim() || "";
+
+    // Validación: no permitir respuestas vacías
+    if (!text) {
+      setReplyErrors((prev) => ({
+        ...prev,
+        [threadId]: "La respuesta no puede estar vacía.",
+      }));
+      return;
+    }
+
     setSendingReply(threadId);
+    setReplyErrors((prev) => ({
+      ...prev,
+      [threadId]: "",
+    }));
+
     try {
       const form = new FormData();
       form.append("Content", text);
@@ -586,8 +616,7 @@ useEffect(() => {
       });
 
       if (!res.ok) {
-        const txt = await res.text();
-        throw new Error(txt || "Error al crear mensaje");
+        throw new Error("Error al crear mensaje");
       }
 
       setReplyText((p) => ({
@@ -596,35 +625,54 @@ useEffect(() => {
       }));
 
       await reloadComments(threadId);
-    } catch (e: any) {
-      alert(
-        `Error al enviar la respuesta: ${e?.message || "desconocido"}`
-      );
+    } catch (e) {
+      console.error("Error al enviar la respuesta", e);
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo enviar la respuesta",
+        message: "No pudimos publicar tu respuesta. Intentá nuevamente más tarde.",
+      });
     } finally {
       setSendingReply(null);
     }
   };
 
-  // borrar respuesta individual
-  const handleDeleteComment = async (
-    threadId: number,
-    messageId: number
-  ) => {
-    const confirmDelete = window.confirm(
-      "¿Eliminar esta respuesta? Esta acción no se puede deshacer."
-    );
-    if (!confirmDelete) return;
+  // abrir diálogo de borrado de respuesta
+  const openDeleteCommentDialog = (threadId: number, messageId: number) => {
+    if (!isAdmin && currentUserId === 0) return;
+    setCommentToDelete({ threadId, messageId });
+    setDeleteCommentDialogOpen(true);
+  };
+
+  // borrar respuesta individual (confirmado desde el diálogo)
+  const handleConfirmDeleteComment = async () => {
+    if (!commentToDelete) return;
+    const { threadId, messageId } = commentToDelete;
 
     try {
+      setDeletingComment(true);
       await deleteMessageApi(messageId, currentUserId);
       await reloadComments(threadId);
-    } catch (e: any) {
+
+      setStatusModal({
+        open: true,
+        variant: "success",
+        title: "Respuesta eliminada",
+        message: "La respuesta se eliminó correctamente.",
+      });
+    } catch (e) {
       console.error("Error eliminando mensaje", e);
-      alert(
-        `No se pudo eliminar la respuesta: ${
-          e?.message || "error desconocido"
-        }`
-      );
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo eliminar la respuesta",
+        message: "No se pudo eliminar la respuesta. Intentá nuevamente más tarde.",
+      });
+    } finally {
+      setDeletingComment(false);
+      setDeleteCommentDialogOpen(false);
+      setCommentToDelete(null);
     }
   };
 
@@ -645,10 +693,13 @@ useEffect(() => {
     const hasReplies = (enriched[key]?.commentsCount ?? 0) > 0;
 
     if (hasReplies) {
-      setStatusDialogMessage(
-        "No se puede eliminar un thread que contiene mensajes. Eliminá primero las respuestas."
-      );
-      setStatusDialogOpen(true);
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se puede eliminar el post",
+        message:
+          "No se puede eliminar un hilo que contiene respuestas. Eliminá primero las respuestas.",
+      });
       setDeleteDialogOpen(false);
       setThreadToDelete(null);
       return;
@@ -680,24 +731,46 @@ useEffect(() => {
         });
 
         refetchThreads();
+
+        setStatusModal({
+          open: true,
+          variant: "success",
+          title: "Post eliminado",
+          message: "El post se eliminó correctamente.",
+        });
       } else if (res.status === 404) {
-        alert("El post ya no existe o fue borrado.");
+        // El post ya no existe
         refetchThreads();
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "Post no disponible",
+          message: "El post ya no existe o fue eliminado.",
+        });
       } else if (res.status === 409) {
-        const text = await res.text();
-        console.error("Error al borrar el post:", text);
-        setStatusDialogMessage(
-          "No se puede eliminar un thread que contiene mensajes."
-        );
-        setStatusDialogOpen(true);
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "No se puede eliminar el post",
+          message: "No se puede eliminar un hilo que contiene mensajes.",
+        });
       } else {
-        const text = await res.text();
-        console.error("Error al borrar el post:", text);
-        alert("No se pudo borrar el post. Probá de nuevo.");
+        console.error("Error al borrar el post:", await res.text());
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "No se pudo eliminar el post",
+          message: "No se pudo borrar el post. Probá de nuevo más tarde.",
+        });
       }
     } catch (e) {
       console.error(e);
-      alert("Ocurrió un error al borrar el post.");
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo eliminar el post",
+        message: "Ocurrió un error al borrar el post. Intentá nuevamente más tarde.",
+      });
     } finally {
       setDeletingThreadId(null);
       setDeleteDialogOpen(false);
@@ -720,36 +793,42 @@ useEffect(() => {
       });
 
       if (res.status === 409) {
-        let msg = "El hilo ya se encuentra cerrado.";
-        try {
-          const json = await res.json();
-          if (json?.error) msg = json.error;
-        } catch {}
-        setStatusDialogMessage(msg);
-        setStatusDialogOpen(true);
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "Hilo ya cerrado",
+          message: "Este hilo ya se encuentra cerrado.",
+        });
         await refetchThreads();
         return;
       }
 
       if (!res.ok) {
-        const text = await res.text();
-        console.error("Error al cerrar el hilo:", text);
-        setStatusDialogMessage(
-          "No se pudo cerrar el hilo. Probá de nuevo."
-        );
-        setStatusDialogOpen(true);
+        console.error("Error al cerrar el hilo:", await res.text());
+        setStatusModal({
+          open: true,
+          variant: "error",
+          title: "No se pudo cerrar el hilo",
+          message: "No se pudo cerrar el hilo. Probá de nuevo más tarde.",
+        });
         return;
       }
 
-      setStatusDialogMessage("El hilo se cerró correctamente.");
-      setStatusDialogOpen(true);
+      setStatusModal({
+        open: true,
+        variant: "success",
+        title: "Hilo cerrado",
+        message: "El hilo se cerró correctamente.",
+      });
       await refetchThreads();
     } catch (e) {
       console.error(e);
-      setStatusDialogMessage(
-        "Ocurrió un error al cerrar el hilo."
-      );
-      setStatusDialogOpen(true);
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "No se pudo cerrar el hilo",
+        message: "Ocurrió un error al cerrar el hilo. Intentá nuevamente más tarde.",
+      });
     } finally {
       setClosingThreadId(null);
     }
@@ -789,7 +868,15 @@ useEffect(() => {
     const hasReplies = (meta.commentsCount ?? 0) > 0;
 
     return (
-      <Card key={thread.id} variant="outlined" sx={{ borderRadius: 3, transition: "all .2s", "&:hover": { boxShadow: 2, transform: "translateY(-1px)" } }}>
+      <Card
+        key={thread.id}
+        variant="outlined"
+        sx={{
+          borderRadius: 3,
+          transition: "all .2s",
+          "&:hover": { boxShadow: 2, transform: "translateY(-1px)" },
+        }}
+      >
         <CardContent>
           <Stack spacing={2}>
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
@@ -804,7 +891,12 @@ useEffect(() => {
                     {thread.title}
                   </Typography>
                   {thread.chips.map((chip: any, i: number) => (
-                    <Chip key={`${chip.label}-${i}`} label={chip.label} color={chip.color} size="small" />
+                    <Chip
+                      key={`${chip.label}-${i}`}
+                      label={chip.label}
+                      color={chip.color}
+                      size="small"
+                    />
                   ))}
 
                   {isAdmin && meta.pinned && (
@@ -888,10 +980,29 @@ useEffect(() => {
               )}
             </Stack>
 
-            <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              justifyContent="space-between"
+            >
               <Stack direction="row" spacing={2} alignItems="center">
-                <Button size="small" startIcon={<ThumbUpIcon sx={{ color: meta.userReaction === 1 ? "success.main" : undefined }} />}
-                        onClick={() => !meta.reacting && toggleReactionForThread(thread.threadId, 1)} disabled={!!meta.reacting} sx={{ minWidth: "auto", px: 1 }}>
+                <Button
+                  size="small"
+                  startIcon={
+                    <ThumbUpIcon
+                      sx={{
+                        color:
+                          meta.userReaction === 1 ? "success.main" : undefined,
+                      }}
+                    />
+                  }
+                  onClick={() =>
+                    !meta.reacting && toggleReactionForThread(thread.threadId, 1)
+                  }
+                  disabled={!!meta.reacting}
+                  sx={{ minWidth: "auto", px: 1 }}
+                >
                   {meta.likes}
                 </Button>
                 <Button
@@ -944,7 +1055,9 @@ useEffect(() => {
               <Box sx={{ mt: 2 }}>
                 <Divider sx={{ mb: 2 }} />
                 {meta.loading ? (
-                  <Box sx={{ display: "flex", justifyContent: "center", py: 2 }}>
+                  <Box
+                    sx={{ display: "flex", justifyContent: "center", py: 2 }}
+                  >
                     <CircularProgress size={24} />
                     <Typography variant="body2" sx={{ ml: 1 }}>
                       Cargando mensajes...
@@ -1033,7 +1146,7 @@ useEffect(() => {
                                     <IconButton
                                       size="small"
                                       onClick={() =>
-                                        handleDeleteComment(
+                                        openDeleteCommentDialog(
                                           thread.threadId,
                                           comment.id
                                         )
@@ -1212,12 +1325,19 @@ useEffect(() => {
                                 maxRows={6}
                                 placeholder="Escribe tu respuesta..."
                                 value={replyText[thread.threadId] || ""}
-                                onChange={(e) =>
+                                onChange={(e) => {
+                                  const value = e.target.value;
                                   setReplyText((p) => ({
                                     ...p,
-                                    [thread.threadId]: e.target.value,
-                                  }))
-                                }
+                                    [thread.threadId]: value,
+                                  }));
+                                  if (replyErrors[thread.threadId]) {
+                                    setReplyErrors((prev) => ({
+                                      ...prev,
+                                      [thread.threadId]: "",
+                                    }));
+                                  }
+                                }}
                                 variant="outlined"
                                 size="small"
                                 disabled={
@@ -1239,6 +1359,16 @@ useEffect(() => {
                                 }}
                               />
 
+                              {replyErrors[thread.threadId] && (
+                                <Typography
+                                  variant="caption"
+                                  color="error"
+                                  sx={{ mt: 0.5, display: "block" }}
+                                >
+                                  {replyErrors[thread.threadId]}
+                                </Typography>
+                              )}
+
                               <Stack
                                 direction="row"
                                 justifyContent="flex-end"
@@ -1259,7 +1389,6 @@ useEffect(() => {
                                     handleSendReply(thread.threadId)
                                   }
                                   disabled={
-                                    !replyText[thread.threadId]?.trim() ||
                                     sendingReply === thread.threadId
                                   }
                                   sx={{
@@ -1293,9 +1422,14 @@ useEffect(() => {
     <Box className="foraria-page-container" sx={{ ml: 0 }}>
       <PageHeader
         title={`Foro ${currentCategoryName !== "Todas" ? `- ${currentCategoryName}` : ""}`}
-        // Unificamos estética: quitamos tabs "Todos/Populares/Recientes" para usuarios
         actions={
-          <Button variant="contained" color="secondary" startIcon={<AddIcon />} onClick={() => setOpen(true)} sx={{ borderRadius: 999, fontWeight: 600 }}>
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AddIcon />}
+            onClick={() => setOpen(true)}
+            sx={{ borderRadius: 999, fontWeight: 600 }}
+          >
             Nuevo Post
           </Button>
         }
@@ -1367,14 +1501,19 @@ useEffect(() => {
           sx={{ mb: 1.5 }}
         >
           <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
-          <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 600 }}>Filtros</Typography>
+          <Typography
+            variant="subtitle1"
+            color="primary"
+            sx={{ fontWeight: 600 }}
+          >
+            Filtros
+          </Typography>
         </Stack>
         <Tabs
           value={currentTabKey}
           onChange={(_, v) => {
             if (isAdmin) setAdminCategory(v);
             else {
-              // navegar al slug correspondiente
               const slug = toSlug(v);
               navigate(`/forums/${slug}`);
             }
@@ -1392,7 +1531,7 @@ useEffect(() => {
               borderColor: "divider",
               borderRadius: 2,
               color: "text.primary",
-              "&:hover": { backgroundColor: "action.hover" }
+              "&:hover": { backgroundColor: "action.hover" },
             },
             "& .Mui-selected": {
               color: "white !important",
@@ -1510,8 +1649,21 @@ useEffect(() => {
         <DialogContent>
           {!resolvedForumId ? (
             <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>No se pudo identificar el foro destino.</Typography>
-              <Button onClick={() => { refetchForums(); }} variant="outlined">Reintentar</Button>
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ mb: 1 }}
+              >
+                No se pudo identificar el foro destino.
+              </Typography>
+              <Button
+                onClick={() => {
+                  refetchForums();
+                }}
+                variant="outlined"
+              >
+                Reintentar
+              </Button>
             </Box>
           ) : (
             <NewPost
@@ -1622,25 +1774,64 @@ useEffect(() => {
         </DialogActions>
       </Dialog>
 
-      {/* Dialog informativo de estado de hilo */}
+      {/* Dialog de confirmación de borrado de respuesta */}
       <Dialog
-        open={statusDialogOpen}
-        onClose={() => setStatusDialogOpen(false)}
+        open={deleteCommentDialogOpen}
+        onClose={() => {
+          if (!deletingComment) {
+            setDeleteCommentDialogOpen(false);
+            setCommentToDelete(null);
+          }
+        }}
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle>Estado del hilo</DialogTitle>
+        <DialogTitle>Eliminar respuesta</DialogTitle>
         <DialogContent>
-          <Typography variant="body1">
-            {statusDialogMessage}
+          <Typography variant="body1" sx={{ mb: 1 }}>
+            ¿Seguro que querés eliminar esta respuesta?
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            Esta acción no se puede deshacer.
           </Typography>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setStatusDialogOpen(false)} autoFocus>
-            Aceptar
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={() => {
+              setDeleteCommentDialogOpen(false);
+              setCommentToDelete(null);
+            }}
+            disabled={deletingComment}
+          >
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleConfirmDeleteComment}
+            disabled={deletingComment}
+            startIcon={
+              deletingComment ? ( <CircularProgress size={16} /> ) : ( <DeleteOutline /> )
+            }
+          >
+            {deletingComment ? "Eliminando..." : "Eliminar"}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ForariaStatusModal
+        open={statusModal.open}
+        onClose={() =>
+          setStatusModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
+        variant={statusModal.variant}
+        title={statusModal.title}
+        message={statusModal.message}
+        primaryActionLabel="Aceptar"
+      />
     </Box>
   );
 };

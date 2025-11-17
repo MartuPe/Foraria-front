@@ -16,7 +16,6 @@ import {
 const sortByNewest = <T extends { id: number }>(arr: T[]) =>
   [...arr].sort((a, b) => b.id - a.id);
 
-// Hardcode momentáneo del consorcio
 const consortiumId = Number(localStorage.getItem("consortiumId"));
 
 export default function AdminUserManagment() {
@@ -27,8 +26,9 @@ export default function AdminUserManagment() {
   const [users, setUsers] = useState<UserListItem[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const [roleFilter, setRoleFilter] = useState<"all" | "Administrador" | "Propietario" | "Inquilino">("all");
-  //const [statusFilter, setStatusFilter] = useState<"all" | "active" | "pending">("all");
+  const [roleFilter, setRoleFilter] = useState<
+    "all" | "Administrador" | "Propietario" | "Inquilino"
+  >("all");
   const [search, setSearch] = useState("");
 
   async function loadData() {
@@ -56,44 +56,22 @@ export default function AdminUserManagment() {
 
     if (search.trim()) {
       const q = search.toLowerCase();
-      data = data.filter(u =>
-        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
-        (u.mail ?? "").toLowerCase().includes(q)
+      data = data.filter(
+        (u) =>
+          `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+          (u.mail ?? "").toLowerCase().includes(q)
       );
     }
 
     if (roleFilter !== "all") {
-      data = data.filter(u => u.role === roleFilter);
+      data = data.filter((u) => u.role === roleFilter);
     }
 
     return data;
   }, [users, search, roleFilter]);
 
-  /*const filtered = useMemo(() => {
-    let data = users;
-
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      data = data.filter(u =>
-        `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
-        (u.mail ?? "").toLowerCase().includes(q)
-      );
-    }
-
-    if (roleFilter !== "all") {
-      data = data.filter(u => u.role === roleFilter);
-    }
-
-    if (statusFilter !== "all") {
-      if (statusFilter === "pending") data = data.filter(u => u.requiresPasswordChange);
-      else data = data.filter(u => !u.requiresPasswordChange);
-    }
-
-    return data;
-  }, [users, search, roleFilter, statusFilter]);*/
-
   return (
-    <>
+    <Box className="foraria-page-container">
       <PageHeader
         title="Gestión de Usuarios"
         showSearch
@@ -104,27 +82,21 @@ export default function AdminUserManagment() {
             color="secondary"
             startIcon={<AddOutlined />}
             onClick={() => setOpenNewUser(true)}
-            sx={{ px: 2.5, fontWeight: 600, textTransform: "none", boxShadow: "0 6px 16px rgba(245,158,11,.25)" }}
-          >
+            sx={{ px: 2.5, fontWeight: 600, textTransform: "none", boxShadow: "0 6px 16px rgba(245,158,11,.25)", }} >
             Nuevo Usuario
           </Button>
         }
         stats={[
-          { icon: <ShieldIcon />, title: "Propietarios", value: owners,  color: "success" },
-          { icon: <HomeIcon />,   title: "Inquilinos",   value: tenants, color: "info" },
+          { icon: <ShieldIcon />, title: "Propietarios", value: owners, color: "success" },
+          { icon: <HomeIcon />, title: "Inquilinos", value: tenants, color: "info" },
         ]}
         filters={[
-          <Select key="roles" value={roleFilter} size="small" sx={{ minWidth: 180 }} onChange={(e) => setRoleFilter(e.target.value as any)}>
+          <Select key="roles" value={roleFilter} size="small" sx={{ minWidth: 180 }} onChange={(e) => setRoleFilter(e.target.value as any)} >
             <MenuItem value="all">Todos los roles</MenuItem>
             <MenuItem value="Propietario">Propietarios</MenuItem>
             <MenuItem value="Inquilino">Inquilinos</MenuItem>
             <MenuItem value="Administrador">Administradores</MenuItem>
           </Select>,
-          /*<Select key="status" value={statusFilter} size="small" sx={{ minWidth: 180 }} onChange={(e) => setStatusFilter(e.target.value as any)}>
-            <MenuItem value="all">Todos los estados</MenuItem>
-            <MenuItem value="active">Activos</MenuItem>
-            <MenuItem value="pending">Pendientes</MenuItem>
-          </Select>,*/
         ]}
       />
 
@@ -133,39 +105,49 @@ export default function AdminUserManagment() {
         onClose={() => setOpenNewUser(false)}
         onCreated={() => {
           loadData();
-        }}
-      />
+        }}/>
 
-      <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
+      <Paper variant="outlined" elevation={0} className="foraria-profile-section" sx={{ mt: 2, p: 2.5, borderRadius: 3 }} >
         {loading ? (
-          <Typography variant="body2">Cargando…</Typography>
-        ) : filtered.length === 0 ? (
-          <Typography variant="body2" color="text.secondary">No hay usuarios para mostrar.</Typography>
+          <Typography variant="body2">Cargando…</Typography> ) : filtered.length === 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            No hay usuarios para mostrar.
+          </Typography>
         ) : (
           <Stack divider={<Divider flexItem />} spacing={2}>
             {filtered.map((u) => {
               const roleMeta = ROLE_META[u.role] ?? { label: u.role, chipColor: "default" as const };
-              const initials = `${u.firstName?.[0] ?? ""}${u.lastName?.[0] ?? ""}`.toUpperCase();
+              const initials = `${u.firstName?.[0] ?? ""}${ u.lastName?.[0] ?? "" }`.toUpperCase();
               const residence = u.residences?.[0];
-              const depto = residence ? `${residence.number ?? ""}${residence.floor ? ` · Piso ${residence.floor}` : ""}` : "—";
+              const depto = residence ? `${residence.number ?? ""}${ residence.floor ? ` · Piso ${residence.floor}` : "" }` : "—";
 
               return (
-                <Box key={u.id} sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-                  <Avatar sx={{ bgcolor: "#7c3aed", width: 44, height: 44 }}>{initials || "U"}</Avatar>
+                <Box key={u.id} sx={{ display: "flex", alignItems: "center", gap: 2 }} >
+                  <Avatar sx={{ bgcolor: "#7c3aed", width: 44, height: 44 }}>
+                    {initials || "U"}
+                  </Avatar>
 
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5, flexWrap: "wrap" }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5, flexWrap: "wrap" }} >
+                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }} >
                         {u.firstName} {u.lastName}
                       </Typography>
                       <Chip size="small" label={roleMeta.label} color={roleMeta.chipColor} />
-                      {u.requiresPasswordChange && <Chip size="small" label="Pendiente" color="secondary" variant="outlined" />}
+                      {u.requiresPasswordChange && (
+                        <Chip size="small" label="Pendiente" color="secondary" variant="outlined" />
+                      )}
                     </Stack>
 
-                    <Stack direction="row" spacing={2} sx={{ color: "text.secondary", flexWrap: "wrap" }}>
+                    <Stack direction="row" spacing={2} sx={{ color: "text.secondary", flexWrap: "wrap" }} >
                       <Typography variant="body2">{u.mail}</Typography>
-                      {u.phoneNumber ? <Typography variant="body2">+{u.phoneNumber}</Typography> : null}
-                      <Typography variant="body2">Depto. {depto}</Typography>
+                      {u.phoneNumber ? (
+                        <Typography variant="body2">
+                          +{u.phoneNumber}
+                        </Typography>
+                      ) : null}
+                      <Typography variant="body2">
+                        Depto. {depto}
+                      </Typography>
                     </Stack>
                   </Box>
                 </Box>
@@ -174,6 +156,6 @@ export default function AdminUserManagment() {
           </Stack>
         )}
       </Paper>
-    </>
+    </Box>
   );
 }

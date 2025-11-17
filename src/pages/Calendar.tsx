@@ -1,4 +1,3 @@
-// src/pages/Calendar.tsx
 import * as React from "react";
 import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Divider, IconButton, Paper, Stack, Typography, CircularProgress } from "@mui/material";
 import { AddRounded, ChevronLeft, ChevronRight } from "@mui/icons-material";
@@ -10,7 +9,13 @@ import NewReserve from "../components/modals/NewReserve";
 import PageHeader from "../components/SectionHeader";
 import { useGet } from "../hooks/useGet";
 
-type Reserve = { description: string; createdAt: string; place_id: number; residence_id: number; user_id: number; };
+type Reserve = {
+  description: string;
+  createdAt: string;
+  place_id: number;
+  residence_id: number;
+  user_id: number;
+};
 
 export default function Calendar() {
   const calendarRef = React.useRef<FullCalendar | null>(null);
@@ -32,15 +37,31 @@ export default function Calendar() {
     if (!reserves) return [];
     return reserves.map((r, i) => {
       const date = new Date(r.createdAt);
-      const time = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit" });
-      return { id: String(i), title: r.description || "Reserva", start: date, extendedProps: { place: `Lugar #${r.place_id}`, time } };
+      const time = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", });
+      return {
+        id: String(i),
+        title: r.description || "Reserva",
+        start: date,
+        extendedProps: {
+          place: `Lugar #${r.place_id}`,
+          time,
+        },
+      };
     });
   }, [reserves]);
 
-  React.useEffect(() => { import("@fullcalendar/core/locales/es").then(m => setFcLocale(m.default ?? m)).catch(() => {}); }, []);
+  React.useEffect(() => {
+    import("@fullcalendar/core/locales/es")
+      .then((m) => setFcLocale(m.default ?? m))
+      .catch(() => {});
+  }, []);
+
   React.useEffect(() => {
     const today = new Date();
-    const formatter = new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" });
+    const formatter = new Intl.DateTimeFormat("es-ES", {
+      month: "long",
+      year: "numeric",
+    });
     const formatted = formatter.format(today);
     setTitle(formatted.charAt(0).toUpperCase() + formatted.slice(1));
   }, []);
@@ -49,32 +70,76 @@ export default function Calendar() {
   const goNext = () => calendarRef.current?.getApi().next();
 
   const isPast = (d: Date) => {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
-    const copy = new Date(d); copy.setHours(0, 0, 0, 0);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const copy = new Date(d);
+    copy.setHours(0, 0, 0, 0);
     return copy < today;
   };
-  const onDateClick = (arg: DateClickArg) => { if (!isPast(arg.date)) setOpenDay(arg.date.toISOString()); };
 
-  const handleConfirmReserve = React.useCallback(() => { setOpenReserve(false); refetch(); }, [refetch]);
+  const onDateClick = (arg: DateClickArg) => {
+    if (!isPast(arg.date)) setOpenDay(arg.date.toISOString());
+  };
+
+  const handleConfirmReserve = React.useCallback(() => {
+    setOpenReserve(false);
+    refetch();
+  }, [refetch]);
 
   return (
-    <Box>
+    <Box className="foraria-page-container">
       <PageHeader
         title="Calendario y Reservas"
-        actions={<Button variant="contained" color="secondary" startIcon={<AddRounded />} onClick={() => setOpenReserve(true)}>Reservar espacio común</Button>}
+        actions={
+          <Button variant="contained" color="secondary" startIcon={<AddRounded />} onClick={() => setOpenReserve(true)} >
+            Reservar espacio común
+          </Button>
+        }
       />
 
-      <Paper elevation={0} variant="outlined" sx={{ p: { xs: 1.5, md: 2 }, borderRadius: 3, borderColor: "divider", position: "relative", minHeight: 400 }}>
+      <Paper
+        elevation={0}
+        variant="outlined"
+        className="foraria-profile-section"
+        sx={{
+          mt: 2,
+          p: { xs: 1.5, md: 2 },
+          borderRadius: 3,
+          borderColor: "divider",
+          position: "relative",
+          minHeight: 400,
+        }}
+      >
         {loading && (
-          <Stack alignItems="center" justifyContent="center" sx={{ position: "absolute", inset: 0, bgcolor: "rgba(255,255,255,0.6)", zIndex: 10 }}>
+          <Stack
+            alignItems="center"
+            justifyContent="center"
+            sx={{
+              position: "absolute",
+              inset: 0,
+              bgcolor: "rgba(255,255,255,0.6)",
+              zIndex: 10,
+            }}
+          >
             <CircularProgress />
           </Stack>
         )}
 
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.5 }}>
-          <IconButton onClick={goPrev} size="small"><ChevronLeft /></IconButton>
-          <Typography variant="h5" fontWeight={600} color="primary">{title}</Typography>
-          <IconButton onClick={goNext} size="small"><ChevronRight /></IconButton>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          sx={{ mb: 1.5 }}
+        >
+          <IconButton onClick={goPrev} size="small">
+            <ChevronLeft />
+          </IconButton>
+          <Typography variant="h5" fontWeight={600} color="primary">
+            {title}
+          </Typography>
+          <IconButton onClick={goNext} size="small">
+            <ChevronRight />
+          </IconButton>
         </Stack>
 
         <Divider sx={{ mb: 1.5 }} />
@@ -101,7 +166,12 @@ export default function Calendar() {
             return (
               <div style={{ display: "flex", flexDirection: "column" }}>
                 <span className="cal-event-name">{arg.event.title}</span>
-                <Typography variant="caption" sx={{ fontSize: "0.7rem", color: "text.secondary" }}>{place} – {time}</Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: "0.7rem", color: "text.secondary" }}
+                >
+                  {place} – {time}
+                </Typography>
               </div>
             );
           }}
@@ -112,38 +182,91 @@ export default function Calendar() {
             if (!isPastCell && !isOtherMonth) el.classList.add("cal-cursor-event");
           }}
           datesSet={(info) => {
-            const activeStart = (info.view && (info.view as any).activeStart) || info.start;
-            const formatter = new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" });
+            const activeStart =
+              (info.view && (info.view as any).activeStart) || info.start;
+            const formatter = new Intl.DateTimeFormat("es-ES", {
+              month: "long",
+              year: "numeric",
+            });
             const formatted = formatter.format(activeStart as Date);
             setTitle(formatted.charAt(0).toUpperCase() + formatted.slice(1));
           }}
         />
       </Paper>
 
-      <Dialog open={openReserve} onClose={() => setOpenReserve(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <Dialog
+        open={openReserve}
+        onClose={() => setOpenReserve(false)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
         <DialogTitle>Reservar espacio común</DialogTitle>
         <DialogContent dividers>
-          <NewReserve date={reserveDate} onCancel={() => setOpenReserve(false)} onConfirm={handleConfirmReserve} />
+          <NewReserve
+            date={reserveDate}
+            onCancel={() => setOpenReserve(false)}
+            onConfirm={handleConfirmReserve}
+          />
         </DialogContent>
       </Dialog>
 
-      <Dialog open={!!openDay} onClose={() => setOpenDay(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <Dialog
+        open={!!openDay}
+        onClose={() => setOpenDay(null)}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 3 } }}
+      >
         <DialogTitle>
-          {openDay && new Date(openDay).toLocaleDateString("es-ES", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+          {openDay &&
+            new Date(openDay).toLocaleDateString("es-ES", {
+              weekday: "long",
+              day: "numeric",
+              month: "long",
+              year: "numeric",
+            })}
         </DialogTitle>
         <DialogContent dividers>
-          <Typography variant="subtitle2" gutterBottom>Eventos del día</Typography>
-          {events.filter(e => new Date(e.start).toDateString() === new Date(openDay!).toDateString()).length > 0 ? (
-            events.filter(e => new Date(e.start).toDateString() === new Date(openDay!).toDateString()).map(e => (
-              <Typography key={e.id} variant="body2">• {e.title} ({(e as any).extendedProps.place} – {(e as any).extendedProps.time})</Typography>
-            ))
+          <Typography variant="subtitle2" gutterBottom>
+            Eventos del día
+          </Typography>
+          {events.filter(
+            (e) =>
+              new Date(e.start).toDateString() ===
+              new Date(openDay!).toDateString()
+          ).length > 0 ? (
+            events
+              .filter(
+                (e) =>
+                  new Date(e.start).toDateString() ===
+                  new Date(openDay!).toDateString()
+              )
+              .map((e) => (
+                <Typography key={e.id} variant="body2">
+                  • {e.title} ({(e as any).extendedProps.place} –{" "}
+                  {(e as any).extendedProps.time})
+                </Typography>
+              ))
           ) : (
-            <Typography variant="body2" color="text.secondary">No hay eventos.</Typography>
+            <Typography variant="body2" color="text.secondary">
+              No hay eventos.
+            </Typography>
           )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setOpenDay(null)}>Cerrar</Button>
-          <Button color="secondary" variant="contained" onClick={() => { setReserveDate(openDay ? new Date(openDay) : null); setOpenReserve(true); setOpenDay(null); }}>Reservar este día</Button>
+          <Button
+            color="secondary"
+            variant="contained"
+            onClick={() => {
+              setReserveDate(openDay ? new Date(openDay) : null);
+              setOpenReserve(true);
+              setOpenDay(null);
+            }}
+          >
+            Reservar este día
+          </Button>
         </DialogActions>
       </Dialog>
     </Box>
