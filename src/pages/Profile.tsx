@@ -1,9 +1,6 @@
-// src/pages/Profile.tsx
 import React, { useEffect, useMemo, useState } from "react";
 import "../styles/profile.css";
-import {
-  Box, Typography, Avatar, Button, Chip, Divider, CircularProgress, Grid,
-} from "@mui/material";
+import { Box, Typography, Avatar, Button, Chip, Divider, CircularProgress, Grid, } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ApartmentIcon from "@mui/icons-material/Apartment";
@@ -14,7 +11,7 @@ import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
 import { useNavigate, Link as RouterLink, useLocation } from "react-router-dom";
 import { authService } from "../services/authService";
 import type { UserProfile } from "../services/userService";
-import { getCurrentUser } from "../services/userService";
+import { profileService } from "../services/profileService";
 
 const roleColor: Record<UserProfile["role"], "info" | "success" | "warning" | "default"> = {
   Administrador: "warning",
@@ -45,17 +42,21 @@ const Profile: React.FC = () => {
 
   useEffect(() => {
     let mounted = true;
+
     (async () => {
       try {
-        const u = await getCurrentUser();
+        const u = await profileService.getProfile();
         if (mounted) setUser(u);
       } catch (e) {
-        console.error(e);
+        console.error("Error cargando perfil", e);
       } finally {
         if (mounted) setLoading(false);
       }
     })();
-    return () => { mounted = false; };
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleLogout = async () => {
@@ -78,13 +79,15 @@ const Profile: React.FC = () => {
           {isAdminRoute ? "Perfil (Administración)" : "Mi Perfil"}
         </Typography>
         <Typography variant="body2" className="foraria-page-subtitle">
-          {isAdminRoute
-            ? "Datos de la cuenta con permisos administrativos"
-            : "Administra tu información personal y configuración de cuenta"}
+          {isAdminRoute ? "Datos de la cuenta con permisos administrativos" : "Administra tu información personal y configuración de cuenta"}
         </Typography>
 
         <Box className="foraria-profile-header">
-          <Avatar src={user?.photo || undefined} className="foraria-profile-avatar" alt={fullName || "Usuario"}>
+          <Avatar
+            src={user?.photo || undefined}
+            className="foraria-profile-avatar"
+            alt={fullName || "Usuario"}
+          >
             {initials(user?.firstName, user?.lastName)}
           </Avatar>
 
@@ -95,7 +98,7 @@ const Profile: React.FC = () => {
           <Chip
             label={user?.role ?? "—"}
             variant="outlined"
-            color={user ? roleColor[user.role] : "default"}
+            color={ user ? roleColor[user.role as keyof typeof roleColor] ?? "default" : "default" }
             sx={{ mt: 1 }}
           />
         </Box>
@@ -108,17 +111,24 @@ const Profile: React.FC = () => {
             className="foraria-edit-button"
             variant="outlined"
             size="small"
-          >
-            Editar
+          > Editar
           </Button>
-          <Button onClick={handleLogout} startIcon={<LogoutIcon />} color="secondary" variant="contained" size="small">
+          <Button
+            onClick={handleLogout}
+            startIcon={<LogoutIcon />}
+            color="secondary"
+            variant="contained"
+            size="small"
+          >
             Cerrar sesión
           </Button>
         </Box>
       </Box>
 
       <Box className="foraria-profile-section" sx={{ mt: 2 }}>
-        <Typography variant="h6" className="foraria-section-title">Información Personal</Typography>
+        <Typography variant="h6" className="foraria-section-title">
+          Información Personal
+        </Typography>
         <Divider sx={{ my: 1 }} />
 
         <Grid container spacing={2} className="foraria-profile-info">
@@ -151,7 +161,9 @@ const Profile: React.FC = () => {
               <PhoneIcon fontSize="small" />
               <Typography className="foraria-profile-label">Teléfono</Typography>
             </Box>
-            <Typography className="foraria-profile-value">{user?.phoneNumber ?? "—"}</Typography>
+            <Typography className="foraria-profile-value">
+              {user?.phoneNumber ?? "—"}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -165,7 +177,9 @@ const Profile: React.FC = () => {
       </Box>
 
       <Box className="foraria-profile-section" sx={{ mt: 2 }}>
-        <Typography variant="h6" className="foraria-section-title">Información del Consorcio</Typography>
+        <Typography variant="h6" className="foraria-section-title">
+          Información del Consorcio
+        </Typography>
         <Divider sx={{ my: 1 }} />
 
         <Grid container spacing={2}>
@@ -174,7 +188,9 @@ const Profile: React.FC = () => {
               <ApartmentIcon fontSize="small" />
               <Typography className="foraria-profile-label">Consorcio activo</Typography>
             </Box>
-            <Typography className="foraria-profile-value">{user?.consortiumId ?? "—"}</Typography>
+            <Typography className="foraria-profile-value">
+              {user?.consortiumId ?? "—"}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12 }}>
@@ -185,7 +201,8 @@ const Profile: React.FC = () => {
               <Box display="grid" gap={0.5}>
                 {user.residences.map((r) => (
                   <Typography key={r.id} className="foraria-profile-value">
-                    Torre/Consorcio: {r.consortiumId} — Piso: {r.floor ?? "—"} — Depto: {r.number ?? "—"}
+                    Torre/Consorcio: {r.consortiumId} — Piso: {r.floor ?? "—"} — Depto:{" "}
+                    {r.number ?? "—"}
                   </Typography>
                 ))}
               </Box>
