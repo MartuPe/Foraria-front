@@ -12,6 +12,7 @@ import { useNavigate, Link as RouterLink, useLocation } from "react-router-dom";
 import { authService } from "../services/authService";
 import type { UserProfile } from "../services/userService";
 import { profileService } from "../services/profileService";
+import PageHeader from "../components/SectionHeader";
 
 const roleColor: Record<UserProfile["role"], "info" | "success" | "warning" | "default"> = {
   Administrador: "warning",
@@ -73,55 +74,40 @@ const Profile: React.FC = () => {
   }
 
   return (
-    <Box className="foraria-page-container" sx={{ ml: 0 }}>
-      <Box className="foraria-profile-section" position="relative">
-        <Typography variant="h4" component="h1" className="foraria-page-title">
-          {isAdminRoute ? "Perfil (Administración)" : "Mi Perfil"}
-        </Typography>
-        <Typography variant="body2" className="foraria-page-subtitle">
-          {isAdminRoute ? "Datos de la cuenta con permisos administrativos" : "Administra tu información personal y configuración de cuenta"}
-        </Typography>
+    <Box className="foraria-page-container"> 
+      <PageHeader
+        title={isAdminRoute ? "Perfil (Administración)" : "Mi Perfil"}
+      />
+ 
+      <Box className="foraria-profile-section" sx={{ mt: 2 }}>
+        <Box display="flex" alignItems={{ xs: "flex-start", md: "center" }} justifyContent="space-between" gap={2} flexWrap="wrap" > 
+          <Box display="flex" alignItems="center" gap={2}>
+            <Avatar src={user?.photo || undefined} className="foraria-profile-avatar" alt={fullName || "Usuario"} >
+              {initials(user?.firstName, user?.lastName)}
+            </Avatar>
 
-        <Box className="foraria-profile-header">
-          <Avatar
-            src={user?.photo || undefined}
-            className="foraria-profile-avatar"
-            alt={fullName || "Usuario"}
-          >
-            {initials(user?.firstName, user?.lastName)}
-          </Avatar>
+            <Box>
+              <Typography className="foraria-profile-name" sx={{ fontWeight: 600 }}>
+                {fullName || "Usuario"}
+              </Typography>
+              <Chip
+                label={user?.role ?? "—"}
+                size="small"
+                variant="outlined"
+                color={ user ? roleColor[user.role as keyof typeof roleColor] ?? "default" : "default" }
+                sx={{ mt: 0.5 }}
+              />
+            </Box>
+          </Box>
 
-          <Typography className="foraria-profile-name" sx={{ fontWeight: 600 }}>
-            {fullName || "Usuario"}
-          </Typography>
-
-          <Chip
-            label={user?.role ?? "—"}
-            variant="outlined"
-            color={ user ? roleColor[user.role as keyof typeof roleColor] ?? "default" : "default" }
-            sx={{ mt: 1 }}
-          />
-        </Box>
-
-        <Box display="flex" gap={1} flexWrap="wrap" justifyContent="flex-end" mt={-5}>
-          <Button
-            component={RouterLink}
-            to={isAdminRoute ? "/admin/editarInformacion" : "/editarInformacion"}
-            startIcon={<EditIcon />}
-            className="foraria-edit-button"
-            variant="outlined"
-            size="small"
-          > Editar
-          </Button>
-          <Button
-            onClick={handleLogout}
-            startIcon={<LogoutIcon />}
-            color="secondary"
-            variant="contained"
-            size="small"
-          >
-            Cerrar sesión
-          </Button>
+          <Box display="flex" gap={1} flexWrap="wrap" justifyContent="flex-end">
+            <Button component={RouterLink} to={isAdminRoute ? "/admin/editarInformacion" : "/editarInformacion"} startIcon={<EditIcon />} variant="outlined" size="small" >
+              Editar
+            </Button>
+            <Button onClick={handleLogout} startIcon={<LogoutIcon />} color="secondary" variant="contained" size="small">
+              Cerrar sesión
+            </Button>
+          </Box>
         </Box>
       </Box>
 
@@ -137,7 +123,9 @@ const Profile: React.FC = () => {
               <AssignmentIndIcon fontSize="small" />
               <Typography className="foraria-profile-label">Nombre</Typography>
             </Box>
-            <Typography className="foraria-profile-value">{user?.firstName ?? "—"}</Typography>
+            <Typography className="foraria-profile-value">
+              {user?.firstName ?? "—"}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -145,7 +133,9 @@ const Profile: React.FC = () => {
               <AssignmentIndIcon fontSize="small" />
               <Typography className="foraria-profile-label">Apellido</Typography>
             </Box>
-            <Typography className="foraria-profile-value">{user?.lastName ?? "—"}</Typography>
+            <Typography className="foraria-profile-value">
+              {user?.lastName ?? "—"}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -153,7 +143,9 @@ const Profile: React.FC = () => {
               <BadgeIcon fontSize="small" />
               <Typography className="foraria-profile-label">DNI</Typography>
             </Box>
-            <Typography className="foraria-profile-value">{user?.dni ?? "—"}</Typography>
+            <Typography className="foraria-profile-value">
+              {user?.dni ?? "—"}
+            </Typography>
           </Grid>
 
           <Grid size={{ xs: 12, md: 6 }}>
@@ -171,7 +163,9 @@ const Profile: React.FC = () => {
               <EmailIcon fontSize="small" />
               <Typography className="foraria-profile-label">Email</Typography>
             </Box>
-            <Typography className="foraria-profile-value">{user?.email ?? "—"}</Typography>
+            <Typography className="foraria-profile-value">
+              {user?.email ?? "—"}
+            </Typography>
           </Grid>
         </Grid>
       </Box>
