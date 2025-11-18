@@ -1,4 +1,3 @@
-// src/services/meetingService.ts
 export interface TranscriptionLine {
   speaker: string;
   time: string;
@@ -118,10 +117,22 @@ export function getMeetings(): Meeting[] {
   return MEETINGS;
 }
 
+export function getMeetingById(id: number): Meeting | undefined {
+  return MEETINGS.find((m) => m.id === id);
+}
+
+export function filterMeetingsByStatus(
+  status: MeetingStatus | "all"
+): Meeting[] {
+  if (status === "all") return MEETINGS;
+  return MEETINGS.filter((m) => m.status === status);
+}
+
 export function getStats(meetings: Meeting[]) {
   const scheduled = meetings.filter((m) => m.status === "scheduled").length;
   const inProgress = meetings.filter((m) => m.status === "inProgress").length;
-  const withTranscription = meetings.filter((m) => m.transcription?.length).length;
-  const thisMonth = meetings.length; // mock simple
+  const withTranscription = meetings.filter((m) => m.transcription?.length)
+    .length;
+  const thisMonth = meetings.length;
   return { scheduled, inProgress, withTranscription, thisMonth };
 }

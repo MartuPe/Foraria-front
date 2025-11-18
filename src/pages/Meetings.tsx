@@ -1,24 +1,31 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Box, Typography, Stack, Button, Dialog, DialogTitle, DialogContent, DialogActions, IconButton, } from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import ArticleOutlinedIcon from "@mui/icons-material/ArticleOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
-import PageHeader from "../components/SectionHeader";
-import InfoCard from "../components/InfoCard";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArticleIcon from "@mui/icons-material/Article";
 import QueryBuilderIcon from "@mui/icons-material/QueryBuilder";
 import PersonIcon from "@mui/icons-material/Person";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import { Meeting } from "../services/meetingService";
+import { useNavigate } from "react-router-dom";
+import PageHeader from "../components/SectionHeader";
+import InfoCard from "../components/InfoCard";
 import { ForariaStatusModal } from "../components/StatCardForms";
+import { getMeetings, getStats, Meeting,} from "../services/meetingService";
+import { storage } from "../utils/storage";
+import { Role } from "../constants/roles";
+import "../styles/meetings.css";
+import CallDialog from "../components/modals/JoinMeeting";
+import { CallDto } from "../services/callService";
+
+type TabKey = "todas" | "actives" | "finalizada";
 
 export default function Meetings() {
   const [selected, setSelected] = useState<Meeting | null>(null);
   const [showTranscription, setShowTranscription] = useState(false);
-
-  const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
+  const [tab, setTab] = useState<TabKey>("todas");
 
   const [statusModal, setStatusModal] = useState<{
     open: boolean;
@@ -32,31 +39,46 @@ export default function Meetings() {
     variant: "error",
   });
 
+  const [callDialogOpen, setCallDialogOpen] = useState(false);
+  const [selectedMeetingForCall, setSelectedMeetingForCall] =
+    useState<Meeting | null>(null);
+
+  const navigate = useNavigate();
+
+  const userRole = storage.role ?? "";
+  const canManageMeetings = [Role.ADMIN, Role.CONSORCIO].includes(
+    userRole as Role
+  );
+
+  const allMeetings = useMemo(() => getMeetings(), []);
+  const stats = useMemo(() => getStats(allMeetings), [allMeetings]);
+
+  const filteredMeetings = useMemo(() => {
+    if (tab === "todas") return allMeetings;
+    if (tab === "actives") {
+      return allMeetings.filter(
+        (m) => m.status === "scheduled" || m.status === "inProgress"
+      );
+    }
+    if (tab === "finalizada") {
+      return allMeetings.filter((m) => m.status === "finished");
+    }
+    return allMeetings;
+  }, [allMeetings, tab]);
+
   const handleDownloadTranscript = () => {
     setStatusModal({
       open: true,
       variant: "error",
       title: "Descarga no disponible",
-      message: "La descarga del PDF de la transcripción todavía no está habilitada. Se activará cuando el backend exponga el archivo.",
+      message:
+        "La descarga del PDF de la transcripción todavía no está habilitada. Se activará cuando el backend exponga el archivo.",
     });
   };
 
-  const handleJoinMeeting = () => {
-    setStatusModal({
-      open: true,
-      variant: "error",
-      title: "Funcionalidad no disponible",
-      message: "La sala de reunión aún no está configurada. Pronto podrás unirte directamente desde aquí.",
-    });
-  };
-
-  const handleViewDetails = () => {
-    setStatusModal({
-      open: true,
-      variant: "error",
-      title: "Funcionalidad en desarrollo",
-      message: "La vista de detalles de la reunión está en desarrollo. En la próxima versión vas a poder ver toda la información acá.",
-    });
+  const handleViewDetails = (meeting: Meeting) => {
+    setSelected(meeting);
+    setShowTranscription(true);
   };
 
   const handleCloseTranscriptDialog = () => {
@@ -64,17 +86,69 @@ export default function Meetings() {
     setShowTranscription(false);
   };
 
+  const handleOpenJoinPreview = (meeting: Meeting) => {
+    setSelectedMeetingForCall(meeting);
+    setCallDialogOpen(true);
+  };
+
+  const handleJoinSuccess = (call: CallDto) => {
+    if (!selectedMeetingForCall) return;
+
+    navigate(
+      `/reuniones/${selectedMeetingForCall.id}/llamada/${call.id}`,
+      {
+        state: {
+          meetingId: selectedMeetingForCall.id,
+        },
+      }
+    );
+  };
+
+  const formatDate = (iso: string) =>
+    new Date(iso).toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+
   return (
     <Box className="foraria-page-container">
       <PageHeader
         title="Reuniones"
+        actions={
+          canManageMeetings ? (
+            <Button variant="contained" color="secondary" href="/admin/reuniones/nueva" >
+              + Nueva reunión
+            </Button>
+          ) : undefined
+        }
         showSearch
         onSearchChange={(q) => console.log("Buscar:", q)}
         stats={[
-          { icon: <CalendarTodayIcon />, title: "Programadas", value: 5, color: "primary" },
-          { icon: <VideocamIcon />, title: "En curso", value: 2, color: "success" },
-          { icon: <ArticleIcon />, title: "Con transcripción", value: 2, color: "info" },
-          { icon: <QueryBuilderIcon />, title: "Este mes", value: 1, color: "secondary" },
+          {
+            icon: <CalendarTodayIcon />,
+            title: "Programadas",
+            value: stats.scheduled,
+            color: "primary",
+          },
+          {
+            icon: <VideocamIcon />,
+            title: "En curso",
+            value: stats.inProgress,
+            color: "success",
+          },
+          {
+            icon: <ArticleIcon />,
+            title: "Con transcripción",
+            value: stats.withTranscription,
+            color: "info",
+          },
+          {
+            icon: <QueryBuilderIcon />,
+            title: "Este mes",
+            value: stats.thisMonth,
+            color: "secondary",
+          },
         ]}
         tabs={[
           { label: "Todas", value: "todas" },
@@ -82,42 +156,55 @@ export default function Meetings() {
           { label: "Finalizadas", value: "finalizada" },
         ]}
         selectedTab={tab}
-        onTabChange={(v) => setTab(v as typeof tab)}
+        onTabChange={(v) => setTab(v as TabKey)}
       />
 
-      <InfoCard
-        title="Asamblea Ordinaria Mensual"
-        description="Revisión de expensas, votación de mejoras y temas varios de la comunidad."
-        fields={[
-          { label: "15 Nov 2025", value: "", icon: <CalendarTodayIcon /> },
-          { label: "19:00 (2 horas)", value: "", icon: <QueryBuilderIcon /> },
-          { label: "Virtual", value: "", icon: <VideocamIcon /> },
-          { label: "5 participantes", value: "", icon: <PersonIcon /> },
-        ]}
-        chips={[
-          { label: "Programada", color: "secondary" },
-          { label: "Consorcio", color: "warning" },
-        ]}
-        showDivider
-        extraActions={[
-          {
-            label: "Unirse",
-            color: "secondary",
-            variant: "contained",
-            onClick: handleJoinMeeting,
-            icon: <VideocamIcon />,
-          },
-          {
-            label: "Ver Detalles",
-            color: "primary",
-            variant: "outlined",
-            onClick: handleViewDetails,
-            icon: <VisibilityIcon />,
-          },
-        ]}
-        sx={{ mt: 2 }}
-      />
+      <Stack spacing={2} mt={2}>
+        {filteredMeetings.map((m) => (
+          <InfoCard
+            key={m.id}
+            title={m.title}
+            description={m.description}
+            fields={[
+              {
+                label: `${formatDate(m.date)} · ${m.time}`,
+                value: "",
+                icon: <CalendarTodayIcon />,
+              },
+              { label: m.duration, value: "", icon: <QueryBuilderIcon /> },
+              { label: m.location, value: "", icon: <VideocamIcon /> },
+              {
+                label: `${m.participants.length} participantes`,
+                value: "",
+                icon: <PersonIcon />,
+              },
+            ]}
+            chips={m.tags.map((t) => ({
+              label: t,
+              color: "secondary" as const,
+            }))}
+            showDivider
+            extraActions={[
+              {
+                label: "Unirse",
+                color: "secondary",
+                variant: "contained",
+                onClick: () => handleOpenJoinPreview(m),
+                icon: <VideocamIcon />,
+              },
+              {
+                label: "Ver Transcripción",
+                color: "primary",
+                variant: "outlined",
+                onClick: () => handleViewDetails(m),
+                icon: <VisibilityIcon />,
+              },
+            ]}
+          />
+        ))}
+      </Stack>
 
+      {/* Diálogo de transcripción */}
       <Dialog
         open={!!selected && showTranscription}
         onClose={handleCloseTranscriptDialog}
@@ -140,7 +227,8 @@ export default function Meetings() {
             variant="outlined"
             startIcon={<DownloadIcon />}
             onClick={handleDownloadTranscript}
-          > Descargar
+          >
+            Descargar
           </Button>
           <IconButton onClick={handleCloseTranscriptDialog} aria-label="Cerrar">
             <CloseIcon />
@@ -198,6 +286,13 @@ export default function Meetings() {
         title={statusModal.title}
         message={statusModal.message}
         primaryActionLabel="Aceptar"
+      />
+
+      <CallDialog
+        open={callDialogOpen}
+        onClose={() => setCallDialogOpen(false)}
+        meeting={selectedMeetingForCall}
+        onJoinSuccess={handleJoinSuccess}
       />
     </Box>
   );
