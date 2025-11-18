@@ -1,0 +1,126 @@
+.foraria-call-video {
+  background-color: #071427;
+  border-radius: 16px;
+  height: 260px;
+  position: relative;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.foraria-call-main-icon {
+  font-size: 48px !important;
+  margin-bottom: 8px;
+}
+
+.foraria-call-connecting {
+  margin-bottom: 24px !important;
+}
+
+.foraria-call-participants {
+  display: flex;
+  gap: 16px;
+}
+
+.foraria-call-participant-box {
+  width: 80px;
+  height: 56px;
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.8;
+}
+
+.foraria-call-participant-icon {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.foraria-call-controls {
+  margin-top: 8px;
+}
+
+.foraria-call-control-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(15, 76, 129, 0.06) !important;
+}
+
+.foraria-call-control-btn:hover {
+  background-color: rgba(15, 76, 129, 0.16) !important;
+}
+
+.foraria-call-control-btn--end {
+  background-color: #e53935 !important;
+}
+
+.foraria-call-control-btn--end:hover {
+  background-color: #c62828 !important;
+}
+
+.foraria-call-room {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.foraria-call-room-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.foraria-call-room-body {
+  display: grid;
+  grid-template-columns: minmax(0, 2.3fr) minmax(260px, 1fr);
+  gap: 16px;
+}
+
+.foraria-call-room-video {
+  background-color: #071427;
+  border-radius: 16px;
+  padding: 16px;
+  color: #ffffff;
+  min-height: 340px;
+}
+
+.foraria-call-room-video-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.foraria-call-room-video-tile {
+  border-radius: 12px;
+  background-color: rgba(255, 255, 255, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 120px;
+}
+
+.foraria-call-room-side {
+  border-radius: 16px;
+  padding: 16px;
+  border: 1px solid #e5e7eb;
+  background-color: #ffffff;
+}
+
+@media (max-width: 960px) {
+  .foraria-call-room-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .foraria-call-room-side {
+    order: -1;
+  }
+}
