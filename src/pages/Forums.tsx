@@ -514,8 +514,12 @@ const Forums: React.FC = () => {
         }));
         return;
       }
+       const token = localStorage.getItem("accessToken");
+         const headers: Record<string,string> = {
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
       const reacRes = await fetch(
-        `${API_BASE}/Reactions/thread/${threadId}`
+        `${API_BASE}/Reactions/thread/${threadId}`, {headers}
       );
       if (!reacRes.ok) throw new Error("Reactions fallback failed");
       const reacJson: ReactionResponse = await reacRes.json();
@@ -535,10 +539,9 @@ const Forums: React.FC = () => {
       try {
         const token = localStorage.getItem("accessToken");
          const headers: Record<string,string> = {
-    'Content-Type': 'application/json',
   };
   if (token) headers.Authorization = `Bearer ${token}`;
-        const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, headers);
+        const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, {headers});
         if (reacRes.ok) {
           const reacJson: ReactionResponse = await reacRes.json();
           setEnriched((p) => ({
