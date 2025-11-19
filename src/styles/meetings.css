@@ -124,3 +124,26 @@
     order: -1;
   }
 }
+
+.foraria-call-room-video-tile--off {
+  background-color: rgba(255, 255, 255, 0.04);
+}
+
+.foraria-call-room-chat-list {
+  max-height: 220px;
+  overflow-y: auto;
+  padding-right: 4px;
+  margin-bottom: 8px;
+}
+
+.foraria-call-room-chat-message {
+  background-color: #f3f4f6;
+  border-radius: 10px;
+  padding: 6px 8px;
+  margin-bottom: 6px;
+}
+
+.foraria-call-room-chat-time {
+  font-weight: normal;
+  color: #6b7280;
+}

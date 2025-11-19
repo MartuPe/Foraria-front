@@ -29,6 +29,7 @@ import SelectConsortium from "./pages/SelectConsortium";
 import AdminUserManagment from "./pages/admin/AdminUserManagement";
 import AdminSuppliers from "./pages/admin/AdminSuppliers";
 import AdminFactura from "./pages/admin/AdminExpenses";
+import CallRoom from "./pages/CallRoom";
 // import AdminDocuments from "./pages/admin/AdminDocuments";
 
 export default function App() {
@@ -50,7 +51,8 @@ export default function App() {
             <Route path="editarInformacion" element={<ChangeData />} />
             <Route path="votaciones" element={<Votes />} />
             <Route path="reuniones" element={<Meetings />} />
-            {/* <Route path="documentos" element={<Documents />} /> */}
+            <Route path="reuniones/:meetingId/llamada/:callId" element={<CallRoom />}/>
+             {/*<Route path="documentos" element={<Documents />} /> */}
             <Route path="expensas" element={<ExpensesPage />} />
             <Route path="reclamos" element={<Claims />} />
             <Route path="calendario" element={<Calendar />} />
@@ -69,6 +71,7 @@ export default function App() {
             <Route path="perfil" element={<Profile />} />
             <Route path="foros" element={<Forums />} />
             <Route path="reuniones" element={<Meetings />} />
+            <Route path="reuniones/:meetingId/llamada/:callId" element={<CallRoom />}/>
             {/* <Route path="auditoria" element={<AdminAudit />} /> */}
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<Votes />} />
