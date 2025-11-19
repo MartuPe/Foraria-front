@@ -109,6 +109,7 @@ export default function ClaimForm({ onSuccess, onCancel }: ClaimFormProps) {
         user_id: Number(localStorage.getItem("userId")),
         residenceId: localStorage.getItem("residenceId"),
         consortiumId: localStorage.getItem("consortiumId"),
+        state: "hola",
       };
 
       await mutate(payload);

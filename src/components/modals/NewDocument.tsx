@@ -61,7 +61,7 @@ export default function NewDocument({ onSuccess, onCancel }: NewDocumentProps) {
         body: formData,
         headers: {
           // No agregar Content-Type, el navegador lo hace automáticamente con boundary
-          'Authorization': `Bearer ${localStorage.getItem('authToken') || 'mock-jwt-token'}`
+          'Authorization': `bearer ${localStorage.getItem('authToken') || 'mock-jwt-token'}`
         }
       });
       
