@@ -30,7 +30,7 @@ type Invoice = {
   description?: string | null;
   filePath?: string | null;
 };
-
+const token = localStorage.getItem("accessToken");
 type ExpenseInner = {
   id: number;
   description: string;
@@ -107,7 +107,7 @@ export default function ExpensesPage() {
       setLoadError(null);
       try {
         const url = `https://localhost:7245/api/ExpenseDetail?id=${residenceId}`;
-        const resp = await axios.get<ExpenseDetail[]>(url);
+        const resp = await axios.get<ExpenseDetail[]>(url, { headers: { Authorization: `Bearer ${token}` }});
         if (!mounted) return;
         const data = resp.data || [];
         data.sort((a, b) => {
@@ -287,7 +287,9 @@ export default function ExpensesPage() {
       setLoadingPaymentFor(detail.id);
       const res = await fetch(
         `https://localhost:7245/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
-        { method: "POST" }
+        { method: "POST" ,
+          headers:  {Authorization: `Bearer ${token}`} 
+        }
       );
       if (!res.ok) {
         const text = await res.text();

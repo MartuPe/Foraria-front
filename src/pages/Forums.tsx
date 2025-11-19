@@ -135,7 +135,7 @@ const Forums: React.FC = () => {
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
   const API_BASE =
-    process.env.REACT_APP_API_URL || "http://localhost:7245/api";
+    process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
   // Modal de estado general (éxito / error)
   const [statusModal, setStatusModal] = useState<{
@@ -279,25 +279,32 @@ const Forums: React.FC = () => {
       return;
     }
     const controller = new AbortController();
-    (async () => {
-      try {
-        const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, {
-          signal: controller.signal,
-        });
-        if (!res.ok) {
-          setForumStats(null);
-          return;
-        }
-        const json: Forum = await res.json();
-        if (mounted) setForumStats(json);
-      } catch {
-        if (mounted) setForumStats(null);
-      }
-    })();
-    return () => {
-      mounted = false;
-      controller.abort();
+   (async () => {
+  try {
+    const token = localStorage.getItem("accessToken");
+    const headers: Record<string,string> = {
+      Accept: 'application/json',
     };
+    if (token) headers.Authorization = `Bearer ${token}`;
+    
+    const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, {
+      signal: controller.signal,
+      headers,
+    });
+    
+    if (!res.ok) {
+      console.error('Error en la respuesta:', res.status, res.statusText);
+      setForumStats(null);
+      return;
+    }
+    
+    const json: Forum = await res.json();
+    if (mounted) setForumStats(json);
+  } catch (error) {
+    console.error('Error fetching forum stats:', error);
+    if (mounted) setForumStats(null);
+  }
+})();
   }, [resolvedForumId, API_BASE]);
 
   // Reacciones + mensajes por thread
@@ -324,18 +331,28 @@ const Forums: React.FC = () => {
         userReaction: 0,
       };
       try {
+        const token = localStorage.getItem("accessToken");
+         const headers: Record<string,string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
         const r = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, {
           signal: ctl.signal,
-          headers: { "Content-Type": "application/json" },
+          headers,
         });
         if (r.ok) reactions = await r.json();
       } catch { }
 
       let messages: Message[] = [];
       try {
+        const token = localStorage.getItem("accessToken");
+         const headers: Record<string,string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
         const m = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
           signal: ctl.signal,
-          headers: { "Content-Type": "application/json" },
+          headers,
         });
         if (m.ok) messages = await m.json();
       } catch { }
@@ -516,7 +533,12 @@ const Forums: React.FC = () => {
       }));
     } catch {
       try {
-        const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`);
+        const token = localStorage.getItem("accessToken");
+         const headers: Record<string,string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+        const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, headers);
         if (reacRes.ok) {
           const reacJson: ReactionResponse = await reacRes.json();
           setEnriched((p) => ({
@@ -559,12 +581,15 @@ const Forums: React.FC = () => {
   // helper para recargar comentarios de un hilo
   const reloadComments = async (threadId: number) => {
     try {
+      const token = localStorage.getItem("accessToken");
+       const headers: Record<string,string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
       const listRes = await fetch(
         `${API_BASE}/Message/thread/${threadId}`,
         {
-          headers: {
-            "Content-Type": "application/json",
-          },
+          headers
         }
       );
 
@@ -605,20 +630,35 @@ const Forums: React.FC = () => {
     }));
 
     try {
-      const form = new FormData();
-      form.append("Content", text);
-      form.append("Thread_id", String(threadId));
-      form.append("User_id", String(currentUserId));
+      const token = localStorage.getItem("accessToken");
+       const headers: Record<string,string> = {
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
+     const form = new FormData();
+form.append("Content", text);
+form.append("Thread_id", String(threadId));
+form.append("User_id", String(currentUserId));
+form.append("FilePath", "string");
 
-      const res = await fetch(`${API_BASE}/Message`, {
-        method: "POST",
-        body: form,
-      });
+// si hay un archivo seleccionado (input type="file")
+const fileInput = document.querySelector<HTMLInputElement>("#file") ;
+if (fileInput && fileInput.files && fileInput.files[0]) {
+  form.append("File", fileInput.files[0], fileInput.files[0].name);
+} else {
+  // si la API espera siempre el campo File, puedes enviar un valor vacío
+  // o no enviarlo; muchas APIs aceptan no recibirlo.
+  // Para forzar un "archivo vacío" (binary) puedes usar un Blob vacío:
+  form.append("File", new Blob([], { type: "application/octet-stream" }), "empty.bin");
+}
 
-      if (!res.ok) {
-        throw new Error("Error al crear mensaje");
-      }
+// NO establecer Content-Type aquí: fetch lo pone automáticamente al usar FormData
+const res = await fetch(`${API_BASE}/Message`, {
+  method: "POST",
+  body: form,
+  headers
+});
 
+if (!res.ok) throw new Error("Error al crear mensaje");
       setReplyText((p) => ({
         ...p,
         [threadId]: "",
@@ -706,13 +746,15 @@ const Forums: React.FC = () => {
     }
 
     try {
+      const token = localStorage.getItem("accessToken");
       setDeletingThreadId(threadId);
-
+ const headers: Record<string,string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${API_BASE}/Thread/${threadId}`, {
         method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers
       });
 
       if (res.status === 204) {
@@ -783,13 +825,15 @@ const Forums: React.FC = () => {
     if (!isAdmin) return;
 
     try {
+      const token = localStorage.getItem("accessToken");
       setClosingThreadId(threadId);
-
+ const headers: Record<string,string> = {
+    'Content-Type': 'application/json',
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${API_BASE}/Thread/${threadId}/close`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers
       });
 
       if (res.status === 409) {

@@ -39,7 +39,7 @@ interface MenuItem {
   icon: React.ReactElement;
   path: string;
 }
-
+const token = localStorage.getItem("accessToken");
 const menuItems: MenuItem[] = [
   { id: "dashboard", label: "Dashboard", icon: <DashboardIcon />, path: "/dashboard" },
   { id: "reclamos", label: "Reclamos", icon: <ReclamosIcon />, path: "/reclamos" },
@@ -124,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     let mounted = true;
     const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
-    fetch(`${API_BASE}/Forum`)
+    fetch(`${API_BASE}/Forum`, { headers: { Authorization: `Bearer ${token}` }})
       .then(async (res) => {
         if (!mounted) return;
         if (!res.ok) { setForos([]); return; }
