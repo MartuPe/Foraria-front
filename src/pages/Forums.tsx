@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box, Card, CardContent, Typography, Chip, Button, Stack, Dialog, DialogContent,
-  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton, Tabs, Tab,
+  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton,
   DialogTitle, DialogActions
 } from "@mui/material";
 
@@ -11,7 +11,7 @@ import {
   TrendingUp as TrendingIcon, ThumbUp as ThumbUpIcon, ThumbDown as ThumbDownIcon,
   Reply as ReplyIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon,
   Send as SendIcon, VisibilityOutlined, PushPinOutlined, PushPin,
-  EditOutlined, DeleteOutline, FilterList as FilterListIcon,
+  EditOutlined, DeleteOutline,
   LockOutlined
 } from "@mui/icons-material";
 

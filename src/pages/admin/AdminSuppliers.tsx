@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, Paper, Select } from "@mui/material";
+import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, Select } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import SearchIcon from "@mui/icons-material/Search";
 import SortIcon from "@mui/icons-material/Sort";
 import { supplierService, Supplier } from "../../services/supplierService";
 import NewSupplier from "../../components/modals/NewSupplier";
@@ -26,9 +25,8 @@ export default function Suppliers() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toDeleteId, setToDeleteId] = useState<number | null>(null);
-  const [openNewSupplier, setOpenNewSupplier] = useState(false);
-              const [totalSuppliers, setTotalSuppliers] = useState<number>(0);
-            const [activeSuppliers, setActiveSuppliers] = useState<number>(0);
+              const [totalSuppliers] = useState<number>(0);
+            const [activeSuppliers] = useState<number>(0);
   const [snack, setSnack] = useState<{
     open: boolean;
     msg: string;
@@ -47,7 +45,7 @@ export default function Suppliers() {
   const [sort, setSort] = useState<SortKey>("nameAsc");
   const [page, setPage] = useState(1);
   const pageSize = 6;
- const [search, setSearch] = useState("");
+ const [, setSearch] = useState("");
   const consortiumId = Number(localStorage.getItem("consortiumId"));
 
   const [qDebounced, setQDebounced] = useState(q);
