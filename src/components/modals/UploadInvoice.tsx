@@ -61,7 +61,7 @@ const token = localStorage.getItem("accessToken");
 
     try {
       const { data } = await axios.post("https://localhost:7245/api/Ocr/process-invoice", formData, {
-        headers: { "Content-Type": "multipart/form-data", Authorization: `Bearer ${token}` },
+        headers: { "Content-Type": "multipart/form-data", Authorization: `bearer ${token}` },
       });
 
       if (!data.success) throw new Error(data.errorMessage || "Error procesando OCR");

@@ -7,7 +7,9 @@
   transition: all 0.3s ease;
 }
 
-
+.foraria-form{
+      padding: 2em;
+}
 
 .foraria-card:hover {
   box-shadow: 0 4px 16px rgba(8, 61, 119, 0.15);

@@ -19,7 +19,7 @@ function getAuthHeaders(): HeadersInit {
   const headers: HeadersInit = {};
   const token = storage.token || localStorage.getItem("token");
   if (token) {
-    headers["Authorization"] = `Bearer ${token}`;
+    headers["Authorization"] = `bearer ${token}`;
   }
   return headers;
 }

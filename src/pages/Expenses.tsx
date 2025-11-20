@@ -33,10 +33,10 @@ type Invoice = {
 const token = localStorage.getItem("accessToken");
 type ExpenseInner = {
   id: number;
-  description: string;
+  // description: string;
   totalAmount: number;
-  createdAt: string;
-  expirationDate?: string | null;
+  // : string;
+  // expirationDate?: string | null;
   consortiumId: number;
   invoices: Invoice[];
 };
@@ -107,14 +107,14 @@ export default function ExpensesPage() {
       setLoadError(null);
       try {
         const url = `https://localhost:7245/api/ExpenseDetail?id=${residenceId}`;
-        const resp = await axios.get<ExpenseDetail[]>(url, { headers: { Authorization: `Bearer ${token}` }});
+        const resp = await axios.get<ExpenseDetail[]>(url, { headers: { Authorization: `bearer ${token}` }});
         if (!mounted) return;
         const data = resp.data || [];
-        data.sort((a, b) => {
-          const ta = a.expense?.createdAt ? new Date(a.expense.createdAt).getTime() : 0;
-          const tb = b.expense?.createdAt ? new Date(b.expense.createdAt).getTime() : 0;
-          return tb - ta || b.id - a.id;
-        });
+        // data.sort((a, b) => {
+        //   const ta = a.expense?.createdAt ? new Date(a.expense.createdAt).getTime() : 0;
+        //   const tb = b.expense?.createdAt ? new Date(b.expense.createdAt).getTime() : 0;
+        //   return tb - ta || b.id - a.id;
+        // });
         setItems(data);
       } catch (err: any) {
         console.error("Error cargando ExpenseDetail:", err);
@@ -222,24 +222,24 @@ export default function ExpensesPage() {
     pdf.setTextColor(255, 255, 255);
     pdf.text("FORARIA", pageWidth / 2, 80, { align: "center" });
 
-    const created = new Date(exp.createdAt).toLocaleDateString("es-AR");
-    const venc = exp.expirationDate
-      ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
-      : "-";
+    // const created = new Date(exp.createdAt).toLocaleDateString("es-AR");
+    // const venc = exp.expirationDate
+    //   ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
+    //   : "-";
 
     pdf.setFontSize(10);
-    const rightX = pageWidth - 20;
-    pdf.text(`CREADA: ${created}`, rightX, 25, { align: "right" });
-    pdf.text(`VENCIMIENTO: ${venc}`, rightX, 40, { align: "right" });
+    // const rightX = pageWidth - 20;
+    // pdf.text(`CREADA: ${created}`, rightX, 25, { align: "right" });
+    // pdf.text(`VENCIMIENTO: ${venc}`, rightX, 40, { align: "right" });
 
     pdf.setFontSize(14);
     pdf.setTextColor(0, 0, 0);
-    pdf.text(
-      `${exp.description || `Expensa ${exp.id}`}`,
-      pageWidth / 2,
-      130,
-      { align: "center" }
-    );
+    // pdf.text(
+    //   `${exp.description || `Expensa ${exp.id}`}`,
+    //   pageWidth / 2,
+    //   130,
+    //   { align: "center" }
+    // );
 
     const rows = exp.invoices.map((inv) => [
       inv.dateOfIssue ? new Date(inv.dateOfIssue).toLocaleDateString("es-AR") : "-",
@@ -288,7 +288,7 @@ export default function ExpensesPage() {
       const res = await fetch(
         `https://localhost:7245/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
         { method: "POST" ,
-          headers:  {Authorization: `Bearer ${token}`} 
+          headers:  {Authorization: `bearer ${token}`} 
         }
       );
       if (!res.ok) {
@@ -388,12 +388,13 @@ export default function ExpensesPage() {
           ) : (
             // Lista de expensas
             items.map((detail) => {
-              const exp = detail.expense;
+              // const exp = detail.expense;
 
               return (
                 <InfoCard
                   key={detail.id}
-                  title={exp.description || `Expensa ${exp.id}`}
+                  title='hola!'
+                  // title={exp.description || `Expensa ${exp.id}`}
                   subtitle={
                     <span style={{ fontSize: "2rem", fontWeight: "bold" }}>
                       <span style={{ color: "rgb(249 115 22)" }}>
@@ -409,16 +410,16 @@ export default function ExpensesPage() {
                     },
                   ]}
                   fields={[
-                    {
-                      label: "Creada:",
-                      value: new Date(exp.createdAt).toLocaleDateString("es-AR"),
-                    },
-                    {
-                      label: "Vence:",
-                      value: exp.expirationDate
-                        ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
-                        : "-",
-                    },
+                    // {
+                    //   label: "Creada:",
+                    //   value: new Date(exp.createdAt).toLocaleDateString("es-AR"),
+                    // },
+                    // {
+                    //   label: "Vence:",
+                    //   value: exp.expirationDate
+                    //     ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
+                    //     : "-",
+                    // },
                   ]}
                   showDivider
                   extraActions={[
@@ -458,10 +459,10 @@ export default function ExpensesPage() {
         <DialogContent dividers>
           {detailsOpenFor && (
             <>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              {/* <Typography variant="subtitle1" sx={{ mb: 1 }}>
                 {detailsOpenFor.expense.description ||
                   `Expensa ${detailsOpenFor.expenseId}`}
-              </Typography>
+              </Typography> */}
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Estado:{" "}
                 <Chip
@@ -500,9 +501,9 @@ export default function ExpensesPage() {
                       }}
                     >
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="subtitle2" noWrap>
+                        {/* <Typography variant="subtitle2" noWrap>
                           {inv.concept || inv.description || `Factura ${inv.id}`}
-                        </Typography>
+                        </Typography> */}
                         <Typography variant="body2" color="text.secondary" noWrap>
                           {inv.supplierName || "-"} • {inv.category || "-"}
                         </Typography>
