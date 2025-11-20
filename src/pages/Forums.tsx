@@ -35,6 +35,8 @@ interface Thread {
   state: string;
   userId?: number;
   forumId?: number;
+  userName: string;
+  userLastName: string;
 }
 
 interface Forum {
@@ -386,7 +388,7 @@ const Forums: React.FC = () => {
       id: String(p.id),
       threadId: p.id,
       title: p.theme ?? "Sin título",
-      subtitle: `Usuario ${p.userId ?? "-"} · ${formatDateNumeric(
+      subtitle: `${p.userName ?? "-"} ${p.userLastName} · ${formatDateNumeric(
         p.createdAt
       )}`,
       description: p.description ?? "",
@@ -1132,6 +1134,7 @@ if (!res.ok) throw new Error("Error al crear mensaje");
                             const canEdit =
                               isAdmin ||
                               comment.user_id === currentUserId;
+                             
 
                             return (
                               <Box

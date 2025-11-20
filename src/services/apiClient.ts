@@ -21,7 +21,7 @@ apiClient.interceptors.request.use(
     console.log('📡 Haciendo petición a:', config.url);
     const token = localStorage.getItem('authToken');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+      config.headers.Authorization = `bearer ${token}`;
     }
     return config;
   },
