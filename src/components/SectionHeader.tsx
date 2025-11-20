@@ -1,3 +1,4 @@
+import React from "react";
 import {
   Box,
   Typography,
@@ -9,6 +10,7 @@ import {
   Grid
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
+import type { GridSize } from "@mui/material";
 
 export interface StatItem {
   icon: React.ReactNode;
@@ -49,6 +51,13 @@ export default function PageHeader({
   filters = [],
   sx = {},
 }: PageHeaderProps) {
+  if (!stats) stats = [];
+
+  // lógica para que 4 por fila cuando haya >=4, pero si hay 2 -> md=6 (50% cada uno)
+  const maxCols = 4;
+  const colsActuales = Math.min(maxCols, Math.max(1, stats.length));
+  const mdSize = Math.floor(12 / colsActuales) as GridSize;
+
   return (
     <Paper
       elevation={0}
@@ -75,9 +84,13 @@ export default function PageHeader({
 
       {/* Métricas (sólo si hay items) */}
       {stats.length > 0 && (
-        <Grid container spacing={2} sx={{ mb: 2 }}>
+        <Grid container spacing={2} sx={{ mb: 2 }} justifyContent="center">
           {stats.map((s, i) => (
-            <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+            <Grid
+              key={i}
+              size={{xs:12,sm:6,md:mdSize}}
+              sx={{ width: "100%" }}
+            >
               <Paper
                 elevation={0}
                 variant="outlined"
@@ -96,7 +109,10 @@ export default function PageHeader({
                     display: "grid",
                     placeItems: "center",
                     borderRadius: 2,
-                    bgcolor: alpha(t.palette[s.color || "primary"].main, 0.15),
+                    bgcolor: alpha(
+                      t.palette[s.color || "primary"].main,
+                      0.15
+                    ),
                     color: t.palette[s.color || "primary"].main,
                   })}
                 >
