@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, Paper } from "@mui/material";
+import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, Paper, Select } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SearchIcon from "@mui/icons-material/Search";
@@ -9,6 +9,9 @@ import NewSupplier from "../../components/modals/NewSupplier";
 import SupplierDetail from "../../components/modals/SupplierDetail";
 import PageHeader from "../../components/SectionHeader";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
+import AddOutlined from "@mui/icons-material/AddOutlined";
+import InventoryIcon from "@mui/icons-material/Inventory";
+import PeopleIcon from "@mui/icons-material/People"
 
 const CATEGORIES = ["Mantenimiento", "Limpieza", "Seguridad", "Jardinería"] as const;
 type SortKey = "nameAsc" | "nameDesc" | "dateNew" | "dateOld" | "category";
@@ -23,7 +26,9 @@ export default function Suppliers() {
 
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toDeleteId, setToDeleteId] = useState<number | null>(null);
-
+  const [openNewSupplier, setOpenNewSupplier] = useState(false);
+              const [totalSuppliers, setTotalSuppliers] = useState<number>(0);
+            const [activeSuppliers, setActiveSuppliers] = useState<number>(0);
   const [snack, setSnack] = useState<{
     open: boolean;
     msg: string;
@@ -36,13 +41,13 @@ export default function Suppliers() {
     },
     []
   );
-
+ const [roleFilter, setRoleFilter] = useState<string>("all");
   const [q, setQ] = useState("");
   const [category, setCategory] = useState<string>("");
   const [sort, setSort] = useState<SortKey>("nameAsc");
   const [page, setPage] = useState(1);
   const pageSize = 6;
-
+ const [search, setSearch] = useState("");
   const consortiumId = Number(localStorage.getItem("consortiumId"));
 
   const [qDebounced, setQDebounced] = useState(q);
@@ -177,75 +182,101 @@ export default function Suppliers() {
 
   return (
     <Box className="foraria-page-container">
-      <PageHeader
-        title="Proveedores del Consorcio"
+       <PageHeader
+        title="Gestión de Proveedores"
+        showSearch
+        onSearchChange={(q) => {
+          setSearch(q);
+          // si querés que el text field del header y éste se mantengan en sync,
+          // descomenta la siguiente línea:
+          setQ(q);
+        }}
         actions={
           <Button
             variant="contained"
             color="secondary"
+            startIcon={<AddOutlined />}
             onClick={() => setOpenNew(true)}
+            sx={{
+              px: 2.5,
+              fontWeight: 600,
+              textTransform: "none",
+              boxShadow: "0 6px 16px rgba(0,0,0,.08)",
+            }}
           >
-            + Nuevo Proveedor
+            Nuevo Proveedor
           </Button>
         }
+        stats={[
+          
+
+          { icon: <InventoryIcon />, title: "Total Proveedores", value: totalSuppliers, color: "primary" },
+          { icon: <PeopleIcon />, title: "Activos", value: activeSuppliers, color: "success" },
+        ]}
+        filters={[
+          <Select
+            key="roles"
+            value={roleFilter}
+            size="small"
+            sx={{ minWidth: 180 }}
+            onChange={(e) => setRoleFilter(e.target.value as string)}
+          >
+            <MenuItem value="all">Todos</MenuItem>
+            <MenuItem value="approved">Aprobados</MenuItem>
+            <MenuItem value="pending">Pendientes</MenuItem>
+            <MenuItem value="blocked">Bloqueados</MenuItem>
+          </Select>,
+
+          <Stack
+            key="supplier-filters"
+            direction={{ xs: "column", md: "row" }}
+            spacing={1.5}
+            mb={0}
+            sx={{ alignItems: "center" }}
+          >
+
+            <TextField
+              select
+              label="Categoría"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              size="small"
+              sx={{ minWidth: 200 }}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              {CATEGORIES.map((c) => (
+                <MenuItem key={c} value={c}>
+                  {c}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              select
+              label="Ordenar"
+              value={sort}
+              onChange={(e) => setSort(e.target.value as SortKey)}
+              size="small"
+              sx={{ minWidth: 220 }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SortIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+              }}
+            >
+              <MenuItem value="nameAsc">Nombre (A→Z)</MenuItem>
+              <MenuItem value="nameDesc">Nombre (Z→A)</MenuItem>
+              <MenuItem value="dateNew">Alta (más nuevo)</MenuItem>
+              <MenuItem value="dateOld">Alta (más viejo)</MenuItem>
+              <MenuItem value="category">Categoría</MenuItem>
+            </TextField>
+          </Stack>,
+        ]}
       />
 
-      <Paper
-        variant="outlined"
-        elevation={0}
-        className="foraria-profile-section"
-        sx={{ mt: 2, p: 2.5, borderRadius: 3 }}
-      >
-        <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} mb={2}>
-          <TextField
-            placeholder="Buscar por nombre, razón social, email, teléfono…"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            fullWidth
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          />
-          <TextField
-            select
-            label="Categoría"
-            value={category}
-            onChange={(e) => setCategory(e.target.value)}
-            sx={{ minWidth: 200 }}
-          >
-            <MenuItem value="">Todas</MenuItem>
-            {CATEGORIES.map((c) => (
-              <MenuItem key={c} value={c}>
-                {c}
-              </MenuItem>
-            ))}
-          </TextField>
-          <TextField
-            select
-            label="Ordenar"
-            value={sort}
-            onChange={(e) => setSort(e.target.value as SortKey)}
-            sx={{ minWidth: 220 }}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SortIcon fontSize="small" />
-                </InputAdornment>
-              ),
-            }}
-          >
-            <MenuItem value="nameAsc">Nombre (A→Z)</MenuItem>
-            <MenuItem value="nameDesc">Nombre (Z→A)</MenuItem>
-            <MenuItem value="dateNew">Alta (más nuevo)</MenuItem>
-            <MenuItem value="dateOld">Alta (más viejo)</MenuItem>
-            <MenuItem value="category">Categoría</MenuItem>
-          </TextField>
-        </Stack>
-
+      
         <Stack spacing={2}>
           {loading ? (
             <>
@@ -330,7 +361,6 @@ export default function Suppliers() {
             <Pagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} color="primary" shape="rounded" showFirstButton showLastButton />
           </Stack>
         )}
-      </Paper>
 
       <Dialog
         open={openNew}
