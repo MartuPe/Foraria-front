@@ -18,6 +18,7 @@ import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import "../styles/meetings.css";
 import CallDialog from "../components/modals/JoinMeeting";
+import NewMeet from "../components/modals/NewMeet";
 import { CallDto } from "../services/callService";
 
 type TabKey = "todas" | "actives" | "finalizada";
@@ -26,6 +27,8 @@ export default function Meetings() {
   const [selected, setSelected] = useState<Meeting | null>(null);
   const [showTranscription, setShowTranscription] = useState(false);
   const [tab, setTab] = useState<TabKey>("todas");
+  const [openNewMeet, setOpenNewMeet] = useState(false);
+
 
   const [statusModal, setStatusModal] = useState<{
     open: boolean;
@@ -117,9 +120,9 @@ export default function Meetings() {
         title="Reuniones"
         actions={
           canManageMeetings ? (
-            <Button variant="contained" color="secondary" href="/admin/reuniones/nueva" >
-              + Nueva reunión
-            </Button>
+            <Button variant="contained" color="secondary" onClick={() => setOpenNewMeet(true)}>
+        + Nueva reunión
+      </Button>
           ) : undefined
         }
         showSearch
@@ -287,6 +290,18 @@ export default function Meetings() {
         message={statusModal.message}
         primaryActionLabel="Aceptar"
       />
+
+      <Dialog open={openNewMeet} onClose={() => setOpenNewMeet(false)} maxWidth="sm" fullWidth>
+        <DialogContent>
+          <NewMeet
+            onCancel={() => setOpenNewMeet(false)}
+            onCreated={(data) => {
+              console.log("Reunión creada:", data);
+              //Llamar al backend para crear la reunión y refrescar la lista de reuniones
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       <CallDialog
         open={callDialogOpen}
