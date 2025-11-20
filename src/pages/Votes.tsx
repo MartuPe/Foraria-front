@@ -438,7 +438,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
           cursor: 'pointer',
           opacity: isActive ? 1 : isPending ? 0.9 : 0.85,
           '&:hover': {
-            transform: isActive || isPending ? 'translateY(-6px) scale(1.02)' : 'translateY(-2px)',
+            transform: isActive || isPending ? 'translateY(-6px) scale(1)' : 'translateY(-2px)',
             boxShadow: isActive || isPending 
               ? '0 12px 24px rgba(0,0,0,0.15)' 
               : '0 4px 12px rgba(0,0,0,0.08)',
