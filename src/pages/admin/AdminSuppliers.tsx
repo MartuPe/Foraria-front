@@ -187,8 +187,7 @@ export default function Suppliers() {
         showSearch
         onSearchChange={(q) => {
           setSearch(q);
-          // si querés que el text field del header y éste se mantengan en sync,
-          // descomenta la siguiente línea:
+
           setQ(q);
         }}
         actions={
