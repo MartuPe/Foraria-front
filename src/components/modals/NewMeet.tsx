@@ -1,40 +1,24 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { TextField, Button, MenuItem, CircularProgress } from "@mui/material";
 import { ForariaStatusModal } from "../../components/StatCardForms";
 import "../../styles/spent.css";
+import { callService } from "../../services/callService";
+import { mapCallToMeeting, Meeting } from "../../services/meetingService";
 
 interface NewMeetProps {
   onCancel?: () => void;
-  onCreated?: (data: {
-    title: string;
-    type: string;
-    location: string;
-    date: string;
-    time: string;
-    description: string;
-  }) => void;
+  onCreated?: (meeting: Meeting) => void;
 }
 
 type FieldErrors = {
   title?: string;
   type?: string;
-  location?: string;
-  date?: string;
-  time?: string;
   description?: string;
 };
 
-const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
-
-export default function NewMeet({
-  onCancel,
-  onCreated,
-}: NewMeetProps) {
+export default function NewMeet({ onCancel, onCreated }: NewMeetProps) {
   const [title, setTitle] = useState("");
   const [type, setType] = useState("");
-  const [location, setLocation] = useState("");
-  const [date, setDate] = useState("");
-  const [time, setTime] = useState("");
   const [description, setDescription] = useState("");
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [submitting, setSubmitting] = useState(false);
@@ -49,17 +33,6 @@ export default function NewMeet({
     message: "",
   });
 
-  const now = useMemo(() => new Date(), []);
-  const todayISO = useMemo(
-    () => now.toISOString().split("T")[0],
-    [now]
-  );
-  const minTimeToday = useMemo(
-    () => now.toTimeString().slice(0, 5),
-    [now]
-  );
-  const isTodaySelected = date === todayISO;
-
   const validateBeforeSubmit = (): boolean => {
     const next: FieldErrors = {};
 
@@ -73,33 +46,10 @@ export default function NewMeet({
       next.type = "Debés seleccionar un tipo de reunión.";
     }
 
-    if (!location) {
-      next.location = "Debés seleccionar una ubicación.";
-    }
-
-    if (!date) {
-      next.date = "La fecha es obligatoria.";
-    } else if (date < todayISO) {
-      next.date = "La fecha no puede ser anterior a hoy.";
-    }
-
-    if (!time) {
-      next.time = "La hora es obligatoria.";
-    }
-
     if (!description.trim()) {
       next.description = "La descripción es obligatoria.";
     } else if (description.trim().length < 10) {
       next.description = "La descripción debe tener al menos 10 caracteres.";
-    }
-
-    if (date && time) {
-      const selectedDateTime = new Date(`${date}T${time}:00`);
-      const nowReal = new Date();
-      if (selectedDateTime.getTime() < nowReal.getTime()) {
-        next.time =
-          "La fecha y hora deben ser posteriores al momento actual.";
-      }
     }
 
     setFieldErrors(next);
@@ -119,56 +69,50 @@ export default function NewMeet({
       setDialog({
         open: true,
         type: "error",
-        message: "No se pudo identificar tu usuario. Volvé a iniciar sesión e intentá nuevamente.",
+        message:
+          "No se pudo identificar tu usuario. Volvé a iniciar sesión e intentá nuevamente.",
       });
       return;
     }
 
-    const payloadForm = { title, type, location, date, time, description };
-    const payloadApi = {
-      userId,
-      ...payloadForm,
-    };
+    const consortiumId = Number(localStorage.getItem("consortiumId") || 0);
+    if (!consortiumId) {
+      setDialog({open: true, type: "error", message: "No se encontró el consorcio asociado. Verificá tu sesión o configuración.", });
+      return;
+    }
 
     try {
       setSubmitting(true);
-
-      const res = await fetch(`${API_BASE}/calls`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json",},
-        body: JSON.stringify(payloadApi),
+      const call = await callService.create({
+        userId,
+        title: title.trim(),
+        description: description.trim(),
+        meetingType: type,
+        consortiumId,
       });
-
-      if (!res.ok) {
-        let friendlyMessage = "No se pudo crear la reunión. Intentá nuevamente más tarde.";
-
-        if (res.status === 400) {
-          friendlyMessage = "No se pudo crear la reunión. Verificá los datos e intentá nuevamente.";
-        } else if (res.status === 403) {
-          friendlyMessage = "No tenés permisos para crear reuniones. Verificá tu sesión.";
-        }
-
-        console.error("Error creando llamada/reunión:", res.status);
-        setDialog({ open: true, type: "error", message: friendlyMessage, });
-        return;
-      }
-
-      // const call: CallDto = await res.json(); (?)
-
-      onCreated?.(payloadForm);
+      const newMeeting = mapCallToMeeting(call);
+      onCreated?.(newMeeting);
       setTitle("");
       setType("");
-      setLocation("");
-      setDate("");
-      setTime("");
       setDescription("");
-      setDialog({open: true, type: "success", message: "La reunión se creó correctamente.", });
-    } catch (err) {
-      console.error("Error de red al crear reunión:", err);
+      setDialog({ open: true, type: "success", message: "La reunión se creó correctamente.",});
+    } catch (error: any) {
+      console.error("Error creando llamada/reunión:", error);
+
+      let friendlyMessage = "No se pudo crear la reunión. Intentá nuevamente más tarde.";
+
+      if (error?.response?.status === 400) {
+        friendlyMessage =
+          "No se pudo crear la reunión. Verificá los datos e intentá nuevamente.";
+      } else if (error?.response?.status === 403) {
+        friendlyMessage =
+          "No tenés permisos para crear reuniones. Verificá tu sesión.";
+      }
+
       setDialog({
         open: true,
         type: "error",
-        message: "No pudimos conectarnos con el servidor. Intentá nuevamente más tarde.",
+        message: friendlyMessage,
       });
     } finally {
       setSubmitting(false);
@@ -210,119 +154,31 @@ export default function NewMeet({
           )}
         </div>
 
-        <div className="foraria-form-group container-items">
-          <div className="foraria-form-group group-size">
-            <label className="foraria-form-label">Tipo de reunión</label>
-            <TextField
-              select
-              fullWidth
-              value={type}
-              onChange={(e) => {
-                setType(e.target.value);
-                if (fieldErrors.type) {
-                  setFieldErrors((prev) => ({ ...prev, type: undefined }));
-                }
-              }}
-              className="foraria-form-input"
-              error={!!fieldErrors.type}
-            >
-              <MenuItem value="Asamblea">Asamblea</MenuItem>
-              <MenuItem value="Emergencia">Emergencia</MenuItem>
-              <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
-              <MenuItem value="Social">Social / Evento</MenuItem>
-            </TextField>
-            {fieldErrors.type && (
-              <div className="field-message field-message--error" role="alert" aria-live="polite" >
-                {fieldErrors.type}
-              </div>
-            )}
-          </div>
-
-          <div className="foraria-form-group group-size">
-            <label className="foraria-form-label">Ubicación</label>
-            <TextField
-              select
-              fullWidth
-              value={location}
-              onChange={(e) => {
-                setLocation(e.target.value);
-                if (fieldErrors.location) {
-                  setFieldErrors((prev) => ({
-                    ...prev,
-                    location: undefined,
-                  }));
-                }
-              }}
-              className="foraria-form-input"
-              error={!!fieldErrors.location}
-            >
-              <MenuItem value="Virtual">Virtual (videollamada)</MenuItem>
-              <MenuItem value="SUM">SUM</MenuItem>
-              <MenuItem value="Hall">Hall de entrada</MenuItem>
-              <MenuItem value="Otro">Otro espacio</MenuItem>
-            </TextField>
-            {fieldErrors.location && (
-              <div className="field-message field-message--error" role="alert" aria-live="polite">
-                {fieldErrors.location}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <div className="foraria-form-group container-items">
-          <div className="foraria-form-group group-size">
-            <label className="foraria-form-label">Fecha</label>
-            <TextField
-              fullWidth
-              type="date"
-              value={date}
-              onChange={(e) => {
-                setDate(e.target.value);
-                if (fieldErrors.date) {
-                  setFieldErrors((prev) => ({ ...prev, date: undefined }));
-                }
-              }}
-              placeholder="dd/mm/aaaa"
-              variant="outlined"
-              className="foraria-form-input"
-              InputLabelProps={{ shrink: true }}
-              inputProps={{ min: todayISO }}
-              error={!!fieldErrors.date}
-            />
-            {fieldErrors.date && (
-              <div className="field-message field-message--error" role="alert" aria-live="polite">
-                {fieldErrors.date}
-              </div>
-            )}
-          </div>
-
-          <div className="foraria-form-group group-size">
-            <label className="foraria-form-label">Hora</label>
-            <TextField
-              fullWidth
-              type="time"
-              value={time}
-              onChange={(e) => {
-                setTime(e.target.value);
-                if (fieldErrors.time) {
-                  setFieldErrors((prev) => ({ ...prev, time: undefined }));
-                }
-              }}
-              placeholder="--:--"
-              variant="outlined"
-              className="foraria-form-input"
-              InputLabelProps={{ shrink: true }}
-              inputProps={
-                isTodaySelected ? { min: minTimeToday } : undefined
+        <div className="foraria-form-group">
+          <label className="foraria-form-label">Tipo de reunión</label>
+          <TextField
+            select
+            fullWidth
+            value={type}
+            onChange={(e) => {
+              setType(e.target.value);
+              if (fieldErrors.type) {
+                setFieldErrors((prev) => ({ ...prev, type: undefined }));
               }
-              error={!!fieldErrors.time}
-            />
-            {fieldErrors.time && (
-              <div className="field-message field-message--error" role="alert" aria-live="polite">
-                {fieldErrors.time}
-              </div>
-            )}
-          </div>
+            }}
+            className="foraria-form-input"
+            error={!!fieldErrors.type}
+          >
+            <MenuItem value="Asamblea">Asamblea</MenuItem>
+            <MenuItem value="Emergencia">Emergencia</MenuItem>
+            <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
+            <MenuItem value="Social">Social / Evento</MenuItem>
+          </TextField>
+          {fieldErrors.type && (
+            <div className="field-message field-message--error" role="alert" aria-live="polite">
+              {fieldErrors.type}
+            </div>
+          )}
         </div>
 
         <div className="foraria-form-group">
@@ -353,10 +209,10 @@ export default function NewMeet({
         </div>
 
         <div className="foraria-form-actions">
-          <Button type="submit" className="foraria-gradient-button boton-crear-reclamo" disabled={submitting}>
+          <Button type="submit" className="foraria-gradient-button boton-crear-reclamo"disabled={submitting}>
             {submitting ? <CircularProgress size={20} /> : "Crear reunión"}
           </Button>
-          <Button type="button" className="foraria-outlined-white-button" onClick={onCancel} disabled={submitting}>
+          <Button type="button" className="foraria-outlined-white-button" onClick={onCancel} disabled={submitting} >
             Cancelar
           </Button>
         </div>
