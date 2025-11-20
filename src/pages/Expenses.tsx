@@ -228,7 +228,7 @@ export default function ExpensesPage() {
     //   : "-";
 
     pdf.setFontSize(10);
-    const rightX = pageWidth - 20;
+    // const rightX = pageWidth - 20;
     // pdf.text(`CREADA: ${created}`, rightX, 25, { align: "right" });
     // pdf.text(`VENCIMIENTO: ${venc}`, rightX, 40, { align: "right" });
 
@@ -388,7 +388,7 @@ export default function ExpensesPage() {
           ) : (
             // Lista de expensas
             items.map((detail) => {
-              const exp = detail.expense;
+              // const exp = detail.expense;
 
               return (
                 <InfoCard
