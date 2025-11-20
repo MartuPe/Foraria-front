@@ -26,7 +26,8 @@ import {
   CircularProgress,
   RadioGroup,            
   FormControlLabel,      
-  Radio                  
+  Radio,
+  Paper                  
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -124,7 +125,7 @@ export default function VotesPrueba() {
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada" | "pendientes">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
-
+const [loadError, setLoadError] = useState<string | null>(null);
   // Estados de votación
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
@@ -151,9 +152,9 @@ export default function VotesPrueba() {
   });
   const [editErrors, setEditErrors] = useState<string[]>([]);
 
-  const { data: pollsData, loading, refetch } = useGet<Poll[]>(
-    "/polls/with-results"
-  );
+  const { data: pollsData, loading, error, refetch } = useGet<Poll[]>(
+  "/polls/with-results"
+);
   const [selectedPollResults, setSelectedPollResults] = useState<Poll | null>(null);
 
   const handleOpenResultsModal = (poll: Poll) => {
@@ -185,11 +186,36 @@ export default function VotesPrueba() {
     fetchUserCount();
   }, []);
 
-  useEffect(() => {
-    if (pollsData) {
-      setPolls(pollsData);
+ useEffect(() => {
+  // Si hay datos, cargarlos y limpiar error
+  if (pollsData) {
+    setPolls(pollsData);
+    setLoadError(null);
+  }
+  
+  // Manejar errores
+  if (error) {
+    const errorMsg = typeof error === 'string' ? error : String(error);
+    
+    // Detectar si es un error 404 o "no se encontraron"
+    const is404 = errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found") ||
+                  errorMsg.toLowerCase().includes("status code 404");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
+                      errorMsg.toLowerCase().includes("no hay");
+    
+    if (is404 || isNotFound) {
+      // Para 404, mostramos lista vacía SIN mensaje de error
+      setPolls([]);
+      setLoadError(null);
+    } else {
+      // Para otros errores, mostramos mensaje de error
+      setPolls([]);
+      setLoadError("No se pudieron cargar las votaciones. Intentá nuevamente más tarde.");
     }
-  }, [pollsData]);
+  }
+}, [pollsData, error]);
 
   useEffect(() => {
     if (!connected) return;
@@ -825,15 +851,73 @@ export default function VotesPrueba() {
   };
 
   if (loading) {
-    return (
-      <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <CircularProgress />
-          <Typography>Cargando votaciones…</Typography>
-        </Stack>
-      </Box>
-    );
-  }
+  return (
+    <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <CircularProgress />
+        <Typography>Cargando votaciones…</Typography>
+      </Stack>
+    </Box>
+  );
+}
+
+// NUEVO: Mostrar error si existe
+if (loadError) {
+  return (
+    <Box className="foraria-page-container">
+      <PageHeader
+        title="Votaciones del Consorcio"
+        tabs={[
+          { label: "Todas", value: "todas" },
+          { label: "Activas", value: "actives" },
+          { label: "Finalizadas", value: "finalizada" },
+          ...(isAdministrador ? [{ label: "Pendientes", value: "pendientes" }] : [])
+        ]}
+        selectedTab={tab}
+        onTabChange={(v) => setTab(v as typeof tab)}
+        actions={
+          isAdministrador && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<AddIcon />}
+              onClick={() => setShowNewVoteModal(true)}
+              sx={{ borderRadius: 999, fontWeight: 600 }}
+            >
+              Nueva Votación
+            </Button>
+          )
+        }
+      />
+      
+      <Paper
+        sx={{
+          p: 6,
+          textAlign: "center",
+          border: "1px dashed #d0d0d0",
+          borderRadius: 3,
+          backgroundColor: "#fafafa",
+          mt: 2
+        }}
+      >
+        <HowToVoteIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          Error al cargar votaciones
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          {loadError}
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={() => refetch()} 
+          sx={{ mt: 1 }}
+        >
+          Reintentar
+        </Button>
+      </Paper>
+    </Box>
+  );
+}
 
   return (
     <Box className="foraria-page-container">
@@ -862,15 +946,42 @@ export default function VotesPrueba() {
         }
       />
 
-      {filteredPolls.length === 0 ? (
-        <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
-          No hay votaciones disponibles.
-        </Typography>
-      ) : (
-        <Stack spacing={2}>
-          {filteredPolls.map(renderPollCard)}
-        </Stack>
-      )}
+     {filteredPolls.length === 0 ? (
+  <Paper
+    sx={{
+      p: 6,
+      textAlign: "center",
+      border: "1px dashed #d0d0d0",
+      borderRadius: 3,
+      backgroundColor: "#fafafa",
+    }}
+  >
+    <HowToVoteIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+    <Typography variant="h5" color="text.primary" gutterBottom>
+      No hay votaciones disponibles
+    </Typography>
+    <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+      {tab === "actives" 
+        ? "No hay votaciones activas en este momento."
+        : tab === "finalizada"
+        ? "No hay votaciones finalizadas aún."
+        : tab === "pendientes"
+        ? "No hay votaciones pendientes de aprobación."
+        : "Aún no se han creado votaciones para este consorcio."
+      }
+    </Typography>
+    <Typography variant="body2" color="text.secondary">
+      {isAdministrador 
+        ? "Podés crear una nueva votación haciendo clic en el botón 'Nueva Votación'."
+        : "Las votaciones aparecerán aquí cuando la administración las cree."
+      }
+    </Typography>
+  </Paper>
+) : (
+  <Stack spacing={2}>
+    {filteredPolls.map(renderPollCard)}
+  </Stack>
+)}
 
       {/* Modal con componente NewVote */}
       <Dialog
