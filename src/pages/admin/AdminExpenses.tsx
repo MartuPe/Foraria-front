@@ -118,7 +118,7 @@ const handleCloseDetails = () => {
   setLoadErrorInvoices(null);
   try {
     const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice", { 
-      headers: { Authorization: `Bearer ${token}` }
+      headers: { Authorization: `bearer ${token}` }
     });
     setInvoices(data || []);
     setLoadErrorInvoices(null);
@@ -229,11 +229,11 @@ const handleCloseDetails = () => {
       }
 
       const expensePayload = { consortiumId, month: input };
-      console.log("Enviando Expense payload:", JSON.stringify(expensePayload));
+      console.log("Enviando Expense payload:", (expensePayload));
 
       const expenseResp = await axios.post(
         "https://localhost:7245/api/Expense" , 
-        JSON.stringify(expensePayload),
+        (expensePayload),
         {
           headers: { "Content-Type": "application/json", Authorization: `bearer ${token}` },
           validateStatus: () => true,
@@ -253,11 +253,11 @@ const handleCloseDetails = () => {
         const nextMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 
         const detailPayload = { consortiumId, month: nextMonth };
-        console.log("Enviando ExpenseDetail payload:", JSON.stringify(detailPayload));
+        console.log("Enviando ExpenseDetail payload:", (detailPayload));
 
         const detailResp = await axios.post(
           "https://localhost:7245/api/ExpenseDetail",
-          JSON.stringify(detailPayload),
+          (detailPayload),
           {
             headers: { "Content-Type": "application/json", Authorization: `bearer ${token}` },
             validateStatus: () => true,
