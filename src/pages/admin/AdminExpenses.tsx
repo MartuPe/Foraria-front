@@ -118,7 +118,7 @@ const handleCloseDetails = () => {
   setLoadErrorInvoices(null);
   try {
     const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice", { 
-      headers: { Authorization: `bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` }
     });
     setInvoices(data || []);
     setLoadErrorInvoices(null);

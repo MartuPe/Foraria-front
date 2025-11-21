@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, Select } from "@mui/material";
+import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, Select, Paper } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SortIcon from "@mui/icons-material/Sort";
@@ -11,14 +11,14 @@ import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import AddOutlined from "@mui/icons-material/AddOutlined";
 import InventoryIcon from "@mui/icons-material/Inventory";
 import PeopleIcon from "@mui/icons-material/People"
-
+import BusinessIcon from "@mui/icons-material/Business"; 
 const CATEGORIES = ["Mantenimiento", "Limpieza", "Seguridad", "Jardinería"] as const;
 type SortKey = "nameAsc" | "nameDesc" | "dateNew" | "dateOld" | "category";
 
 export default function Suppliers() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [loading, setLoading] = useState(true);
-
+const [loadError, setLoadError] = useState<string | null>(null);
   const [openNew, setOpenNew] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
@@ -54,30 +54,50 @@ export default function Suppliers() {
     return () => clearTimeout(t);
   }, [q]);
 
-  const fetchSuppliers = useCallback(async () => {
-    setLoading(true);
-    try {
-      const data = await supplierService.getAll(consortiumId);
+const fetchSuppliers = useCallback(async () => {
+  setLoading(true);
+  setLoadError(null); // Limpiar error previo
+  
+  try {
+    const data = await supplierService.getAll(consortiumId);
 
-      if (!Array.isArray(data)) {
-        console.error("Respuesta inesperada al obtener proveedores:", data);
-        openSnack("Respuesta inesperada del servidor al cargar proveedores.", "error");
-        setSuppliers([]);
-      } else {
-        setSuppliers(data);
-      }
-    } catch (err) {
-      console.error("Error al obtener proveedores:", err);
-      openSnack("No se pudieron cargar los proveedores. Intentá nuevamente.", "error");
+    if (!Array.isArray(data)) {
+      console.error("Respuesta inesperada al obtener proveedores:", data);
+      setLoadError("Respuesta inesperada del servidor al cargar proveedores.");
       setSuppliers([]);
-    } finally {
-      setLoading(false);
+    } else {
+      setSuppliers(data);
+      setLoadError(null); // Éxito: limpiar error
     }
-  }, [openSnack, consortiumId]);
-
-  useEffect(() => {
-    fetchSuppliers();
-  }, [fetchSuppliers]);
+  } catch (err: any) {
+    console.error("Error al obtener proveedores:", err);
+    
+    // Extraer mensaje de error
+    const errorMsg = err?.response?.data?.error || 
+                    err?.response?.data?.message || 
+                    err?.message ||
+                    String(err);
+    
+    // Detectar si es 404
+    const is404 = err?.response?.status === 404 || 
+                  errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron");
+    
+    if (is404 || isNotFound) {
+      // Para 404, lista vacía sin error
+      setSuppliers([]);
+      setLoadError(null);
+    } else {
+      // Para otros errores, mostrar mensaje
+      setSuppliers([]);
+      setLoadError("No se pudieron cargar los proveedores. Intentá nuevamente más tarde.");
+    }
+  } finally {
+    setLoading(false);
+  }
+}, [consortiumId]);
 
   const askDelete = (id: number) => {
     setToDeleteId(id);
@@ -274,84 +294,156 @@ export default function Suppliers() {
       />
 
       
-        <Stack spacing={2}>
-          {loading ? (
-            <>
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </>
-          ) : filtered.length === 0 ? (
-            <Card variant="outlined" sx={{ borderRadius: 2 }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>
-                  No encontramos proveedores
-                </Typography>
-                <Typography color="text.secondary" paragraph>
-                  Probá limpiar filtros o crear un nuevo proveedor.
-                </Typography>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    setQ("");
-                    setCategory("");
-                    setSort("nameAsc");
-                  }}
-                  sx={{ mr: 1 }}
-                >
-                  Limpiar filtros
-                </Button>
-                <Button variant="outlined" onClick={() => setOpenNew(true)}>
-                  Crear proveedor
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            paged.map((s) => (
-              <Card key={s.id} variant="outlined" sx={{ borderRadius: 2 }}>
-                <CardContent>
-                  <Stack direction={{ xs: "column", sm: "row" }} justifyContent="space-between" alignItems={{ xs: "flex-start", sm: "center" }} spacing={1} >
-                    <div>
-                      <Typography
-                        variant="h6"
-                        color="primary"
-                        sx={{
-                          cursor: "pointer",
-                          textDecoration: "none",
-                          "&:hover": { textDecoration: "underline" },
-                          wordBreak: "break-word",
-                        }}
-                        onClick={() => openDetailFor(s.id!)}
-                        title="Ver detalle"
-                      >
-                        {s.commercialName}
-                      </Typography>
+  <Stack spacing={2}>
+  { loadError ? (
+    // NUEVO: Estado de error
+    <Paper
+      sx={{
+        p: 6,
+        textAlign: "center",
+        border: "1px dashed #d0d0d0",
+        borderRadius: 3,
+        backgroundColor: "#fafafa",
+      }}
+    >
+      <BusinessIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+      <Typography variant="h5" color="text.primary" gutterBottom>
+        Error al cargar proveedores
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+        {loadError}
+      </Typography>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={() => fetchSuppliers()}
+      >
+        Reintentar
+      </Button>
+    </Paper>
+  ) : suppliers.length === 0 && !q && !category ? (
+    // NUEVO: Estado inicial vacío (sin proveedores, sin filtros)
+    <Paper
+      sx={{
+        p: 6,
+        textAlign: "center",
+        border: "1px dashed #d0d0d0",
+        borderRadius: 3,
+        backgroundColor: "#fafafa",
+      }}
+    >
+      <BusinessIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+      <Typography variant="h5" color="text.primary" gutterBottom>
+        No hay proveedores registrados
+      </Typography>
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+        Aún no se han registrado proveedores en el sistema.
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+        Comienza agregando tu primer proveedor.
+      </Typography>
+      <Button
+        variant="contained"
+        color="secondary"
+        size="large"
+        startIcon={<AddOutlined />}
+        onClick={() => setOpenNew(true)}
+      >
+        Crear Primer Proveedor
+      </Button>
+    </Paper>
+  ) : filtered.length === 0 ? (
+    // Estado filtrado vacío (hay proveedores pero ninguno coincide con filtros)
+    <Paper
+      sx={{
+        p: 4,
+        textAlign: "center",
+        border: "1px solid #f0f0f0",
+        borderRadius: 3,
+      }}
+    >
+      <Typography variant="h6" color="text.secondary">
+        No se encontraron proveedores con los filtros aplicados
+      </Typography>
+      <Typography variant="body2" color="text.secondary" sx={{ mt: 1, mb: 2 }}>
+        Intenta cambiar los filtros o realizar una nueva búsqueda
+      </Typography>
+      <Button
+        variant="contained"
+        onClick={() => {
+          setQ("");
+          setCategory("");
+          setSort("nameAsc");
+        }}
+        sx={{ mr: 1 }}
+      >
+        Limpiar filtros
+      </Button>
+      <Button variant="outlined" onClick={() => setOpenNew(true)}>
+        Crear proveedor
+      </Button>
+    </Paper>
+  ) : (
+    // Lista de proveedores
+    paged.map((s) => (
+      <Card key={s.id} variant="outlined" sx={{ borderRadius: 2 }}>
+        <CardContent>
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            justifyContent="space-between"
+            alignItems={{ xs: "flex-start", sm: "center" }}
+            spacing={1}
+          >
+            <div>
+              <Typography
+                variant="h6"
+                color="primary"
+                sx={{
+                  cursor: "pointer",
+                  textDecoration: "none",
+                  "&:hover": { textDecoration: "underline" },
+                  wordBreak: "break-word",
+                }}
+                onClick={() => openDetailFor(s.id!)}
+                title="Ver detalle"
+              >
+                {s.commercialName}
+              </Typography>
 
-                      <Typography color="text.secondary">
-                        {s.businessName} – {s.supplierCategory}
-                      </Typography>
+              <Typography color="text.secondary">
+                {s.businessName} – {s.supplierCategory}
+              </Typography>
 
-                      <Typography variant="body2" color="text.secondary">
-                        {s.email && <>{s.email} </>}
-                        {s.phone && <>| {s.phone}</>}
-                      </Typography>
-                    </div>
+              <Typography variant="body2" color="text.secondary">
+                {s.email && <>{s.email} </>}
+                {s.phone && <>| {s.phone}</>}
+              </Typography>
+            </div>
 
-                    <Stack direction="row" spacing={1}>
-                      <Button variant="outlined" startIcon={<VisibilityIcon />} onClick={() => openDetailFor(s.id!)} >
-                        Ver detalle
-                      </Button>
+            <Stack direction="row" spacing={1}>
+              <Button
+                variant="outlined"
+                startIcon={<VisibilityIcon />}
+                onClick={() => openDetailFor(s.id!)}
+              >
+                Ver detalle
+              </Button>
 
-                      <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => askDelete(s.id!)} >
-                        Eliminar
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </Stack>
+              <Button
+                variant="outlined"
+                color="error"
+                startIcon={<DeleteOutlineIcon />}
+                onClick={() => askDelete(s.id!)}
+              >
+                Eliminar
+              </Button>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
+    ))
+  )}
+</Stack>
 
         {!loading && filtered.length > pageSize && (
           <Stack alignItems="center" mt={2}>
