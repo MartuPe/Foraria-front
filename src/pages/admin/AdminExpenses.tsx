@@ -13,6 +13,7 @@ import {
   FormControl,
   InputLabel,
   Divider,
+  Paper,
 } from "@mui/material";
 import PageHeader from "../../components/SectionHeader";
 import InvoiceUploadForm from "../../components/modals/UploadInvoice";
@@ -25,6 +26,8 @@ import axios from "axios";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import isotipoForaria from "../../assets/Isotipo-Color.png";
+import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const token = localStorage.getItem("accessToken");
 
@@ -91,7 +94,8 @@ export default function AdminCargaFactura() {
   const [selectedTab, setSelectedTab] = useState<TabKey>("facturas");
 const [detailsOpen, setDetailsOpen] = useState(false);
 const [selectedExpense, setSelectedExpense] = useState<any | null>(null);
-
+const [loadErrorInvoices, setLoadErrorInvoices] = useState<string | null>(null);
+const [loadErrorExpenses, setLoadErrorExpenses] = useState<string | null>(null);
 const handleViewExpense = (exp: any) => {
   setSelectedExpense(exp);
   setDetailsOpen(true);
@@ -109,37 +113,79 @@ const handleCloseDetails = () => {
     return parseNullableNumber(localStorage.getItem("consortiumId"));
   };
 
-  // Fetch invoices
-  const fetchInvoices = async () => {
-    setLoadingInvoices(true);
-    try {
-      const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice", { headers: { Authorization: `Bearer ${token}` }});
-      setInvoices(data || []);
-    } catch (err) {
-      console.error("Error al cargar facturas", err);
-    } finally {
-      setLoadingInvoices(false);
+ const fetchInvoices = async () => {
+  setLoadingInvoices(true);
+  setLoadErrorInvoices(null);
+  try {
+    const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice", { 
+      headers: { Authorization: `bearer ${token}` }
+    });
+    setInvoices(data || []);
+    setLoadErrorInvoices(null);
+  } catch (err: any) {
+    console.error("Error al cargar facturas", err);
+    
+    const errorMsg = err?.response?.data?.error || 
+                    err?.response?.data?.message || 
+                    String(err);
+    
+    const is404 = err?.response?.status === 404 || 
+                  errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron");
+    
+    if (is404 || isNotFound) {
+      setInvoices([]);
+      setLoadErrorInvoices(null);
+    } else {
+      setInvoices([]);
+      setLoadErrorInvoices("No se pudieron cargar las facturas. Intentá nuevamente más tarde.");
     }
-  };
+  } finally {
+    setLoadingInvoices(false);
+  }
+};
 
-  // Fetch expenses
+
   const fetchExpenses = async () => {
-    setLoadingExpenses(true);
-    try {
-      const { data } = await axios.get<Expense[]>("https://localhost:7245/api/Expense", { headers: { Authorization: `Bearer ${token}` }});
-      const sorted = (data || []).slice().sort((a, b) => {
-        const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-        const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        return db - da;
-      });
-      setExpenses(sorted);
-    } catch (err) {
-      console.error("Error al cargar expensas", err);
-    } finally {
-      setLoadingExpenses(false);
+  setLoadingExpenses(true);
+  setLoadErrorExpenses(null);
+  try {
+    const { data } = await axios.get<Expense[]>("https://localhost:7245/api/Expense", { 
+      headers: { Authorization: `bearer ${token}` }
+    });
+    const sorted = (data || []).slice().sort((a, b) => {
+      const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const db = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return db - da;
+    });
+    setExpenses(sorted);
+    setLoadErrorExpenses(null);
+  } catch (err: any) {
+    console.error("Error al cargar expensas", err);
+    
+    const errorMsg = err?.response?.data?.error || 
+                    err?.response?.data?.message || 
+                    String(err);
+    
+    const is404 = err?.response?.status === 404 || 
+                  errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron");
+    
+    if (is404 || isNotFound) {
+      setExpenses([]);
+      setLoadErrorExpenses(null);
+    } else {
+      setExpenses([]);
+      setLoadErrorExpenses("No se pudieron cargar las expensas. Intentá nuevamente más tarde.");
     }
-  };
-
+  } finally {
+    setLoadingExpenses(false);
+  }
+};
   useEffect(() => {
     fetchInvoices();
     fetchExpenses();
@@ -189,7 +235,7 @@ const handleCloseDetails = () => {
         "https://localhost:7245/api/Expense" , 
         JSON.stringify(expensePayload),
         {
-          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `bearer ${token}` },
           validateStatus: () => true,
         }
       );
@@ -213,7 +259,7 @@ const handleCloseDetails = () => {
           "https://localhost:7245/api/ExpenseDetail",
           JSON.stringify(detailPayload),
           {
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+            headers: { "Content-Type": "application/json", Authorization: `bearer ${token}` },
             validateStatus: () => true,
           }
         );
@@ -325,7 +371,7 @@ const generateAdminPdf = (exp: Expense) => {
 };
 
   return (
-    <div className="page">
+    <div className="foraria-page-container">
       <PageHeader
         title="Carga de Facturas"
         actions={
@@ -412,12 +458,74 @@ const generateAdminPdf = (exp: Expense) => {
       <Box sx={{ padding: 2 }}>
         <Stack spacing={2}>
           {selectedTab === "facturas" && (
-            <>
-              <Typography variant="h6">Facturas</Typography>
-              {loadingInvoices && <div>Cargando facturas...</div>}
-              {!loadingInvoices && sortedInvoices.length === 0 && <div>No hay facturas.</div>}
-              {!loadingInvoices &&
-                sortedInvoices.map((inv) => {
+  <>
+    <Typography variant="h6">Facturas</Typography>
+    
+    {loadingInvoices && (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 4 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <CircularProgress />
+          <Typography>Cargando facturas…</Typography>
+        </Stack>
+      </Box>
+    )}
+    
+    {loadErrorInvoices && !loadingInvoices && (
+      <Paper
+        sx={{
+          p: 6,
+          textAlign: "center",
+          border: "1px dashed #d0d0d0",
+          borderRadius: 3,
+          backgroundColor: "#fafafa",
+        }}
+      >
+        <ReceiptLongOutlinedIcon
+          sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+        />
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          Error al cargar facturas
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          {loadErrorInvoices}
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={() => fetchInvoices()} 
+          sx={{ mt: 1 }}
+        >
+          Reintentar
+        </Button>
+      </Paper>
+    )}
+    
+    {!loadingInvoices && !loadErrorInvoices && sortedInvoices.length === 0 && (
+      <Paper
+        sx={{
+          p: 6,
+          textAlign: "center",
+          border: "1px dashed #d0d0d0",
+          borderRadius: 3,
+          backgroundColor: "#fafafa",
+        }}
+      >
+        <ReceiptLongOutlinedIcon
+          sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+        />
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          No hay facturas registradas
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+          Aún no se han cargado facturas en el sistema.
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Podés cargar una nueva factura haciendo clic en "Cargar Factura".
+        </Typography>
+      </Paper>
+    )}
+    
+    {!loadingInvoices && !loadErrorInvoices &&
+      sortedInvoices.map((inv) => {
                   const files: InfoFile[] = inv.filePath
                     ? inv.filePath.split(",").map((name) => ({
                         url: name,
@@ -455,16 +563,76 @@ const generateAdminPdf = (exp: Expense) => {
             </>
           )}
 
-    {selectedTab === "expensas" && (
+   {selectedTab === "expensas" && (
   <>
     <Typography variant="h6" sx={{ mb: 2 }}>
       Expensas
     </Typography>
 
-    {loadingExpenses && <div>Cargando expensas...</div>}
-    {!loadingExpenses && expenses.length === 0 && <div>No hay expensas.</div>}
+    {loadingExpenses && (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", py: 4 }}>
+        <Stack direction="row" spacing={2} alignItems="center">
+          <CircularProgress />
+          <Typography>Cargando expensas…</Typography>
+        </Stack>
+      </Box>
+    )}
+    
+    {loadErrorExpenses && !loadingExpenses && (
+      <Paper
+        sx={{
+          p: 6,
+          textAlign: "center",
+          border: "1px dashed #d0d0d0",
+          borderRadius: 3,
+          backgroundColor: "#fafafa",
+        }}
+      >
+        <ReceiptLongOutlinedIcon
+          sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+        />
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          Error al cargar expensas
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          {loadErrorExpenses}
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={() => fetchExpenses()} 
+          sx={{ mt: 1 }}
+        >
+          Reintentar
+        </Button>
+      </Paper>
+    )}
+    
+    {!loadingExpenses && !loadErrorExpenses && expenses.length === 0 && (
+      <Paper
+        sx={{
+          p: 6,
+          textAlign: "center",
+          border: "1px dashed #d0d0d0",
+          borderRadius: 3,
+          backgroundColor: "#fafafa",
+        }}
+      >
+        <ReceiptLongOutlinedIcon
+          sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
+        />
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          No hay expensas generadas
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+          Aún no se han generado expensas.
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Podés generar una expensa haciendo clic en "Generar expensa por mes".
+        </Typography>
+      </Paper>
+    )}
 
-    {!loadingExpenses &&
+    {!loadingExpenses && !loadErrorExpenses &&
       expenses.map((exp) => {
         return (
           <InfoCard

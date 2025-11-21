@@ -124,7 +124,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     let mounted = true;
     const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
-    fetch(`${API_BASE}/Forum`, { headers: { Authorization: `Bearer ${token}` }})
+    fetch(`${API_BASE}/Forum`, { headers: { Authorization: `bearer ${token}` }})
       .then(async (res) => {
         if (!mounted) return;
         if (!res.ok) { setForos([]); return; }

@@ -3,8 +3,22 @@ import { api } from "../api/axios";
 export interface CallDto {
   id: number;
   createdByUserId: number;
+  title: string;
+  description: string;
+  meetingType: string;
   startedAt: string | null;
   status: string;
+}
+
+export interface CallListItemDto {
+  id: number;
+  title: string;
+  description: string;
+  meetingType: string;
+  status: string;
+  startedAt: string;
+  participantsCount: number;
+  location: string;
 }
 
 export interface CallParticipantDto {
@@ -30,30 +44,42 @@ export interface CallStateDto {
 }
 
 export const callService = {
-  create: (userId: number) =>
-    api.post<CallDto>("/api/calls", { userId }).then((r) => r.data),
+  create: (payload: {
+    userId: number;
+    title: string;
+    description: string;
+    meetingType: string;
+    consortiumId: number;
+  }) => api.post<CallDto>("/calls", payload).then((r) => r.data),
+
+  getByConsortium: (consortiumId: number, status?: string) =>
+    api
+      .get<CallListItemDto[]>(`/calls/consortium/${consortiumId}`, {
+        params: status ? { status } : undefined,
+      })
+      .then((r) => r.data),
 
   join: (callId: number, userId: number) =>
-    api.post(`/api/calls/${callId}/join`, { userId }),
+    api.post(`/calls/${callId}/join`, { userId }),
 
   end: (callId: number) => api.post(`/api/calls/${callId}/end`),
 
   getDetails: (callId: number) =>
-    api.get<CallDto>(`/api/calls/${callId}`).then((r) => r.data),
+    api.get<CallDto>(`/calls/${callId}`).then((r) => r.data),
 
   getParticipants: (callId: number) =>
     api
-      .get<CallParticipantDto[]>(`/api/calls/${callId}/participants`)
+      .get<CallParticipantDto[]>(`/calls/${callId}/participants`)
       .then((r) => r.data),
 
   getState: (callId: number) =>
-    api.get<CallStateDto>(`/api/calls/${callId}/state`).then((r) => r.data),
+    api.get<CallStateDto>(`/calls/${callId}/state`).then((r) => r.data),
 
   uploadRecording: (callId: number, file: File) => {
     const formData = new FormData();
     formData.append("file", file);
 
-    return api.post(`/api/calls/${callId}/recording`, formData, {
+    return api.post(`/calls/${callId}/recording`, formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

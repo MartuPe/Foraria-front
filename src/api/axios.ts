@@ -16,7 +16,7 @@ export const api = axios.create({
 /*api.interceptors.request.use((config) => {
   const token = localStorage.getItem("authToken");
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`; 
+    config.headers.Authorization = `bearer ${token}`; 
   }
   return config;
 });*/
@@ -29,7 +29,7 @@ api.interceptors.request.use((config: InternalAxiosRequestConfig) => {
     config.headers = new AxiosHeaders(config.headers as any);
   }
   if (token) {
-    (config.headers as AxiosHeaders).set("Authorization", `Bearer ${token}`);
+    (config.headers as AxiosHeaders).set("Authorization", `bearer ${token}`);
   }
   return config;
 });
@@ -84,7 +84,7 @@ api.interceptors.response.use(
           onRefreshed(newAccess);
 
           original.headers = original.headers || {};
-          (original.headers as any).Authorization = `Bearer ${newAccess}`;
+          (original.headers as any).Authorization = `bearer ${newAccess}`;
           return api(original);
         } catch (e) {
           isRefreshing = false;
@@ -99,7 +99,7 @@ api.interceptors.response.use(
       return new Promise((resolve) => {
         pendingRequests.push((token: string) => {
           original.headers = original.headers || {};
-          (original.headers as any).Authorization = `Bearer ${token}`;
+          (original.headers as any).Authorization = `bearer ${token}`;
           resolve(api(original));
         });
       });

@@ -13,6 +13,7 @@ type Reserve = {
   description: string;
   createdAt: string;
   place_id: number;
+  placeName: string;
   residence_id: number;
   user_id: number;
 };
@@ -46,7 +47,7 @@ export default function Calendar() {
         title: r.description || "Reserva",
         start: date,
         extendedProps: {
-          place: `Lugar #${r.place_id}`,
+          place: `${r.placeName}`,
           time,
         },
       };
