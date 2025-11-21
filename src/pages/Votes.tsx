@@ -1,32 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
 import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  Chip, 
-  Button, 
-  Stack,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  LinearProgress,
-  Alert,
-  Divider,
-  Avatar,
-  AvatarGroup,
-  Tooltip,
-  IconButton,
-  TextField,
-  MenuItem,
-  Select,
-  FormControl,
-  InputLabel,
-  CircularProgress,
-  RadioGroup,            
-  FormControlLabel,      
-  Radio                  
+  Box, Card, CardContent, Typography, Chip, Button, Stack,
+  Dialog, DialogTitle, DialogContent, DialogActions, LinearProgress,
+  Alert, Divider, Avatar, AvatarGroup, Tooltip, IconButton, TextField,
+  MenuItem, Select, FormControl, InputLabel, CircularProgress, RadioGroup,
+  FormControlLabel, Radio,
+  useTheme, useMediaQuery                 // <-- añadido
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -120,6 +99,8 @@ interface PollVoteResult {
 
 export default function VotesPrueba() {
   const isAdministrador = storage.role === "Administrador";
+  const theme = useTheme();                               // <-- añadido
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm')); // <-- añadido
   
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada" | "pendientes">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -459,7 +440,6 @@ export default function VotesPrueba() {
     (poll.pollResults || []).forEach((r) =>
       resultsMap.set(r.pollOptionId, r.votesCount)
     );
-
     const totalVotes = Array.from(resultsMap.values()).reduce((s, v) => s + v, 0);
     
     const optionsWithResults = poll.pollOptions.map(option => {
@@ -473,7 +453,11 @@ export default function VotesPrueba() {
     }).sort((a, b) => b.votes - a.votes);
 
     const winner = optionsWithResults.length > 0 ? optionsWithResults[0] : null;
-    const participationPercent = totalUsers > 0 ? Math.round((totalVotes / totalUsers) * 100) : 0;
+    // Ajuste: clamp y manejo de totalUsers = 0, y evitar sobrepasar 100 si totalVotes > totalUsers
+    const base = totalUsers > 0 ? totalUsers : totalVotes || 1;
+    const rawPercent = (totalVotes / base) * 100;
+    const participationPercent = Math.min(Math.round(rawPercent), 100);
+
     return {
       totalVotes,
       participationPercent,
@@ -502,10 +486,10 @@ export default function VotesPrueba() {
     const isPollOpen = isActive || isPending || isDraft; 
 
     return (
-      <Card 
-        key={poll.id} 
-        variant="outlined" 
-        sx={{ 
+      <Card
+        key={poll.id}
+        variant="outlined"
+        sx={{
           borderRadius: 3,
           border: isActive ? '2px solid' : isPending ? '2px dashed' : '1px solid',
           borderColor: isActive ? 'success.main' : isPending ? 'warning.main' : 'grey.300',
@@ -515,6 +499,10 @@ export default function VotesPrueba() {
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           cursor: 'pointer',
           opacity: isActive ? 1 : isPending ? 0.9 : 0.85,
+          width: '100%',                         // <-- responsive base
+          display: 'flex',
+          flexDirection: 'column',
+          p: { xs: 1, sm: 1.5 },                 // <-- padding adaptado
           '&:hover': {
             transform: isActive || isPending ? 'translateY(-6px) scale(1.02)' : 'translateY(-2px)',
             boxShadow: isActive || isPending 
@@ -604,39 +592,63 @@ export default function VotesPrueba() {
         )}
 
         {/* ...existing card content... */}
-        <CardContent>
-          <Stack spacing={2.5}>
-            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-              <Box sx={{ flex: 1 }}>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                  <Typography 
-                    variant="h6" 
+        <CardContent sx={{ p: { xs: 1, sm: 2 } }}>   {/* <-- padding internal */}
+          <Stack spacing={isMobile ? 1.8 : 2.5}>
+            <Stack
+              direction={isMobile ? "column" : "row"}              // <-- apilar en mobile
+              justifyContent="space-between"
+              alignItems={isMobile ? "flex-start" : "flex-start"}
+              spacing={isMobile ? 1 : 0}
+            >
+              <Box sx={{ flex: 1, width: '100%' }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  spacing={1}
+                  sx={{ mb: 0.75 }}
+                >
+                  <Typography
+                    variant={isMobile ? "subtitle1" : "h6"}        // <-- menor en mobile
                     color={isActive ? "primary" : isPending ? "warning.dark" : "text.secondary"}
-                    sx={{ 
+                    sx={{
                       fontWeight: isActive || isPending ? 600 : 500,
+                      lineHeight: 1.2
                     }}
                   >
                     {poll.title}
                   </Typography>
-                  {(isActive || isPending) && (
+                  {(isActive || isPending) && !isMobile && (       // <-- ocultar share en mobile
                     <IconButton size="small" color="default">
                       <ShareIcon fontSize="small" />
                     </IconButton>
                   )}
                 </Stack>
-                <Typography 
-                  variant="body2" 
-                  color="text.secondary" 
-                  sx={{ 
-                    mb: 1.5,
-                    opacity: isActive || isPending ? 1 : 0.8
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{
+                    mb: 1.2,
+                    opacity: isActive || isPending ? 1 : 0.8,
+                    display: '-webkit-box',                      // <-- clamp descripción
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    WebkitLineClamp: isMobile ? 3 : 'unset',
+                    wordBreak: 'break-word'
                   }}
                 >
                   {poll.description}
                 </Typography>
               </Box>
-              
-              <Stack direction="row" spacing={1}>
+
+              <Stack
+                direction={isMobile ? "row" : "row"}
+                spacing={1}
+                sx={{
+                  width: isMobile ? '100%' : 'auto',
+                  flexWrap: 'wrap',
+                  justifyContent: isMobile ? 'flex-start' : 'flex-end'
+                }}
+              >
                 <Chip 
                   label={poll.state || "Cerrada"}
                   color={
@@ -657,53 +669,14 @@ export default function VotesPrueba() {
               </Stack>
             </Stack>
 
-            {/* ...existing content sections... */}
-            {(isActive || isPending || isDraft) && poll.endDate && (
-              <Alert 
-                severity={isPending ? "warning" : "info"}
-                icon={<AccessTimeIcon />}
-                sx={{ 
-                  backgroundColor: isPending ? 'warning.50' : 'info.50',
-                  border: '1px solid',
-                  borderColor: isPending ? 'warning.200' : 'info.200'
-                }}
-              >
-                <Typography variant="body2" fontWeight={600}>
-                  {isPending ? 'Pendiente aprobación' : `Finaliza: ${new Date(poll.endDate).toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'short', 
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}`}
-                </Typography>
-              </Alert>
-            )}
+            {/* ...existing alerts... */}
 
-            {/* ...rest of existing card content... */}
-            {!isActive && !isPending && !isDraft && (
-              <Alert 
-                severity={isRejected ? "error" : "success"}
-                sx={{ 
-                  backgroundColor: isRejected ? 'error.50' : 'grey.100',
-                  border: '1px solid',
-                  borderColor: isRejected ? 'error.200' : 'grey.300',
-                  '& .MuiAlert-icon': {
-                    color: isRejected ? 'error.main' : 'grey.600'
-                  }
-                }}
-              >
-                <Typography variant="body2" fontWeight={600} color={isRejected ? 'error.dark' : 'grey.700'}>
-                  Votación {isRejected ? 'rechazada' : 'cerrada'} el {new Date(poll.endDate || poll.createdAt).toLocaleDateString('es-ES', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                  })}
-                </Typography>
-              </Alert>
-            )}
-
-            <Stack direction="row" alignItems="center" spacing={3} flexWrap="wrap">
+            <Stack
+              direction={isMobile ? "column" : "row"}          // <-- apilar stats
+              alignItems={isMobile ? "flex-start" : "center"}
+              spacing={isMobile ? 1 : 3}
+              flexWrap="wrap"
+            >
               <Stack direction="row" alignItems="center" spacing={0.5}>
                 <CalendarTodayIcon 
                   fontSize="small" 
@@ -745,7 +718,7 @@ export default function VotesPrueba() {
             </Stack>
 
             {isAdministrador && ( 
-              <Box>
+              <Box sx={{ mt: isMobile ? 0.5 : 0 }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                   <Typography 
                     variant="caption" 
@@ -809,9 +782,17 @@ export default function VotesPrueba() {
               </Stack>
             )}
 
-            <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
-              <Stack direction="row" spacing={1}>
-                {/* Botón "Votar Ahora" */}
+            <Stack
+              direction={isMobile ? "column" : "row"}          // <-- acciones responsive
+              spacing={isMobile ? 1 : 1}
+              justifyContent="space-between"
+              alignItems={isMobile ? "stretch" : "center"}
+            >
+              <Stack
+                direction={isMobile ? "column" : "row"}
+                spacing={isMobile ? 1 : 1}
+                sx={{ width: isMobile ? '100%' : 'auto' }}
+              >
                 {isActive && !hasVoted && (
                   <Button
                     variant="contained"
@@ -819,7 +800,8 @@ export default function VotesPrueba() {
                     startIcon={<HowToVoteIcon />}
                     onClick={() => handleOpenVoteModal(poll)}
                     disabled={isVoting}
-                    sx={{ 
+                    fullWidth={isMobile}                     // <-- fullWidth en mobile
+                    sx={{
                       borderRadius: 999,
                       px: 3,
                       py: 1,
@@ -836,18 +818,19 @@ export default function VotesPrueba() {
                   color={isActive || isPending || isDraft ? "primary" : "inherit"}
                   startIcon={<BarChartIcon />}
                   onClick={() => handleOpenResultsModal(poll)}
+                  fullWidth={isMobile}
                   sx={{
                     borderRadius: 999,
                     px: 2.5,
                     fontWeight: 500,
                     textTransform: 'none',
-                    backgroundColor: isActive || isPending ? undefined : 'grey.600',
-                    color: isActive || isPending ? undefined : 'white',
-                    borderColor: isActive || isPending ? undefined : 'grey.600',
+                    backgroundColor: (isActive || isPending) ? undefined : 'grey.600',
+                    color: (isActive || isPending) ? undefined : 'white',
+                    borderColor: (isActive || isPending) ? undefined : 'grey.600',
                     transition: 'all 0.2s ease-in-out',
                     '&:hover': {
-                      backgroundColor: isActive || isPending ? 'primary.50' : 'grey.700',
-                      borderColor: isActive || isPending ? 'primary.main' : 'grey.700',
+                      backgroundColor: (isActive || isPending) ? 'primary.50' : 'grey.700',
+                      borderColor: (isActive || isPending) ? 'primary.main' : 'grey.700',
                       transform: 'translateY(-1px)',
                     }
                   }}
@@ -861,14 +844,14 @@ export default function VotesPrueba() {
                     color="info"
                     size="small"
                     variant="outlined"
-                    sx={{ fontWeight: 600 }}
+                    sx={{ fontWeight: 600, alignSelf: isMobile ? 'flex-start' : 'center' }}
                   />
                 )}
 
-                {(isActive || isPending || isDraft) && (
+                {(isActive || isPending || isDraft) && !isMobile && (
                   <Tooltip title="Recibir notificaciones">
-                    <IconButton 
-                      size="small" 
+                    <IconButton
+                      size="small"
                       color="default"
                       sx={{
                         transition: 'all 0.2s ease-in-out',
@@ -937,31 +920,76 @@ export default function VotesPrueba() {
   }
 
   return (
-    <Box className="foraria-page-container">
-      <PageHeader
-        title="Votaciones del Consorcio"
-        tabs={[
-          { label: "Todas", value: "todas" },
-          { label: "Activas", value: "actives" },
-          { label: "Finalizadas", value: "finalizada" },
-          ...(isAdministrador ? [{ label: "Pendientes", value: "pendientes" }] : [])
-        ]}
-        selectedTab={tab}
-        onTabChange={(v) => setTab(v as typeof tab)}
-        actions={
-          isAdministrador && (
-            <Button
-              variant="contained"
-              color="secondary"
-              startIcon={<AddIcon />}
-              onClick={() => setShowNewVoteModal(true)}
-              sx={{ borderRadius: 999, fontWeight: 600 }}
-            >
-              Nueva Votación
-            </Button>
-          )
+    <Box
+      className="foraria-page-container"
+      sx={{
+        pt: { xs: 1, md: 2 },
+        '& .MuiCard-root': {
+          boxShadow: { xs: '0 2px 6px rgba(0,0,0,0.06)', md: 'none' }
         }
-      />
+      }}
+    >
+      {/* Desktop / Tablet: Tabs originales. Mobile: Select */}
+      {isMobile ? (
+        <>
+          <PageHeader
+            title="Votaciones del Consorcio"
+            actions={
+              isAdministrador && (
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  startIcon={<AddIcon />}
+                  onClick={() => setShowNewVoteModal(true)}
+                  sx={{ borderRadius: 999, fontWeight: 600, width: '100%' }}
+                >
+                  Nueva Votación
+                </Button>
+              )
+            }
+          />
+          <Box sx={{ mt: 2, mb: 2, maxWidth: 280 }}>
+            <FormControl fullWidth size="small">
+              <InputLabel>Filtrar</InputLabel>
+              <Select
+                label="Filtrar"
+                value={tab}
+                onChange={(e) => setTab(e.target.value as typeof tab)}
+              >
+                <MenuItem value="todas">Todas</MenuItem>
+                <MenuItem value="actives">Activas</MenuItem>
+                <MenuItem value="finalizada">Finalizadas</MenuItem>
+                {isAdministrador && <MenuItem value="pendientes">Pendientes</MenuItem>}
+              </Select>
+            </FormControl>
+          </Box>
+        </>
+      ) : (
+        <PageHeader
+          title="Votaciones del Consorcio"
+          tabs={[
+            { label: "Todas", value: "todas" },
+            { label: "Activas", value: "actives" },
+            { label: "Finalizadas", value: "finalizada" },
+            ...(isAdministrador ? [{ label: "Pendientes", value: "pendientes" }] : [])
+          ]}
+          selectedTab={tab}
+            onTabChange={(v) => setTab(v as typeof tab)}
+          actions={
+            isAdministrador && (
+              <Button
+                variant="contained"
+                color="secondary"
+                startIcon={<AddIcon />}
+                onClick={() => setShowNewVoteModal(true)}
+                sx={{ borderRadius: 999, fontWeight: 600 }}
+              >
+                Nueva Votación
+              </Button>
+            )
+          }
+        />
+      )}
 
       {filteredPolls.length === 0 ? (
         <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'center', py: 4 }}>
