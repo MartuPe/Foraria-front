@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useCallback } from 'react';
 import {
   Button,
   Dialog,
@@ -29,7 +30,6 @@ import isotipoForaria from "../../assets/Isotipo-Color.png";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import CircularProgress from "@mui/material/CircularProgress";
 
-const token = localStorage.getItem("accessToken");
 
 
 interface InvoiceItem {
@@ -87,6 +87,7 @@ export default function AdminCargaFactura() {
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
 
+const token = localStorage.getItem("accessToken");
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
   const [loadingInvoices, setLoadingInvoices] = useState(false);
@@ -113,12 +114,13 @@ const handleCloseDetails = () => {
     return parseNullableNumber(localStorage.getItem("consortiumId"));
   };
 
- const fetchInvoices = async () => {
+ const fetchInvoices = useCallback(async () => {
+  const token = localStorage.getItem("accessToken");
   setLoadingInvoices(true);
   setLoadErrorInvoices(null);
   try {
     const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice", { 
-      headers: { Authorization: `bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` }
     });
     setInvoices(data || []);
     setLoadErrorInvoices(null);
@@ -145,15 +147,16 @@ const handleCloseDetails = () => {
   } finally {
     setLoadingInvoices(false);
   }
-};
+}, []);
 
 
-  const fetchExpenses = async () => {
+  const fetchExpenses = useCallback( async () => {
+    const token = localStorage.getItem("accessToken");
   setLoadingExpenses(true);
   setLoadErrorExpenses(null);
   try {
     const { data } = await axios.get<Expense[]>("https://localhost:7245/api/Expense", { 
-      headers: { Authorization: `bearer ${token}` }
+      headers: { Authorization: `Bearer ${token}` }
     });
     const sorted = (data || []).slice().sort((a, b) => {
       const da = a.createdAt ? new Date(a.createdAt).getTime() : 0;
@@ -185,13 +188,12 @@ const handleCloseDetails = () => {
   } finally {
     setLoadingExpenses(false);
   }
-};
+}, []);
   useEffect(() => {
     fetchInvoices();
     fetchExpenses();
-  }, []);
+  }, [fetchInvoices, fetchExpenses]);
 
-  // --- NUEVO: modal para seleccionar año/mes antes de generar expensa ---
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i);
   const months = [
     { value: "01", label: "Enero" },
@@ -235,7 +237,7 @@ const handleCloseDetails = () => {
         "https://localhost:7245/api/Expense" , 
         (expensePayload),
         {
-          headers: { "Content-Type": "application/json", Authorization: `bearer ${token}` },
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
           validateStatus: () => true,
         }
       );
@@ -259,7 +261,7 @@ const handleCloseDetails = () => {
           "https://localhost:7245/api/ExpenseDetail",
           (detailPayload),
           {
-            headers: { "Content-Type": "application/json", Authorization: `bearer ${token}` },
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
             validateStatus: () => true,
           }
         );
@@ -749,3 +751,5 @@ const generateAdminPdf = (exp: Expense) => {
     </div>
   );
 }
+
+
