@@ -6,7 +6,6 @@ import theme from "./styles/muiStyle";
 import { RequireAuth, RequireRoles } from "./routes/guards";
 import { Role, RoleGroups } from "./constants/roles";
 import { storage } from "./utils/storage";
-
 import Login from "./pages/Login";
 import RecoverPassword from "./pages/RecoverPassword";
 import ResetPassword from "./pages/ResetPassword";
