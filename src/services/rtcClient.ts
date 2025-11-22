@@ -6,7 +6,8 @@ export class RTCClient {
   constructor(
     private sendOffer: (offer: any, toUserId: number) => void,
     private sendAnswer: (answer: any, toUserId: number) => void,
-    private sendIce: (candidate: any, toUserId: number) => void
+    private sendIce: (candidate: any, toUserId: number) => void,
+    private onRemoteStream?: (userId: number, stream: MediaStream) => void
   ) {}
 
   private createPeer(userId: number): RTCPeerConnection {
@@ -31,6 +32,9 @@ export class RTCClient {
       const [stream] = event.streams;
       if (stream) {
         this.remoteStreams.set(userId, stream);
+        if (this.onRemoteStream) {
+          this.onRemoteStream(userId, stream);
+        }
       }
     };
 
