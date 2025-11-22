@@ -58,6 +58,7 @@ const fetchSuppliers = useCallback(async () => {
   setLoading(true);
   setLoadError(null); // Limpiar error previo
   
+  
   try {
     const data = await supplierService.getAll(consortiumId);
 
@@ -104,6 +105,10 @@ const fetchSuppliers = useCallback(async () => {
     setConfirmOpen(true);
   };
 
+  useEffect(() => {
+  fetchSuppliers();
+}, [fetchSuppliers]);
+
   const handleDelete = async () => {
     if (toDeleteId == null) return;
     try {
@@ -129,7 +134,7 @@ const fetchSuppliers = useCallback(async () => {
     setSelectedId(id);
     setOpenDetail(true);
   };
-
+console.log(localStorage.getItem("consortiumId"))
   const filtered = useMemo(() => {
     let list = suppliers;
 
