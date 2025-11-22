@@ -30,18 +30,11 @@ function toLocalDateTimeParts(iso: string | null): {
   date: string;
   time: string;
 } {
-  if (!iso) {
-    const now = new Date();
-    return {
-      date: now.toISOString().split("T")[0],
-      time: now.toTimeString().slice(0, 5),
-    };
-  }
-  const d = new Date(iso);
-  return {
-    date: d.toISOString().split("T")[0],
-    time: d.toTimeString().slice(0, 5),
-  };
+  const d = iso ? new Date(iso) : new Date();
+  const pad = (n: number) => n.toString().padStart(2, "0");
+  const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  return { date, time };
 }
 
 function mapBackendStatusToMeetingStatus(

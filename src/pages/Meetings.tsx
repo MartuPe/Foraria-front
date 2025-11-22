@@ -25,29 +25,14 @@ export default function Meetings() {
   const [loading, setLoading] = useState<boolean>(false);
   const [tab, setTab] = useState<TabKey>("todas");
   const [openNewMeet, setOpenNewMeet] = useState(false);
-  const [statusModal, setStatusModal] = useState<{
-    open: boolean;
-    title: string;
-    message: string;
-    variant: "success" | "error";
-  }>({
-    open: false,
-    title: "",
-    message: "",
-    variant: "error",
-  });
-
+  const [statusModal, setStatusModal] = useState<{ open: boolean; title: string; message: string; variant: "success" | "error";}>({open: false, title: "", message: "", variant: "error",});
   const [callDialogOpen, setCallDialogOpen] = useState(false);
-  const [selectedMeetingForCall, setSelectedMeetingForCall] =
-    useState<Meeting | null>(null);
-
+  const [selectedMeetingForCall, setSelectedMeetingForCall] = useState<Meeting | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
   const userRole = storage.role ?? "";
-  const canManageMeetings = [Role.ADMIN, Role.CONSORCIO].includes(
-    userRole as Role
-  );
+  const canManageMeetings = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
 
   useEffect(() => {
     const loadMeetings = async () => {
@@ -114,12 +99,12 @@ export default function Meetings() {
     });
   };
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("es-AR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    });
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("es-AR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 
   return (
     <Box className="foraria-page-container">
