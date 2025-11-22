@@ -14,7 +14,6 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
   const [newOption, setNewOption] = useState("");
   const [options, setOptions] = useState<string[]>(["Sí", "No"]);
   const [formError, setFormError] = useState<string | null>(null);
-  const [consortiumId, setConsortiumId] = useState<number>(0);
   const { mutate, loading, error } = useMutation("https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/polls", "post");
 
 
