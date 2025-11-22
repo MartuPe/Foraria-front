@@ -14,7 +14,9 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
   const [newOption, setNewOption] = useState("");
   const [options, setOptions] = useState<string[]>(["Sí", "No"]);
   const [formError, setFormError] = useState<string | null>(null);
+  const [consortiumId, setConsortiumId] = useState<number>(0);
   const { mutate, loading, error } = useMutation("https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/polls", "post");
+
 
  const handleAddOption = () => {
     setFormError(null);
@@ -66,7 +68,7 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
   const now = new Date();
   const createdAt = new Date(now.getTime() - now.getTimezoneOffset() * 60000).toISOString();
   const deletedAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000 - now.getTimezoneOffset() * 60000).toISOString();
-
+const consortiumId = Number(localStorage.getItem("consortiumId"));
 
   
     const payload = {
@@ -79,7 +81,10 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
       state: "activa",
       userId: localStorage.getItem("userId"),
       options,
+      consortiumId: consortiumId,
     };
+
+console.log("Payload que se envía:", payload);
 
     try {
       await mutate(payload);
@@ -127,6 +132,9 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
           <MenuItem value={1}>General</MenuItem>
           <MenuItem value={2}>Mantenimiento</MenuItem>
           <MenuItem value={3}>Eventos</MenuItem>
+          <MenuItem value={4}>Presupuesto</MenuItem>
+          <MenuItem value={5}>Seguridad</MenuItem>
+          <MenuItem value={6}>Mejoras</MenuItem>
         </TextField>
       </div>
 

@@ -30,7 +30,7 @@ const Claims: React.FC = () => {
   const [openNew, setOpenNew] = useState(false);
   const [openAcceptId, setOpenAcceptId] = useState<number | null>(null);
   const [openRejectId, setOpenRejectId] = useState<number | null>(null);
-
+ const isAdministrador = storage.role === "Administrador";
   const API_BASE = (process.env.REACT_APP_API_URL?.replace(/\/+$/,"") || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net");
   const userRole = storage.role ?? "";
   const canManageClaims = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
@@ -112,7 +112,13 @@ const Claims: React.FC = () => {
     <Box className="foraria-page-container">
       <PageHeader
         title="Reclamos"
-        actions={<Button variant="contained" color="secondary" onClick={() => setOpenNew(true)}>+ Nuevo Reclamo</Button>}
+        actions={
+  !isAdministrador ? (
+    <Button variant="contained" color="secondary" onClick={() => setOpenNew(true)}>
+      + Nuevo Reclamo
+    </Button>
+  ) : null
+}
         showSearch
         onSearchChange={setSearch}
         tabs={[
@@ -153,14 +159,16 @@ const Claims: React.FC = () => {
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               Aún no se han creado reclamos en el sistema. Comienza creando tu primer reclamo.
             </Typography>
-            <Button 
-              variant="contained" 
-              color="secondary" 
-              size="large"
-              onClick={() => setOpenNew(true)}
-            >
-              + Crear Primer Reclamo
-            </Button>
+           {!isAdministrador && (
+  <Button 
+    variant="contained" 
+    color="secondary" 
+    size="large"
+    onClick={() => setOpenNew(true)}
+  >
+    + Crear Primer Reclamo
+  </Button>
+)}
           </Paper>
         ) : isFilteredEmpty ? (
           
