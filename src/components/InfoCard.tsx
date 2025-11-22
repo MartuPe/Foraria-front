@@ -17,6 +17,7 @@ import {
   Tooltip,
   useTheme,
 } from "@mui/material";
+import useMediaQuery from "@mui/material/useMediaQuery";
 import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import OpenInNewIcon from "@mui/icons-material/OpenInNew";
@@ -69,7 +70,7 @@ export interface AdminResponseCard {
 
 export interface InfoCardProps {
   title: string;
-  subtitle?:  React.ReactNode;
+  subtitle?: React.ReactNode;
   description?: string;
   chips?: InfoChip[];
   fields?: InfoField[];
@@ -110,6 +111,7 @@ export default function InfoCard({
   adminResponse = null,
 }: InfoCardProps) {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const renderFileAvatar = (file: InfoFile) => {
     const type = (file.type ?? "").toLowerCase();
@@ -117,7 +119,13 @@ export default function InfoCard({
     const isPdf = type === "pdf";
 
     if (isImage && file.url) {
-      return <Avatar variant="rounded" src={file.url} sx={{ width: 56, height: 56, borderRadius: 1 }} />;
+      return (
+        <Avatar
+          variant="rounded"
+          src={file.url}
+          sx={{ width: 56, height: 56, borderRadius: 1 }}
+        />
+      );
     }
     if (isPdf) {
       return (
@@ -127,7 +135,14 @@ export default function InfoCard({
       );
     }
     return (
-      <Avatar sx={{ bgcolor: "grey.200", color: "text.primary", width: 56, height: 56 }}>
+      <Avatar
+        sx={{
+          bgcolor: "grey.200",
+          color: "text.primary",
+          width: 56,
+          height: 56,
+        }}
+      >
         <InsertDriveFileIcon />
       </Avatar>
     );
@@ -160,7 +175,13 @@ export default function InfoCard({
       }}
     >
       <Stack spacing={2}>
-        <Stack direction="row" spacing={2} alignItems="flex-start">
+        {/* HEADER: imagen + contenido + acciones */}
+        <Stack
+          direction={isMobile ? "column" : "row"}
+          spacing={2}
+          alignItems={isMobile ? "flex-start" : "flex-start"}
+          flexWrap="wrap"
+        >
           {image && (
             <Box
               component="img"
@@ -176,17 +197,34 @@ export default function InfoCard({
             />
           )}
 
-          <Box sx={{ flex: 1 }}>
-            <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
-              <Typography variant="subtitle1" fontWeight={600} color="primary">
+          {/* CONTENIDO PRINCIPAL */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Stack
+              direction={isMobile ? "column" : "row"}
+              alignItems={isMobile ? "flex-start" : "center"}
+              spacing={isMobile ? 0.5 : 1}
+              sx={{ width: "100%" }}
+            >
+              <Typography
+                variant="subtitle1"
+                fontWeight={600}
+                color="primary"
+                sx={{ mr: 1 }}
+              >
                 {title}
               </Typography>
+
               {chips.map((chip, i) => {
                 const isOutlined = chip.variant === "outlined";
-                const chipColor = chip.color && chip.color !== "default" ? chip.color : undefined;
-                // Force visible border for outlined variants using theme palette
+                const chipColor =
+                  chip.color && chip.color !== "default"
+                    ? chip.color
+                    : undefined;
                 const borderColor =
-                  isOutlined && chipColor ? (theme.palette as any)[chipColor]?.main ?? theme.palette.primary.main : undefined;
+                  isOutlined && chipColor
+                    ? (theme.palette as any)[chipColor]?.main ??
+                      theme.palette.primary.main
+                    : undefined;
 
                 return (
                   <Chip
@@ -203,7 +241,10 @@ export default function InfoCard({
                             borderStyle: "solid",
                             borderColor,
                             backgroundColor: "transparent",
-                            color: chipColor ? (theme.palette as any)[chipColor]?.main ?? undefined : undefined,
+                            color: chipColor
+                              ? (theme.palette as any)[chipColor]?.main ??
+                                undefined
+                              : undefined,
                           }
                         : {}),
                     }}
@@ -213,7 +254,11 @@ export default function InfoCard({
             </Stack>
 
             {subtitle && (
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 0.5 }}
+              >
                 {subtitle}
               </Typography>
             )}
@@ -224,9 +269,17 @@ export default function InfoCard({
               </Typography>
             )}
 
-            <Stack direction="row" spacing={2} flexWrap="wrap" sx={{ mt: 1 }}>
+            {/* CAMPOS (persona, fecha, etc.) */}
+            <Stack
+              direction="column"
+              spacing={1}
+              sx={{ mt: 1, width: "100%" }}
+            >
               {fields.map((f, i) => (
-                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box
+                  key={i}
+                  sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                >
                   {f.icon}
                   <Typography variant="body2" color="text.secondary">
                     <strong>{f.label} </strong>
@@ -243,14 +296,32 @@ export default function InfoCard({
             </Stack>
           </Box>
 
-          <Stack spacing={1} alignItems="flex-end" sx={{ minWidth: 160 }}>
+          {/* PRECIO + ACCIONES */}
+          <Stack
+            spacing={1}
+            alignItems={isMobile ? "stretch" : "flex-end"}
+            sx={{
+              width: isMobile ? "100%" : "auto",
+              minWidth: isMobile ? "auto" : 160,
+            }}
+          >
             {price && (
-              <Typography variant="h6" fontWeight={700} color="primary" sx={{ whiteSpace: "nowrap" }}>
+              <Typography
+                variant="h6"
+                fontWeight={700}
+                color="primary"
+                sx={{ whiteSpace: "nowrap", textAlign: "right" }}
+              >
                 ${price}
               </Typography>
             )}
+
             {actions.length > 0 && (
-              <Stack direction="row" spacing={1}>
+              <Stack
+                direction={isMobile ? "column" : "row"}
+                spacing={1}
+                sx={{ width: isMobile ? "100%" : "auto" }}
+              >
                 {actions.map((a, i) => (
                   <Button
                     key={i}
@@ -259,6 +330,7 @@ export default function InfoCard({
                     size="small"
                     startIcon={a.icon}
                     onClick={a.onClick}
+                    fullWidth={isMobile}
                     sx={{
                       minWidth: 0,
                       px: 1.2,
@@ -279,7 +351,12 @@ export default function InfoCard({
 
         {progress !== undefined && (
           <Box sx={{ width: "100%" }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 0.5 }}>
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+              sx={{ mb: 0.5 }}
+            >
               {progressLabel && (
                 <Typography variant="body2" color="text.secondary">
                   {progressLabel}
@@ -289,14 +366,22 @@ export default function InfoCard({
                 {progress}%
               </Typography>
             </Stack>
-            <LinearProgress variant="determinate" value={progress} color="primary" sx={{ borderRadius: 2, height: 8 }} />
+            <LinearProgress
+              variant="determinate"
+              value={progress}
+              color="primary"
+              sx={{ borderRadius: 2, height: 8 }}
+            />
           </Box>
         )}
 
         {optionalFields.length > 0 && (
           <Stack direction="row" spacing={2} flexWrap="wrap">
             {optionalFields.map((field, i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+              <Box
+                key={i}
+                sx={{ display: "flex", alignItems: "center", gap: 1 }}
+              >
                 {field.icon}
                 <Typography variant="body2" color="text.secondary">
                   {field.label}
@@ -314,8 +399,23 @@ export default function InfoCard({
                 Archivos adjuntos ({files.length})
               </Typography>
 
-              <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-start" }}>
-                <List dense sx={{ pt: 0, width: "100%", display: "flex", gap: 1 }}>
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  justifyContent: "flex-start",
+                }}
+              >
+                <List
+                  dense
+                  sx={{
+                    pt: 0,
+                    width: "100%",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: 1,
+                  }}
+                >
                   {files.map((f, i) => (
                     <ListItem
                       key={i}
@@ -331,14 +431,25 @@ export default function InfoCard({
 
                       <Box sx={{ flex: 1 }} />
 
-                      <Stack direction="row" spacing={0.5} alignItems="center" sx={{ ml: 1 }}>
+                      <Stack
+                        direction="row"
+                        spacing={0.5}
+                        alignItems="center"
+                        sx={{ ml: 1 }}
+                      >
                         <Tooltip title="Abrir">
-                          <IconButton size="small" onClick={() => handleOpen(f.url)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpen(f.url)}
+                          >
                             <OpenInNewIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
                         <Tooltip title="Descargar">
-                          <IconButton size="small" onClick={() => handleDownload(f)}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDownload(f)}
+                          >
                             <DownloadIcon fontSize="small" />
                           </IconButton>
                         </Tooltip>
@@ -374,8 +485,13 @@ export default function InfoCard({
                   {adminResponse.text}
                 </Typography>
                 {adminResponse.date && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
-                    Fecha estimada de solucion: {new Date(adminResponse.date).toLocaleString()}
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mt: 0.5 }}
+                  >
+                    Fecha estimada de solucion:{" "}
+                    {new Date(adminResponse.date).toLocaleString()}
                   </Typography>
                 )}
               </Stack>
