@@ -1,3 +1,5 @@
+import { callService, CallDto, CallListItemDto } from "./callService";
+
 export interface TranscriptionLine {
   speaker: string;
   time: string;
@@ -10,129 +12,134 @@ export interface Meeting {
   id: number;
   title: string;
   description: string;
-  date: string;      // yyyy-mm-dd
-  time: string;      // hh:mm
-  duration: string;  // "2 horas", "45 minutos"
-  location: string;  // "Virtual" | "Sum" | etc
+  date: string;
+  time: string;
+  duration: string;  // "2 horas", "45 minutos" (por ahora placeholder)
+  location: string;
   organizer: string;
-  participants: string[];
+  participants: string[]; // por ahora sólo usamos length
   status: MeetingStatus;
   tags: string[];
   hasRecording?: boolean;
   transcription?: TranscriptionLine[];
 }
 
-export const MEETINGS: Meeting[] = [
-  {
-    id: 1,
-    title: "Asamblea Ordinaria Mensual",
-    description:
-      "Revisión de expensas, votación de mejoras y temas varios de la comunidad.",
-    date: "2024-11-25",
-    time: "19:00",
-    duration: "2 horas",
-    location: "Virtual",
-    organizer: "Consejo de Administración",
-    participants: [
-      "María González",
-      "Carlos Rodríguez",
-      "Ana Martínez",
-      "Luis Fernández",
-      "Roberto Silva",
-    ],
-    status: "scheduled",
-    tags: ["Programada", "Consorcio"],
-  },
-  {
-    id: 2,
-    title: "Reunión de Emergencia - Problema Eléctrico",
-    description:
-      "Discusión urgente sobre el corte de luz en el sector B y medidas a tomar.",
-    date: "2024-11-20",
-    time: "20:30",
-    duration: "45 minutos",
+let meetingsStore: Meeting[] = [];
+
+function toLocalDateTimeParts(iso: string | null): { date: string; time: string } {
+  if (!iso) {
+    const now = new Date();
+    return {
+      date: now.toISOString().split("T")[0],
+      time: now.toTimeString().slice(0, 5),
+    };
+  }
+  const d = new Date(iso);
+  return {
+    date: d.toISOString().split("T")[0],
+    time: d.toTimeString().slice(0, 5),
+  };
+}
+
+function mapBackendStatusToMeetingStatus(
+  status: string,
+  startedAt: string | null,
+  endedAt?: string | null
+): MeetingStatus {
+  const now = new Date();
+  const start = startedAt ? new Date(startedAt) : null;
+
+  if (status === "Finished" || endedAt) return "finished";
+  if (start && start > now) return "scheduled";
+  return "inProgress";
+}
+
+function buildTags(meetingStatus: MeetingStatus, meetingType?: string): string[] {
+  const tags: string[] = [];
+  if (meetingStatus === "scheduled") tags.push("Programada");
+  if (meetingStatus === "finished") tags.push("Finalizada");
+  if (meetingStatus === "inProgress") tags.push("En curso");
+  if (meetingType) tags.push(meetingType);
+  return tags;
+}
+
+function mapCallListItemToMeeting(item: CallListItemDto): Meeting {
+  const { date, time } = toLocalDateTimeParts(item.startedAt);
+  const status = mapBackendStatusToMeetingStatus(item.status, item.startedAt);
+
+  return {
+    id: item.id,
+    title: item.title,
+    description: item.description,
+    date,
+    time,
+    duration: "-",                // por ahora sin duración real
+    location: item.location,
+    organizer: "Administrador",   // revisar
+    participants: Array(item.participantsCount).fill("Participante"),
+    status,
+    tags: buildTags(status, item.meetingType),
+    hasRecording: false,
+    transcription: [],
+  };
+}
+
+export function mapCallToMeeting(call: CallDto): Meeting {
+  const { date, time } = toLocalDateTimeParts(call.startedAt);
+  const status = mapBackendStatusToMeetingStatus(call.status, call.startedAt);
+
+  return {
+    id: call.id,
+    title: call.title,
+    description: call.description,
+    date,
+    time,
+    duration: "-",
     location: "Virtual",
     organizer: "Administrador",
-    participants: ["Administrador", "Técnico Eléctrico", "Consejero 1"],
-    status: "finished",
-    tags: ["Finalizada", "Emergencia"],
-    hasRecording: true,
-    transcription: [
-      {
-        speaker: "Administrador",
-        time: "20:30:15",
-        text: "Buenas noches a todos. Comenzamos esta reunión de emergencia...",
-      },
-      {
-        speaker: "Técnico Eléctrico",
-        time: "20:32:45",
-        text: "El problema se originó en el tablero principal...",
-      },
-      {
-        speaker: "Consejero 1",
-        time: "20:35:20",
-        text: "Aprobamos el presupuesto de $15.000 para la reparación urgente.",
-      },
-    ],
-  },
-  {
-    id: 3,
-    title: "Planificación de Mantenimiento 2025",
-    description:
-      "Revisión del plan de mantenimiento preventivo para el próximo año.",
-    date: "2024-11-18",
-    time: "18:00",
-    duration: "1.5 horas",
-    location: "Sum",
-    organizer: "Consejo de Administración",
-    participants: ["Consejo", "Mantenimiento"],
-    status: "finished",
-    tags: ["Finalizada", "Mantenimiento"],
+    participants: [],
+    status,
+    tags: buildTags(status, call.meetingType),
     hasRecording: false,
-    transcription: [
-      {
-        speaker: "Mantenimiento",
-        time: "18:05:02",
-        text: "Se propone cronograma trimestral de inspecciones.",
-      },
-    ],
-  },
-  {
-    id: 4,
-    title: "Evento de Fin de Año",
-    description:
-      "Organización de la fiesta de fin de año y actividades navideñas.",
-    date: "2024-11-30",
-    time: "16:00",
-    duration: "1 hora",
-    location: "Sum",
-    organizer: "Consejo de Administración",
-    participants: ["Consejo", "Vecinos"],
-    status: "scheduled",
-    tags: ["Programada", "Social"],
-  },
-];
+    transcription: [],
+  };
+}
 
+export async function fetchMeetingsByConsortium(consortiumId: number): Promise<Meeting[]> {
+  const calls = await callService.getByConsortium(consortiumId);
+  meetingsStore = calls
+    .sort(
+      (a, b) =>
+        new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+    )
+    .map(mapCallListItemToMeeting);
+  return meetingsStore;
+}
+
+// Mantener helpers para stats/filtros
 export function getMeetings(): Meeting[] {
-  return MEETINGS;
+  return meetingsStore;
 }
 
 export function getMeetingById(id: number): Meeting | undefined {
-  return MEETINGS.find((m) => m.id === id);
+  return meetingsStore.find((m) => m.id === id);
 }
 
 export function filterMeetingsByStatus(
   status: MeetingStatus | "all"
 ): Meeting[] {
-  if (status === "all") return MEETINGS;
-  return MEETINGS.filter((m) => m.status === status);
+  if (status === "all") return meetingsStore;
+  return meetingsStore.filter((m) => m.status === status);
 }
 
 export function getStats(meetings: Meeting[]) {
   const scheduled = meetings.filter((m) => m.status === "scheduled").length;
   const inProgress = meetings.filter((m) => m.status === "inProgress").length;
-  const withTranscription = meetings.filter((m) => m.transcription?.length)
-    .length;
+  const withTranscription = meetings.filter((m) => m.transcription?.length).length;
   const thisMonth = meetings.length;
   return { scheduled, inProgress, withTranscription, thisMonth };
+}
+
+export function addMeeting(meeting: Meeting) {
+  meetingsStore = [meeting, ...meetingsStore];
 }

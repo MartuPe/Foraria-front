@@ -72,7 +72,7 @@ export default function App() {
             <Route path="foros" element={<Forums />} />
             <Route path="reuniones" element={<Meetings />} />
             <Route path="reuniones/:meetingId/llamada/:callId" element={<CallRoom />}/>
-            {/* <Route path="auditoria" element={<AdminAudit />} /> */}
+            {/*<Route path="auditoria" element={<AdminAudit />} /> */}
             <Route path="gestionUsuario" element={<AdminUserManagment />} />
             <Route path="votaciones" element={<Votes />} />
             <Route path="provedores" element={<AdminSuppliers />} />
