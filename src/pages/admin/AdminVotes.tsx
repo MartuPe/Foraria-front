@@ -59,23 +59,23 @@ export default function AdminVotes() {
   const handleClose = () => setOpen(false);
 
   const { data: pollsData, loading, error } = useGet<Poll[]>(
-    "https://localhost:7245/api/polls/with-results"
+    "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/polls/with-results"
   );
 
   const { mutate: sendVote, error: voteError } = useMutation(
-    "https://localhost:7245/api/votes",
+    "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/votes",
     "post"
   );
 
   const { on, connected } = useSignalR({
-    url: "https://localhost:7245/pollHub",
+    url: "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/pollHub",
   });
 
   // ✅ Traemos el total de usuarios una sola vez
   useEffect(() => {
     const fetchUserCount = async () => {
       try {
-        const res = await fetch("https://localhost:7245/api/User/count");
+        const res = await fetch("https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/User/count");
         const data: UserCountResponse = await res.json();
         setTotalUsers(data.totalUsers);
       } catch (err) {

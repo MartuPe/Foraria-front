@@ -16,6 +16,7 @@ type Reserve = {
   placeName: string;
   residence_id: number;
   user_id: number;
+  dateReserve: number;
 };
 
 export default function Calendar() {
@@ -40,7 +41,7 @@ export default function Calendar() {
   const events = React.useMemo(() => {
     if (!reserves) return [];
     return reserves.map((r, i) => {
-      const date = new Date(r.createdAt);
+      const date = new Date(r.dateReserve);
       const time = date.toLocaleTimeString("es-AR", { hour: "2-digit", minute: "2-digit", });
       return {
         id: String(i),

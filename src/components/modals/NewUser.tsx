@@ -11,8 +11,7 @@ type Props = {
 };
 
 const ROLES = [
-  { id: 1, label: "Consorcio" },
-  { id: 2, label: "Administrador" },
+  { id: 1, label: "Consejo" },
   { id: 3, label: "Propietario" },
   { id: 4, label: "Inquilino" },
 ];
@@ -233,6 +232,29 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
               )}
             </Grid>
 
+ <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                Rol
+              </Typography>
+              <TextField
+                select
+                fullWidth
+                value={form.roleId}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    roleId: Number(e.target.value),
+                  }))
+                }
+              >
+                {ROLES.map((r) => (
+                  <MenuItem key={r.id} value={r.id}>
+                    {r.label}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
                 Teléfono
@@ -276,28 +298,7 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
               )}
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
-                Rol
-              </Typography>
-              <TextField
-                select
-                fullWidth
-                value={form.roleId}
-                onChange={(e) =>
-                  setForm((prev) => ({
-                    ...prev,
-                    roleId: Number(e.target.value),
-                  }))
-                }
-              >
-                {ROLES.map((r) => (
-                  <MenuItem key={r.id} value={r.id}>
-                    {r.label}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Grid>
+           
 
             {success?.temporaryPassword && (
               <Grid size={{ xs: 12 }}>

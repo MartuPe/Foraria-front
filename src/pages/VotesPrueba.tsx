@@ -174,18 +174,18 @@ export default function VotesPrueba() {
   };
 
   const { mutate: createPoll, loading: createLoading, error: createError } = useMutation(
-    "https://localhost:7245/api/polls", 
+    "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/polls", 
     "post"
   );
 
   // Mutación para enviar votos (restaurada)
   const { mutate: sendVote } = useMutation(
-    "https://localhost:7245/api/votes",
+    "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/votes",
     "post"
   );
 
   const { on, connected } = useSignalR({
-    url: "https://localhost:7245/pollHub",
+    url: "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/pollHub",
   });
 
   useEffect(() => {
