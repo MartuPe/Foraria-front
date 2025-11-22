@@ -73,17 +73,12 @@ function formatDateNumeric(dateString?: string | null) {
     : d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function toSlug(text: string) {
-  return text.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-}
+
 function toCategorySlug(text: string): string {
   const normalized = text.toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
   
- 
   const categoryMap: Record<string, string> = {
     "garage y parking": "garage-parking",
     "espacios comunes": "espacios-comunes",
@@ -91,21 +86,19 @@ function toCategorySlug(text: string): string {
     "administracion": "administracion",
     "seguridad": "seguridad",
     "mantenimiento": "mantenimiento",
-    "general": "general",
-    "todas": "todas"
+    "general": "general"
   };
 
   if (categoryMap[normalized]) {
     return categoryMap[normalized];
   }
-  
 
   return normalized
     .replace(/\s+/g, "-")
     .replace(/[^a-z0-9-]/g, "");
 }
+
 const ADMIN_TAB_COLORS: Record<string, string> = {
-  Todas: "#666666",
   General: "#1472c4ff",
   Administración: "#5caeffff",
   Seguridad: "#ef5350",
@@ -164,7 +157,6 @@ const Forums: React.FC = () => {
   const API_BASE =
     process.env.REACT_APP_API_URL || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api";
 
-  // Modal de estado general (éxito / error)
   const [statusModal, setStatusModal] = useState<{
     open: boolean;
     variant: "success" | "error";
@@ -177,26 +169,18 @@ const Forums: React.FC = () => {
     message: "",
   });
 
-  // Validaciones de respuesta por hilo
   const [replyErrors, setReplyErrors] = useState<Record<number, string>>({});
-
-  // Diálogo de eliminación de respuesta individual
   const [deleteCommentDialogOpen, setDeleteCommentDialogOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<{
     threadId: number;
     messageId: number;
   } | null>(null);
   const [deletingComment, setDeletingComment] = useState(false);
-
-  // Diálogo de eliminación de thread
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
   const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
-
-  // Estado para cerrar hilo
   const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
 
-  // Manejo de error de carga de foros / threads
   useEffect(() => {
     if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
       setLoadError(null);
@@ -215,7 +199,6 @@ const Forums: React.FC = () => {
         errorMsg.toLowerCase().includes("no hay");
 
       if (is404 || isNotFound) {
-        // Caso "no hay datos": se muestra estado vacío, sin error crítico.
         setLoadError(null);
       } else {
         setLoadError("No se pudo cargar el foro. Intentá nuevamente más tarde.");
@@ -230,67 +213,82 @@ const Forums: React.FC = () => {
 
   const adminCategory =
     (searchParams.get("category") as keyof typeof ADMIN_TAB_COLORS | null) ||
-    "Todas";
+    "General";
   const setAdminCategory = (cat: string) => setSearchParams({ category: cat });
 
- const currentCategoryName = useMemo(() => {
-  if (!forumsRaw) {
- 
+  const currentCategoryName = useMemo(() => {
     const key = (isAdmin ? adminCategory : slugFromPath).toLowerCase();
     
-  
-    if (key === "todas") return "Todas";
-    if (key === "general") return "General";
-    if (key.includes("administracion") || key === "administracion") return "Administración";
-    if (key.includes("seguridad")) return "Seguridad";
-    if (key.includes("mantenimiento")) return "Mantenimiento";
-    if (key.includes("espacios") || key === "espacios-comunes") return "Espacios Comunes";
-    if (key.includes("garage") || key === "garage-parking" || key === "garage-y-parking") return "Garage y Parking";
+    const slugToCategoryMap: Record<string, string> = {
+      "general": "General",
+      "administracion": "Administración",
+      "administración": "Administración",
+      "seguridad": "Seguridad",
+      "mantenimiento": "Mantenimiento",
+      "espacios-comunes": "Espacios Comunes",
+      "espacios comunes": "Espacios Comunes",
+      "garage-parking": "Garage y Parking",
+      "garage y parking": "Garage y Parking"
+    };
+    
+    if (slugToCategoryMap[key]) {
+      return slugToCategoryMap[key];
+    }
+    
+    if (forumsRaw) {
+      const searchSlug = toCategorySlug(key);
+      const found = forumsRaw.find((f) => toCategorySlug(f.categoryName) === searchSlug);
+      if (found) return found.categoryName;
+    }
     
     return "General";
-  }
-  
-  const key = isAdmin ? adminCategory : slugFromPath;
-  if (key === "Todas") return "Todas";
-  
-  const found = forumsRaw.find(
-    (f) => toSlug(f.categoryName) === toSlug(key) || toCategorySlug(f.categoryName) === toCategorySlug(key)
-  );
-  return found?.categoryName ?? "General";
-}, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
+  }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
 
   const forumIdsForCategory = useMemo(() => {
     if (!forumsRaw) return new Set<number>();
-    if (isAdmin && adminCategory === "Todas") {
-      return new Set(forumsRaw.map((f) => f.id));
-    }
+    
     const key = isAdmin ? adminCategory : slugFromPath;
+    
     return new Set(
       forumsRaw
-        .filter((f) => toSlug(f.categoryName) === toSlug(key))
+        .filter((f) => {
+          const forumSlug = toCategorySlug(f.categoryName);
+          const searchSlug = toCategorySlug(key);
+          return forumSlug === searchSlug;
+        })
         .map((f) => f.id)
     );
   }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
 
-
   const resolvedForumId = useMemo(() => {
-    if (!forumsRaw) return null;
-    if (isAdmin && adminCategory === "Todas")
-      return forumsRaw[0]?.id ?? null;
-    const key = isAdmin ? adminCategory : currentCategoryName;
-    const found = forumsRaw.find(
-      (f) => toSlug(f.categoryName) === toSlug(key)
-    );
+    if (!forumsRaw || forumsRaw.length === 0) {
+      const categoryToIdMap: Record<string, number> = {
+        "General": 1,
+        "Administración": 2,
+        "Seguridad": 3,
+        "Mantenimiento": 4,
+        "Espacios Comunes": 5,
+        "Garage y Parking": 6,
+      };
+      return categoryToIdMap[currentCategoryName] ?? 1;
+    }
+    
+    const key = isAdmin ? adminCategory : slugFromPath;
+    const searchSlug = toCategorySlug(key);
+    
+    const found = forumsRaw.find((f) => {
+      const forumSlug = toCategorySlug(f.categoryName);
+      return forumSlug === searchSlug;
+    });
+    
     return found ? found.id : null;
-  }, [forumsRaw, isAdmin, adminCategory, currentCategoryName]);
-
+  }, [forumsRaw, isAdmin, adminCategory, slugFromPath, currentCategoryName]);
 
   const postsRaw = useMemo(() => {
     if (!threadsRaw) return [];
     if (!forumsRaw) return threadsRaw;
     return threadsRaw.filter((t) => forumIdsForCategory.has(t.forumId ?? -1));
   }, [threadsRaw, forumsRaw, forumIdsForCategory]);
-
 
   useEffect(() => {
     let mounted = true;
@@ -299,35 +297,35 @@ const Forums: React.FC = () => {
       return;
     }
     const controller = new AbortController();
-   (async () => {
-  try {
-    const token = localStorage.getItem("accessToken");
-    const headers: Record<string,string> = {
-      Accept: 'application/json',
-    };
-    if (token) headers.Authorization = `Bearer ${token}`;
-    
-    const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, {
-      signal: controller.signal,
-      headers,
-    });
-    
-    if (!res.ok) {
-      console.error('Error en la respuesta:', res.status, res.statusText);
-      setForumStats(null);
-      return;
-    }
-    
-    const json: Forum = await res.json();
-    if (mounted) setForumStats(json);
-  } catch (error) {
-    console.error('Error fetching forum stats:', error);
-    if (mounted) setForumStats(null);
-  }
-})();
+    (async () => {
+      try {
+        const token = localStorage.getItem("accessToken");
+        const headers: Record<string,string> = {
+          Accept: 'application/json',
+        };
+        if (token) headers.Authorization = `Bearer ${token}`;
+        
+        const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, {
+          signal: controller.signal,
+          headers,
+        });
+        
+        if (!res.ok) {
+          console.error('Error en la respuesta:', res.status, res.statusText);
+          setForumStats(null);
+          return;
+        }
+        
+        const json: Forum = await res.json();
+        if (mounted) setForumStats(json);
+      } catch (error) {
+        console.error('Error fetching forum stats:', error);
+        if (mounted) setForumStats(null);
+      }
+    })();
+    return () => { mounted = false; controller.abort(); };
   }, [resolvedForumId, API_BASE]);
 
- 
   useEffect(() => {
     if (!postsRaw || postsRaw.length === 0) {
       setEnriched({});
@@ -352,10 +350,10 @@ const Forums: React.FC = () => {
       };
       try {
         const token = localStorage.getItem("accessToken");
-         const headers: Record<string,string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
+        const headers: Record<string,string> = {
+          'Content-Type': 'application/json',
+        };
+        if (token) headers.Authorization = `Bearer ${token}`;
         const r = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, {
           signal: ctl.signal,
           headers,
@@ -366,10 +364,10 @@ const Forums: React.FC = () => {
       let messages: Message[] = [];
       try {
         const token = localStorage.getItem("accessToken");
-         const headers: Record<string,string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
+        const headers: Record<string,string> = {
+          'Content-Type': 'application/json',
+        };
+        if (token) headers.Authorization = `Bearer ${token}`;
         const m = await fetch(`${API_BASE}/Message/thread/${threadId}`, {
           signal: ctl.signal,
           headers,
@@ -399,7 +397,6 @@ const Forums: React.FC = () => {
     return () => { mounted = false; controllers.forEach(c => c.abort()); };
   }, [postsRaw, API_BASE]);
 
-  
   const posts = useMemo(() => {
     if (!postsRaw) return [];
     return postsRaw.map((p) => ({
@@ -426,7 +423,6 @@ const Forums: React.FC = () => {
     }));
   }, [postsRaw, forumsRaw]);
 
-  
   const computedStats = useMemo(() => {
     const totalPosts = posts.length;
     const activeUsers =
@@ -450,17 +446,10 @@ const Forums: React.FC = () => {
     [forumStats, computedStats]
   );
 
-
-  const [expandedThreads, setExpandedThreads] = useState<Set<number>>(
-    new Set()
-  );
+  const [expandedThreads, setExpandedThreads] = useState<Set<number>>(new Set());
   const [replyText, setReplyText] = useState<Record<number, string>>({});
   const [sendingReply, setSendingReply] = useState<number | null>(null);
-
-
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
-
-
   const [editOpen, setEditOpen] = useState(false);
   const [threadBeingEdited, setThreadBeingEdited] = useState<{
     id: number;
@@ -534,10 +523,9 @@ const Forums: React.FC = () => {
         }));
         return;
       }
-       const token = localStorage.getItem("accessToken");
-         const headers: Record<string,string> = {
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
+      const token = localStorage.getItem("accessToken");
+      const headers: Record<string,string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
       const reacRes = await fetch(
         `${API_BASE}/Reactions/thread/${threadId}`, {headers}
       );
@@ -558,9 +546,8 @@ const Forums: React.FC = () => {
     } catch {
       try {
         const token = localStorage.getItem("accessToken");
-         const headers: Record<string,string> = {
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
+        const headers: Record<string,string> = {};
+        if (token) headers.Authorization = `Bearer ${token}`;
         const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, {headers});
         if (reacRes.ok) {
           const reacJson: ReactionResponse = await reacRes.json();
@@ -601,19 +588,16 @@ const Forums: React.FC = () => {
     }
   };
 
-  // helper para recargar comentarios de un hilo
   const reloadComments = async (threadId: number) => {
     try {
       const token = localStorage.getItem("accessToken");
-       const headers: Record<string,string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
+      const headers: Record<string,string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
       const listRes = await fetch(
         `${API_BASE}/Message/thread/${threadId}`,
-        {
-          headers
-        }
+        { headers }
       );
 
       if (listRes.ok) {
@@ -633,11 +617,9 @@ const Forums: React.FC = () => {
     }
   };
 
-  // enviar respuesta (POST /Message con FormData)
   const handleSendReply = async (threadId: number) => {
     const text = replyText[threadId]?.trim() || "";
 
-    // Validación: no permitir respuestas vacías
     if (!text) {
       setReplyErrors((prev) => ({
         ...prev,
@@ -654,34 +636,30 @@ const Forums: React.FC = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-       const headers: Record<string,string> = {
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
-     const form = new FormData();
-form.append("Content", text);
-form.append("Thread_id", String(threadId));
-form.append("User_id", String(currentUserId));
-form.append("FilePath", "string");
+      const headers: Record<string,string> = {};
+      if (token) headers.Authorization = `Bearer ${token}`;
+      
+      const form = new FormData();
+      form.append("Content", text);
+      form.append("Thread_id", String(threadId));
+      form.append("User_id", String(currentUserId));
+      form.append("FilePath", "string");
 
-// si hay un archivo seleccionado (input type="file")
-const fileInput = document.querySelector<HTMLInputElement>("#file") ;
-if (fileInput && fileInput.files && fileInput.files[0]) {
-  form.append("File", fileInput.files[0], fileInput.files[0].name);
-} else {
-  // si la API espera siempre el campo File, puedes enviar un valor vacío
-  // o no enviarlo; muchas APIs aceptan no recibirlo.
-  // Para forzar un "archivo vacío" (binary) puedes usar un Blob vacío:
-  form.append("File", new Blob([], { type: "application/octet-stream" }), "empty.bin");
-}
+      const fileInput = document.querySelector<HTMLInputElement>("#file");
+      if (fileInput && fileInput.files && fileInput.files[0]) {
+        form.append("File", fileInput.files[0], fileInput.files[0].name);
+      } else {
+        form.append("File", new Blob([], { type: "application/octet-stream" }), "empty.bin");
+      }
 
-// NO establecer Content-Type aquí: fetch lo pone automáticamente al usar FormData
-const res = await fetch(`${API_BASE}/Message`, {
-  method: "POST",
-  body: form,
-  headers
-});
+      const res = await fetch(`${API_BASE}/Message`, {
+        method: "POST",
+        body: form,
+        headers
+      });
 
-if (!res.ok) throw new Error("Error al crear mensaje");
+      if (!res.ok) throw new Error("Error al crear mensaje");
+      
       setReplyText((p) => ({
         ...p,
         [threadId]: "",
@@ -701,14 +679,12 @@ if (!res.ok) throw new Error("Error al crear mensaje");
     }
   };
 
-  // abrir diálogo de borrado de respuesta
   const openDeleteCommentDialog = (threadId: number, messageId: number) => {
     if (!isAdmin && currentUserId === 0) return;
     setCommentToDelete({ threadId, messageId });
     setDeleteCommentDialogOpen(true);
   };
 
-  // borrar respuesta individual (confirmado desde el diálogo)
   const handleConfirmDeleteComment = async () => {
     if (!commentToDelete) return;
     const { threadId, messageId } = commentToDelete;
@@ -739,14 +715,12 @@ if (!res.ok) throw new Error("Error al crear mensaje");
     }
   };
 
-  // abrir diálogo de borrado de thread
   const openDeleteDialog = (threadId: number) => {
     if (!isAdmin) return;
     setThreadToDelete(threadId);
     setDeleteDialogOpen(true);
   };
 
-  // borrar thread (confirmado desde el diálogo)
   const handleDeleteThread = async () => {
     if (!isAdmin) return;
     if (threadToDelete == null) return;
@@ -771,10 +745,10 @@ if (!res.ok) throw new Error("Error al crear mensaje");
     try {
       const token = localStorage.getItem("accessToken");
       setDeletingThreadId(threadId);
- const headers: Record<string,string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
+      const headers: Record<string,string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${API_BASE}/Thread/${threadId}`, {
         method: "DELETE",
         headers
@@ -804,7 +778,6 @@ if (!res.ok) throw new Error("Error al crear mensaje");
           message: "El post se eliminó correctamente.",
         });
       } else if (res.status === 404) {
-        // El post ya no existe
         refetchThreads();
         setStatusModal({
           open: true,
@@ -843,17 +816,16 @@ if (!res.ok) throw new Error("Error al crear mensaje");
     }
   };
 
-  // cerrar hilo (PATCH /Thread/{id}/close)
   const handleCloseThread = async (threadId: number) => {
     if (!isAdmin) return;
 
     try {
       const token = localStorage.getItem("accessToken");
       setClosingThreadId(threadId);
- const headers: Record<string,string> = {
-    'Content-Type': 'application/json',
-  };
-  if (token) headers.Authorization = `Bearer ${token}`;
+      const headers: Record<string,string> = {
+        'Content-Type': 'application/json',
+      };
+      if (token) headers.Authorization = `Bearer ${token}`;
       const res = await fetch(`${API_BASE}/Thread/${threadId}/close`, {
         method: "PATCH",
         headers
@@ -901,7 +873,6 @@ if (!res.ok) throw new Error("Error al crear mensaje");
     }
   };
 
-  // abrir modal de edición de thread
   const openEditDialog = (thread: {
     threadId: number;
     title: string;
@@ -916,7 +887,6 @@ if (!res.ok) throw new Error("Error al crear mensaje");
     setEditOpen(true);
   };
 
-  // Render cada thread
   const renderThread = (thread: any) => {
     const key = String(thread.threadId);
     const meta =
@@ -982,14 +952,11 @@ if (!res.ok) throw new Error("Error al crear mensaje");
                 </Typography>
               </Box>
 
-              {/* Herramientas SOLO admin */}
               {isAdmin && (
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
                   <IconButton
                     size="small"
-                    onClick={() => {
-                      /* vista detalle */
-                    }}
+                    onClick={() => {}}
                     sx={{ color: "primary.main" }}
                   >
                     <VisibilityOutlined fontSize="small" />
@@ -1152,7 +1119,6 @@ if (!res.ok) throw new Error("Error al crear mensaje");
                             const canEdit =
                               isAdmin ||
                               comment.user_id === currentUserId;
-                             
 
                             return (
                               <Box
@@ -1483,67 +1449,55 @@ if (!res.ok) throw new Error("Error al crear mensaje");
       </Card>
     );
   };
-console.log(currentCategoryName)
+
   const currentTabKey = isAdmin ? adminCategory : currentCategoryName;
 
   return (
     <Box className="foraria-page-container" sx={{ ml: 0 }}>
       <PageHeader
-  title={`Foro ${currentCategoryName !== "Todas" ? `- ${currentCategoryName}` : ""}`}
-  actions={
-    <Button
-      variant="contained"
-      color="secondary"
-      startIcon={<AddIcon />}
-      onClick={() => setOpen(true)}
-      sx={{ borderRadius: 999, fontWeight: 600 }}
-    >
-      Nuevo Post
-    </Button>
-  }
-  stats={[
-    {
-      icon: <ChatIcon color="action" />,
-      title: "Posts Totales",
-      value: String(headerStats.totalPosts),
-      color: "primary",
-    },
-    {
-      icon: <GroupsIcon color="action" />,
-      title: "Participantes",
-      value: String(headerStats.activeUsers),
-      color: "success",
-    },
-    {
-      icon: <TrendingIcon color="action" />,
-      title: "Respuestas",
-      value: String(headerStats.totalResponses),
-      color: "secondary",
-    },
-  ]}
-  tabs={
-    isAdmin
-      ? [
-          { label: "Todas", value: "Todas" },
-          ...CATEGORY_LABELS.map((c) => ({ label: c, value: c })),
-        ]
-      : CATEGORY_LABELS.map((c) => ({ label: c, value: c }))
-  }
-  selectedTab={currentTabKey}
-  onTabChange={(v) => {
-  console.log("🔍 Tab clicked:", v);
-  console.log("🔍 Generated slug:", toCategorySlug(v));
-  
-  if (isAdmin) {
-    setAdminCategory(v);
-  } else {
-    const slug = toCategorySlug(v);
-    console.log("🔍 Navigating to:", `/forums/${slug}`);
-    navigate(`/forums/${slug}`);
-  }
-}}
-
-/>
+        title={`Foro - ${currentCategoryName}`}
+        actions={
+          <Button
+            variant="contained"
+            color="secondary"
+            startIcon={<AddIcon />}
+            onClick={() => setOpen(true)}
+            sx={{ borderRadius: 999, fontWeight: 600 }}
+          >
+            Nuevo Post
+          </Button>
+        }
+        stats={[
+          {
+            icon: <ChatIcon color="action" />,
+            title: "Posts Totales",
+            value: String(headerStats.totalPosts),
+            color: "primary",
+          },
+          {
+            icon: <GroupsIcon color="action" />,
+            title: "Participantes",
+            value: String(headerStats.activeUsers),
+            color: "success",
+          },
+          {
+            icon: <TrendingIcon color="action" />,
+            title: "Respuestas",
+            value: String(headerStats.totalResponses),
+            color: "secondary",
+          },
+        ]}
+        tabs={CATEGORY_LABELS.map((c) => ({ label: c, value: c }))}
+        selectedTab={currentTabKey}
+        onTabChange={(v) => {
+          if (isAdmin) {
+            setAdminCategory(v);
+          } else {
+            const slug = toCategorySlug(v);
+            navigate(`/forums/${slug}`);
+          }
+        }}
+      />
 
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
@@ -1632,7 +1586,6 @@ console.log(currentCategoryName)
         <Stack spacing={2}>{posts.map(renderThread)}</Stack>
       )}
      
-      {/* Dialog para crear nuevo post */}
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -1640,39 +1593,18 @@ console.log(currentCategoryName)
         fullWidth
       >
         <DialogContent>
-          {!resolvedForumId ? (
-            <Box sx={{ py: 4, textAlign: "center" }}>
-              <Typography
-                variant="body1"
-                color="text.secondary"
-                sx={{ mb: 1 }}
-              >
-                No se pudo identificar el foro destino.
-              </Typography>
-              <Button
-                onClick={() => {
-                  refetchForums();
-                }}
-                variant="outlined"
-              >
-                Reintentar
-              </Button>
-            </Box>
-          ) : (
-            <NewPost
-              onClose={() => setOpen(false)}
-              forumId={resolvedForumId}
-              userId={currentUserId}
-              onCreated={() => {
-                refetchThreads();
-                setOpen(false);
-              }}
-            />
-          )}
+          <NewPost
+            onClose={() => setOpen(false)}
+            forumId={resolvedForumId ?? 1}
+            userId={currentUserId}
+            onCreated={() => {
+              refetchThreads();
+              setOpen(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para editar post */}
       <Dialog
         open={editOpen}
         onClose={() => setEditOpen(false)}
@@ -1696,7 +1628,6 @@ console.log(currentCategoryName)
         </DialogContent>
       </Dialog>
 
-      {/* Dialog para editar respuesta */}
       <Dialog
         open={!!editingMessage}
         onClose={() => setEditingMessage(null)}
@@ -1718,7 +1649,6 @@ console.log(currentCategoryName)
         </DialogContent>
       </Dialog>
 
-      {/* Dialog de confirmación de borrado de thread */}
       <Dialog
         open={deleteDialogOpen}
         onClose={() => {
@@ -1767,7 +1697,6 @@ console.log(currentCategoryName)
         </DialogActions>
       </Dialog>
 
-      {/* Dialog de confirmación de borrado de respuesta */}
       <Dialog
         open={deleteCommentDialogOpen}
         onClose={() => {

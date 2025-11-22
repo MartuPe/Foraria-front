@@ -14,7 +14,6 @@ type Reserve = {
   createdAt: string;
   place_id: number;
   placeName: string;
-  residence_id: number;
   user_id: number;
   dateReserve: number;
 };
@@ -26,7 +25,7 @@ export default function Calendar() {
   const [title, setTitle] = React.useState("");
   const [reserveDate, setReserveDate] = React.useState<Date | null>(null);
   const [fcLocale, setFcLocale] = React.useState<any>(undefined);
-  const urlGetReserves = `/Reserve/${localStorage.getItem("consortiumId")}`;
+  const urlGetReserves = '/Reserve';
   const { data: reserves, loading, refetch } = useGet<Reserve[]>(urlGetReserves);
 
   const theme = useTheme();
