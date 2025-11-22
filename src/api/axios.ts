@@ -2,7 +2,7 @@
 import axios, { AxiosError, AxiosRequestConfig, InternalAxiosRequestConfig, AxiosHeaders } from "axios";
 
 
-const baseURL = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
+const baseURL = process.env.REACT_APP_API_URL || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api";
 
 export const api = axios.create({
   baseURL,

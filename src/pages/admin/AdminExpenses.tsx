@@ -119,7 +119,7 @@ const handleCloseDetails = () => {
   setLoadingInvoices(true);
   setLoadErrorInvoices(null);
   try {
-    const { data } = await axios.get<Invoice[]>("https://localhost:7245/api/Invoice", { 
+    const { data } = await axios.get<Invoice[]>("https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Invoice", { 
       headers: { Authorization: `Bearer ${token}` }
     });
     setInvoices(data || []);
@@ -155,7 +155,7 @@ const handleCloseDetails = () => {
   setLoadingExpenses(true);
   setLoadErrorExpenses(null);
   try {
-    const { data } = await axios.get<Expense[]>("https://localhost:7245/api/Expense", { 
+    const { data } = await axios.get<Expense[]>("https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Expense", { 
       headers: { Authorization: `Bearer ${token}` }
     });
     const sorted = (data || []).slice().sort((a, b) => {
@@ -234,7 +234,7 @@ const handleCloseDetails = () => {
       console.log("Enviando Expense payload:", (expensePayload));
 
       const expenseResp = await axios.post(
-        "https://localhost:7245/api/Expense" , 
+        "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Expense" , 
         (expensePayload),
         {
           headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
@@ -258,7 +258,7 @@ const handleCloseDetails = () => {
         console.log("Enviando ExpenseDetail payload:", (detailPayload));
 
         const detailResp = await axios.post(
-          "https://localhost:7245/api/ExpenseDetail",
+          "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/ExpenseDetail",
           (detailPayload),
           {
             headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },

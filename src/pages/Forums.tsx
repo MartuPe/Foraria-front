@@ -162,7 +162,7 @@ const Forums: React.FC = () => {
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
   const API_BASE =
-    process.env.REACT_APP_API_URL || "https://localhost:7245/api";
+    process.env.REACT_APP_API_URL || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api";
 
   // Modal de estado general (éxito / error)
   const [statusModal, setStatusModal] = useState<{

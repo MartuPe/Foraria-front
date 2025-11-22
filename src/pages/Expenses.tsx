@@ -108,7 +108,7 @@ export default function ExpensesPage() {
       setLoading(true);
       setLoadError(null);
       try {
-        const url = `https://localhost:7245/api/ExpenseDetail?id=${residenceId}`;
+        const url = `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/ExpenseDetail?id=${residenceId}`;
         const resp = await axios.get<ExpenseDetail[]>(url, { headers: { Authorization: `bearer ${token}` }});
         if (!mounted) return;
         const data = resp.data || [];
@@ -289,7 +289,7 @@ export default function ExpensesPage() {
       setLoadingPaymentFor(detail.id);
         const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        `https://localhost:7245/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
+        `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
         { method: "POST" ,
           headers:  {Authorization: `bearer ${token}`} 
         }
