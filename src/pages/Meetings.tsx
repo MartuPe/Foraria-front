@@ -188,8 +188,8 @@ export default function Meetings() {
                   value: "",
                   icon: <CalendarTodayIcon />,
                 },
-                { label: m.duration, value: "", icon: <QueryBuilderIcon /> },
-                { label: m.location, value: "", icon: <VideocamIcon /> },
+                //{ label: m.duration, value: "", icon: <QueryBuilderIcon /> },
+                //{ label: m.location, value: "", icon: <VideocamIcon /> },
                 {
                   label: `${m.participants.length} participantes`,
                   value: "",

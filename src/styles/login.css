@@ -1,0 +1,117 @@
+.foraria-login-page {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  background-color: #f4f2d8;
+}
+
+.foraria-wrapper {
+  width: 100%;
+}
+
+.foraria-form-container {
+  background-color: #00427a;
+  border-radius: 24px;
+  padding: 40px 48px 32px;
+  max-width: 520px;
+  width: 100%;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.foraria-logo {
+  width: 140px;
+  height: auto;
+  margin-bottom: 24px;
+}
+
+.foraria-form-title {
+  color: #ffffff;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.foraria-form-container .MuiTextField-root,
+.foraria-form-container .MuiButton-root,
+.foraria-form-container .foraria-centered-link {
+  width: 100%;
+}
+
+.foraria-gradient-button {
+  border-radius: 999px;
+  font-weight: 500;
+}
+/* Link "Olvidé mi contraseña" */
+.foraria-centered-link {
+  text-align: center;
+}
+
+.foraria-form-link {
+  color: #ffffff;
+  font-size: 0.95rem;
+}
+
+.field-message--error {
+  color: #ffe5e5;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .foraria-login-page {
+    background-color: #00427a;
+    padding: 0; 
+  }
+
+  .foraria-form-container {
+    max-width: 100%;
+    min-height: 100vh;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 32px 20px 24px;
+    justify-content: center;
+  }
+
+  .foraria-logo {
+    width: 110px;
+    margin-bottom: 20px;
+  }
+
+  .foraria-form-title {
+    font-size: 1.4rem;
+    text-align: center;
+  }
+
+  .foraria-gradient-button {
+    margin-top: 8px;
+  }
+
+  .foraria-centered-link {
+    margin-top: 16px;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 959.95px) {
+  .foraria-login-page {
+    padding: 24px;
+  }
+
+  .foraria-form-container {
+    max-width: 420px;
+    padding: 36px 32px 28px;
+  }
+
+  .foraria-logo {
+    width: 120px;
+  }
+}
+
+@media (min-width: 1200px) {
+  .foraria-form-container {
+    max-width: 560px;
+  }
+}

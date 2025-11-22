@@ -15,6 +15,7 @@ import { authService } from "../services/authService";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import isotipoColor from "../assets/Isotipo-Color.png";
+import "../styles/login.css";
 import "../styles/messages.css";
 
 const Login: React.FC = () => {
