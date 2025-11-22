@@ -1,5 +1,15 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Paper, MenuItem, Select, Button, Avatar, Chip, Box, Stack, Typography, Divider } from "@mui/material";
+import {
+  Paper,
+  MenuItem,
+  Select,
+  Button,
+  Avatar,
+  Chip,
+  Box,
+  Stack,
+  Typography,
+} from "@mui/material";
 import { AddOutlined } from "@mui/icons-material";
 import NewUser from "../../components/modals/NewUser";
 import PageHeader from "../../components/SectionHeader";
@@ -71,27 +81,56 @@ export default function AdminUserManagment() {
   }, [users, search, roleFilter]);
 
   return (
+    // 👇 Igual que en Reclamos: sin maxWidth / mx
     <Box className="foraria-page-container">
       <PageHeader
         title="Gestión de Usuarios"
         showSearch
         onSearchChange={(q) => setSearch(q)}
+        // si querés aire extra entre header y lista, podés sumar:
+        // sx={{ mb: { xs: 2, md: 3 } }}
         actions={
           <Button
             variant="contained"
             color="secondary"
             startIcon={<AddOutlined />}
             onClick={() => setOpenNewUser(true)}
-            sx={{ px: 2.5, fontWeight: 600, textTransform: "none", boxShadow: "0 6px 16px rgba(245,158,11,.25)", }} >
+            sx={{
+              px: { xs: 2, sm: 2.5 },
+              fontWeight: 600,
+              textTransform: "none",
+              boxShadow: "0 6px 16px rgba(245,158,11,.25)",
+              width: { xs: "100%", sm: "auto" },
+            }}
+          >
             Nuevo Usuario
           </Button>
         }
         stats={[
-          { icon: <ShieldIcon />, title: "Propietarios", value: owners, color: "success" },
-          { icon: <HomeIcon />, title: "Inquilinos", value: tenants, color: "info" },
+          {
+            icon: <ShieldIcon />,
+            title: "Propietarios",
+            value: owners,
+            color: "success",
+          },
+          {
+            icon: <HomeIcon />,
+            title: "Inquilinos",
+            value: tenants,
+            color: "info",
+          },
         ]}
         filters={[
-          <Select key="roles" value={roleFilter} size="small" sx={{ minWidth: 180 }} onChange={(e) => setRoleFilter(e.target.value as any)} >
+          <Select
+            key="roles"
+            value={roleFilter}
+            size="small"
+            sx={{
+              minWidth: { xs: 140, sm: 180 },
+              width: { xs: "100%", sm: "auto" },
+            }}
+            onChange={(e) => setRoleFilter(e.target.value as any)}
+          >
             <MenuItem value="all">Todos los roles</MenuItem>
             <MenuItem value="Propietario">Propietarios</MenuItem>
             <MenuItem value="Inquilino">Inquilinos</MenuItem>
@@ -105,52 +144,129 @@ export default function AdminUserManagment() {
         onClose={() => setOpenNewUser(false)}
         onCreated={() => {
           loadData();
-        }}/>
+        }}
+      />
 
-      <Paper variant="outlined" elevation={0} className="foraria-profile-section" sx={{ mt: 2, p: 2.5, borderRadius: 3 }} >
+      <Paper
+        variant="outlined"
+        elevation={0}
+        className="foraria-profile-section"
+        sx={{
+          mt: 2,
+          p: { xs: 2, md: 2.5 },
+          borderRadius: 3,
+        }}
+      >
         {loading ? (
-          <Typography variant="body2">Cargando…</Typography> ) : filtered.length === 0 ? (
+          <Typography variant="body2">Cargando…</Typography>
+        ) : filtered.length === 0 ? (
           <Typography variant="body2" color="text.secondary">
             No hay usuarios para mostrar.
           </Typography>
         ) : (
-          <Stack divider={<Divider flexItem />} spacing={2}>
+          <Stack spacing={2}>
             {filtered.map((u) => {
-              const roleMeta = ROLE_META[u.role] ?? { label: u.role, chipColor: "default" as const };
-              const initials = `${u.firstName?.[0] ?? ""}${ u.lastName?.[0] ?? "" }`.toUpperCase();
+              const roleMeta =
+                ROLE_META[u.role] ?? {
+                  label: u.role,
+                  chipColor: "default" as const,
+                };
+              const initials = `${u.firstName?.[0] ?? ""}${
+                u.lastName?.[0] ?? ""
+              }`.toUpperCase();
               const residence = u.residences?.[0];
-              const depto = residence ? `${residence.number ?? ""}${ residence.floor ? ` · Piso ${residence.floor}` : "" }` : "—";
+              const depto = residence
+                ? `${residence.number ?? ""}${
+                    residence.floor ? ` · Piso ${residence.floor}` : ""
+                  }`
+                : "—";
 
               return (
-                <Box key={u.id} sx={{ display: "flex", alignItems: "center", gap: 2 }} >
-                  <Avatar sx={{ bgcolor: "#7c3aed", width: 44, height: 44 }}>
+                <Paper
+                  key={u.id}
+                  elevation={1}
+                  sx={{
+                    p: 2,
+                    display: "flex",
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    gap: 2,
+                    borderRadius: 3,
+                    bgcolor: "background.paper",
+                    width: "100%",
+                    transition:
+                      "transform 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease",
+                    "&:hover": {
+                      boxShadow: { xs: 1, sm: 4 },
+                      transform: { xs: "none", sm: "translateY(-2px)" },
+                    },
+                  }}
+                >
+                  <Avatar
+                    sx={{
+                      bgcolor: "#7c3aed",
+                      width: { xs: 44, sm: 48 },
+                      height: { xs: 44, sm: 48 },
+                      fontSize: { xs: 16, sm: 18 },
+                    }}
+                  >
                     {initials || "U"}
                   </Avatar>
 
                   <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5, flexWrap: "wrap" }} >
-                      <Typography variant="subtitle1" sx={{ fontWeight: 700 }} >
+                    <Stack
+                      direction="row"
+                      alignItems="center"
+                      spacing={1}
+                      sx={{ mb: 0.5, flexWrap: "wrap" }}
+                    >
+                      <Typography
+                        variant="subtitle1"
+                        sx={{
+                          fontWeight: 700,
+                          fontSize: { xs: 14, sm: 16 },
+                        }}
+                      >
                         {u.firstName} {u.lastName}
                       </Typography>
-                      <Chip size="small" label={roleMeta.label} color={roleMeta.chipColor} />
+                      <Chip
+                        size="small"
+                        label={roleMeta.label}
+                        color={roleMeta.chipColor}
+                      />
                       {u.requiresPasswordChange && (
-                        <Chip size="small" label="Pendiente" color="secondary" variant="outlined" />
+                        <Chip
+                          size="small"
+                          label="Pendiente"
+                          color="secondary"
+                          variant="outlined"
+                        />
                       )}
                     </Stack>
 
-                    <Stack direction="row" spacing={2} sx={{ color: "text.secondary", flexWrap: "wrap" }} >
-                      <Typography variant="body2">{u.mail}</Typography>
+                    <Stack
+                      direction={{ xs: "column", sm: "row" }}
+                      spacing={{ xs: 0.5, sm: 2 }}
+                      sx={{
+                        color: "text.secondary",
+                        flexWrap: "wrap",
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{ wordBreak: "break-all" }}
+                      >
+                        {u.mail}
+                      </Typography>
                       {u.phoneNumber ? (
                         <Typography variant="body2">
                           +{u.phoneNumber}
                         </Typography>
                       ) : null}
-                      <Typography variant="body2">
-                        Depto. {depto}
-                      </Typography>
+                      <Typography variant="body2">Depto. {depto}</Typography>
                     </Stack>
                   </Box>
-                </Box>
+                </Paper>
               );
             })}
           </Stack>
