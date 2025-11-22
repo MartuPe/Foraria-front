@@ -97,7 +97,12 @@ const UpdateData: React.FC = () => {
         photo,
       });
 
+    const role = localStorage.getItem("role");
+    if (role === "admin") {
+      navigate("/admin/dashbord", { replace: true }); // mantuve tu typo; cambia a /admin/dashboard si corresponde
+    } else {
       navigate("/dashboard", { replace: true });
+    }
     } catch (err: any) {
       console.error(err);
       const raw =
