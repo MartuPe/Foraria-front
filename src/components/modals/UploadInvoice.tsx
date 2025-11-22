@@ -37,7 +37,7 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
   const [description, setDescription] = useState("");
   const [ocrItems, setOcrItems] = useState<any[]>([]); // <--- guardamos items OCR
   const token = localStorage.getItem("accessToken");
-  const consortiumId = localStorage.getItem('consortiumId')
+  const consortiumIdStorage = localStorage.getItem('consortiumId')
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
@@ -169,7 +169,7 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
         purchaseOrder: "",
         confidenceScore: 0,
         processedAt: new Date().toISOString(),
-        consortiumId: consortiumId,  
+        consortiumId: consortiumIdStorage,  
         items: ocrItems.length > 0 ? ocrItems : [
           {
             description: description || "Factura",
