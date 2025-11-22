@@ -7,7 +7,8 @@ import PhotoCamera from "@mui/icons-material/PhotoCamera";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import isotipoColor from "../assets/Isotipo-Color.png";
 import { authService } from "../services/authService";
-
+import { storage } from "../utils/storage"; 
+import { Role } from "../constants/roles";
 const UpdateData: React.FC = () => {
   const navigate = useNavigate();
 
@@ -97,9 +98,10 @@ const UpdateData: React.FC = () => {
         photo,
       });
 
-    const role = localStorage.getItem("role");
-    if (role === "admin") {
-      navigate("/admin/dashbord", { replace: true }); // mantuve tu typo; cambia a /admin/dashboard si corresponde
+    const role = storage.role as Role | null;
+    console.log(role)
+    if ( role === Role.ADMIN || role === Role.CONSORCIO  ) {
+      navigate("/admin/dashboard", { replace: true }); // mantuve tu typo; cambia a /admin/dashboard si corresponde
     } else {
       navigate("/dashboard", { replace: true });
     }

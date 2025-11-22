@@ -29,7 +29,7 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
     email: "",
     phone: "",
     residenceId: "",
-    roleId: 1,
+    roleId: 0,
   });
 
   const [submitting, setSubmitting] = React.useState(false);
@@ -49,7 +49,7 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
         email: "",
         phone: "",
         residenceId: "",
-        roleId: 1,
+        roleId: 0,
       });
       setError(null);
       setSuccess(null);

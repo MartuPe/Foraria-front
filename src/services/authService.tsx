@@ -9,6 +9,7 @@ export type LoginResponse = {
   token?: string;
   accessToken?: string;
   refreshToken?: string;
+  consortiumId?: number;
   requiresPasswordChange?: boolean;
   user?: {
     id: number;
@@ -28,7 +29,7 @@ export type LoginResponse = {
       floor?: number;
       number?: number;
       tower?: string;
-      consortiumId?: number;
+      
     }>;
     requiresPasswordChange?: boolean;
     hasPermission?: boolean;
@@ -53,43 +54,46 @@ console.log("Login response data:", data);
     }
 
     // 3) Guardar datos del usuario
-    if (data.user) {
-      const firstResidence = data.user.residences?.[0];
-      const consortiumId = data.user.consortiumId ?? firstResidence?.consortiumId ?? null;
-      const residenceId = firstResidence?.id ?? null;
+ if (data.user) {
+  const firstResidence = data.user.residences?.[0];
 
-      const u = {
-        id: data.user.id,
-        email: data.user.mail ?? email,
-        firstName: data.user.name ?? "",
-        lastName: data.user.lastName ?? "",
-        role: roleDescription ?? "",
-        consortiumId: consortiumId,
-        residences: data.user.residences ?? [],
-      };
+  // EL consortiumId REAL viene del root del JSON
+  const consortiumId =
+    data.consortiumId ??
+    null;
 
-      // Persistir en storage
-      storage.user = u;
-      storage.userId = u.id;
-      storage.consortiumId = consortiumId;
-      storage.residenceId = residenceId;
+  const residenceId = firstResidence?.id ?? null;
 
-      // También en localStorage para los guards
-      localStorage.setItem("userId", String(u.id));
-      localStorage.setItem("email", u.email);
-      
-      if (consortiumId) {
-        localStorage.setItem("consortiumId", String(consortiumId));
-      } else {
-        localStorage.removeItem("consortiumId");
-      }
-      
-      if (residenceId) {
-        localStorage.setItem("residenceId", String(residenceId));
-      } else {
-        localStorage.removeItem("residenceId");
-      }
-    }
+  const u = {
+    id: data.user.id,
+    email: data.user.mail ?? email,
+    firstName: data.user.name ?? "",
+    lastName: data.user.lastName ?? "",
+    role: roleDescription ?? "",
+    consortiumId: consortiumId,
+    residences: data.user.residences ?? [],
+  };
+
+  storage.user = u;
+  storage.userId = u.id;
+  storage.consortiumId = consortiumId;
+  storage.residenceId = residenceId;
+
+  localStorage.setItem("userId", String(u.id));
+  localStorage.setItem("email", u.email);
+
+  if (consortiumId != null) {
+    localStorage.setItem("consortiumId", String(consortiumId));
+  } else {
+    localStorage.removeItem("consortiumId");
+  }
+
+  if (residenceId) {
+    localStorage.setItem("residenceId", String(residenceId));
+  } else {
+    localStorage.removeItem("residenceId");
+  }
+}
 
     // 4) Manejar requiresPasswordChange
     const requires = data.requiresPasswordChange === true;
@@ -98,35 +102,50 @@ console.log("Login response data:", data);
     return data;
   },
 
-  async updateFirstTime(payload: {
-    firstName: string;
-    lastName: string;
-    dni: string;
-    currentPassword: string;
-    newPassword: string;
-    confirmNewPassword: string;
-    photo?: File | null;
-  }) {
-    const form = new FormData();
-    form.append("firstName", payload.firstName);
-    form.append("lastName", payload.lastName);
-    form.append("dni", payload.dni);
-    form.append("currentPassword", payload.currentPassword);
-    form.append("newPassword", payload.newPassword);
-    form.append("confirmNewPassword", payload.confirmNewPassword);
-    if (payload.photo) form.append("photo", payload.photo);
+async updateFirstTime(payload: {
+  firstName: string;
+  lastName: string;
+  dni: string;
+  currentPassword: string;
+  newPassword: string;
+  confirmNewPassword: string;
+  photo?: File | null;
+}) {
+  const form = new FormData();
+  form.append("firstName", payload.firstName);
+  form.append("lastName", payload.lastName);
+  form.append("dni", payload.dni);
+  form.append("currentPassword", payload.currentPassword);
+  form.append("newPassword", payload.newPassword);
+  form.append("confirmNewPassword", payload.confirmNewPassword);
+  if (payload.photo) form.append("photo", payload.photo);
 
-    const r = await api.post("/User/update-first-time", form, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+  const r = await api.post("/User/update-first-time", form, {
+    headers: { "Content-Type": "multipart/form-data" },
+  });
 
-    const access = r.data?.accessToken ?? r.data?.token;
-    if (access) storage.token = access;
-    if (r.data?.refreshToken) storage.refresh = r.data.refreshToken;
-    try { initSessionFromToken(); } catch {}
-    localStorage.setItem("requiresPasswordChange", "false");
-    return r.data;
-  },
+  // Guardamos solo el token, NO regeneramos rol
+  const access = r.data?.accessToken ?? r.data?.token;
+  if (access) storage.token = access;
+
+  if (r.data?.refreshToken) storage.refresh = r.data.refreshToken;
+
+ const currentRole = storage.role;
+
+try { initSessionFromToken(); } catch {  localStorage.setItem("requiresPasswordChange", "false");}
+
+// restaurar rol
+storage.role = currentRole;
+if (currentRole !== null) {
+  localStorage.setItem("role", currentRole);
+} else {
+  localStorage.removeItem("role");
+}
+
+
+
+  return r.data;
+},
 
   async logout() {
     try {

@@ -49,7 +49,7 @@ const Login: React.FC = () => {
       // Ahora storage.role está correctamente guardado
       const role = storage.role as Role | null;
       const requires = res.requiresPasswordChange === true;
-
+      console.log(role)
       // Verificar si debe actualizar información primero
       if (requires) {
         navigate("/actualizarInformacion");

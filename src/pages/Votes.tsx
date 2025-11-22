@@ -102,12 +102,12 @@ const BACKEND_STATE_VALUES: Record<string, string> = {
 interface PollCategory { id: number; name: string; }
 
 const POLL_CATEGORIES: PollCategory[] = [
-  { id: 1, name: 'Administración' },
+  { id: 1, name: 'General' },
   { id: 2, name: 'Mantenimiento' },
-  { id: 3, name: 'Mejoras' },
-  { id: 4, name: 'Normativas' },
-  { id: 5, name: 'Presupuesto' },
-  { id: 6, name: 'Seguridad' }
+  { id: 3, name: 'Eventos' },
+  { id: 4, name: 'Presupuesto' },
+  { id: 5, name: 'Seguridad' },
+  { id: 6, name: 'Mejoras' }
 ];
 
 interface UserCountResponse {
