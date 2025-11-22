@@ -23,6 +23,7 @@
     "@types/react-dom": "^19.1.9",
     "axios": "1.6.8",
     "chart.js": "^4.5.0",
+    "firebase": "^12.6.0",
     "jspdf": "^3.0.3",
     "jspdf-autotable": "^5.0.2",
     "jwt-decode": "^4.0.0",

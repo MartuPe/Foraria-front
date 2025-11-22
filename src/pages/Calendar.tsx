@@ -202,7 +202,7 @@ export default function Calendar() {
             firstDay={0}
             height="auto"
             fixedWeekCount={false}
-            dayMaxEventRows={isMobile ? 3 : 2}        // ligero ajuste móvil
+            dayMaxEventRows={isMobile ? 3 : 2}        
             events={events}
             dateClick={onDateClick}
             headerToolbar={false}

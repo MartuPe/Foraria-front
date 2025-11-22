@@ -381,6 +381,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
     (poll.pollResults || []).forEach((r) =>
       resultsMap.set(r.pollOptionId, r.votesCount)
     );
+
     const totalVotes = Array.from(resultsMap.values()).reduce((s, v) => s + v, 0);
     
     const optionsWithResults = poll.pollOptions.map(option => {
@@ -394,11 +395,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
     }).sort((a, b) => b.votes - a.votes);
 
     const winner = optionsWithResults.length > 0 ? optionsWithResults[0] : null;
-    // Ajuste: clamp y manejo de totalUsers = 0, y evitar sobrepasar 100 si totalVotes > totalUsers
-    const base = totalUsers > 0 ? totalUsers : totalVotes || 1;
-    const rawPercent = (totalVotes / base) * 100;
-    const participationPercent = Math.min(Math.round(rawPercent), 100);
-
+    const participationPercent = totalUsers > 0 ? Math.round((totalVotes / totalUsers) * 100) : 0;
     return {
       totalVotes,
       participationPercent,
@@ -427,10 +424,10 @@ const [loadError, setLoadError] = useState<string | null>(null);
     const isPollOpen = isActive || isPending || isDraft; 
 
     return (
-      <Card
-        key={poll.id}
-        variant="outlined"
-        sx={{
+      <Card 
+        key={poll.id} 
+        variant="outlined" 
+        sx={{ 
           borderRadius: 3,
           border: isActive ? '2px solid' : isPending ? '2px dashed' : '1px solid',
           borderColor: isActive ? 'success.main' : isPending ? 'warning.main' : 'grey.300',
@@ -440,10 +437,6 @@ const [loadError, setLoadError] = useState<string | null>(null);
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           cursor: 'pointer',
           opacity: isActive ? 1 : isPending ? 0.9 : 0.85,
-          width: '100%',                         // <-- responsive base
-          display: 'flex',
-          flexDirection: 'column',
-          p: { xs: 1, sm: 1.5 },                 // <-- padding adaptado
           '&:hover': {
             transform: isActive || isPending ? 'translateY(-6px) scale(1)' : 'translateY(-2px)',
             boxShadow: isActive || isPending 
@@ -530,64 +523,39 @@ const [loadError, setLoadError] = useState<string | null>(null);
           />
         )}
 
-        {/* ...existing card content... */}
-        <CardContent sx={{ p: { xs: 1, sm: 2 } }}>   {/* <-- padding internal */}
-          <Stack spacing={isMobile ? 1.8 : 2.5}>
-            <Stack
-              direction={isMobile ? "column" : "row"}              // <-- apilar en mobile
-              justifyContent="space-between"
-              alignItems={isMobile ? "flex-start" : "flex-start"}
-              spacing={isMobile ? 1 : 0}
-            >
-              <Box sx={{ flex: 1, width: '100%' }}>
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  spacing={1}
-                  sx={{ mb: 0.75 }}
-                >
-                  <Typography
-                    variant={isMobile ? "subtitle1" : "h6"}        // <-- menor en mobile
+        <CardContent>
+          <Stack spacing={2.5}>
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+              <Box sx={{ flex: 1 }}>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                  <Typography 
+                    variant="h6" 
                     color={isActive ? "primary" : isPending ? "warning.dark" : "text.secondary"}
-                    sx={{
+                    sx={{ 
                       fontWeight: isActive || isPending ? 600 : 500,
-                      lineHeight: 1.2
                     }}
                   >
                     {poll.title}
                   </Typography>
-                  {(isActive || isPending) && !isMobile && (       // <-- ocultar share en mobile
+                  {(isActive || isPending) && (
                     <IconButton size="small" color="default">
                       <ShareIcon fontSize="small" />
                     </IconButton>
                   )}
                 </Stack>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
-                    mb: 1.2,
-                    opacity: isActive || isPending ? 1 : 0.8,
-                    display: '-webkit-box',                      // <-- clamp descripción
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    WebkitLineClamp: isMobile ? 3 : 'unset',
-                    wordBreak: 'break-word'
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
+                    mb: 1.5,
+                    opacity: isActive || isPending ? 1 : 0.8
                   }}
                 >
                   {poll.description}
                 </Typography>
               </Box>
-
-              <Stack
-                direction={isMobile ? "row" : "row"}
-                spacing={1}
-                sx={{
-                  width: isMobile ? '100%' : 'auto',
-                  flexWrap: 'wrap',
-                  justifyContent: isMobile ? 'flex-start' : 'flex-end'
-                }}
-              >
+              
+              <Stack direction="row" spacing={1}>
                 <Chip 
                   label={poll.state || "Cerrada"}
                   color={
@@ -694,7 +662,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
             </Stack>
 
             {isAdministrador && ( 
-              <Box sx={{ mt: isMobile ? 0.5 : 0 }}>
+              <Box>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                   <Typography 
                     variant="caption" 
@@ -758,17 +726,8 @@ const [loadError, setLoadError] = useState<string | null>(null);
               </Stack>
             )}
 
-            <Stack
-              direction={isMobile ? "column" : "row"}          // <-- acciones responsive
-              spacing={isMobile ? 1 : 1}
-              justifyContent="space-between"
-              alignItems={isMobile ? "stretch" : "center"}
-            >
-              <Stack
-                direction={isMobile ? "column" : "row"}
-                spacing={isMobile ? 1 : 1}
-                sx={{ width: isMobile ? '100%' : 'auto' }}
-              >
+            <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
+              <Stack direction="row" spacing={1}>
                 {isActive && !hasVoted && (
                   <Button
                     variant="contained"
@@ -776,8 +735,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
                     startIcon={<HowToVoteIcon />}
                     onClick={() => handleOpenVoteModal(poll)}
                     disabled={isVoting}
-                    fullWidth={isMobile}                     // <-- fullWidth en mobile
-                    sx={{
+                    sx={{ 
                       borderRadius: 999,
                       px: 3,
                       py: 1,
@@ -794,19 +752,18 @@ const [loadError, setLoadError] = useState<string | null>(null);
                   color={isActive || isPending || isDraft ? "primary" : "inherit"}
                   startIcon={<BarChartIcon />}
                   onClick={() => handleOpenResultsModal(poll)}
-                  fullWidth={isMobile}
                   sx={{
                     borderRadius: 999,
                     px: 2.5,
                     fontWeight: 500,
                     textTransform: 'none',
-                    backgroundColor: (isActive || isPending) ? undefined : 'grey.600',
-                    color: (isActive || isPending) ? undefined : 'white',
-                    borderColor: (isActive || isPending) ? undefined : 'grey.600',
+                    backgroundColor: isActive || isPending ? undefined : 'grey.600',
+                    color: isActive || isPending ? undefined : 'white',
+                    borderColor: isActive || isPending ? undefined : 'grey.600',
                     transition: 'all 0.2s ease-in-out',
                     '&:hover': {
-                      backgroundColor: (isActive || isPending) ? 'primary.50' : 'grey.700',
-                      borderColor: (isActive || isPending) ? 'primary.main' : 'grey.700',
+                      backgroundColor: isActive || isPending ? 'primary.50' : 'grey.700',
+                      borderColor: isActive || isPending ? 'primary.main' : 'grey.700',
                       transform: 'translateY(-1px)',
                     }
                   }}
@@ -820,14 +777,14 @@ const [loadError, setLoadError] = useState<string | null>(null);
                     color="info"
                     size="small"
                     variant="outlined"
-                    sx={{ fontWeight: 600, alignSelf: isMobile ? 'flex-start' : 'center' }}
+                    sx={{ fontWeight: 600 }}
                   />
                 )}
 
-                {(isActive || isPending || isDraft) && !isMobile && (
+                {(isActive || isPending || isDraft) && (
                   <Tooltip title="Recibir notificaciones">
-                    <IconButton
-                      size="small"
+                    <IconButton 
+                      size="small" 
                       color="default"
                       sx={{
                         transition: 'all 0.2s ease-in-out',
@@ -947,11 +904,84 @@ if (loadError) {
         <Typography variant="h5" color="text.primary" gutterBottom>
           Error al cargar votaciones
         </Typography>
-      ) : (
-        <Stack spacing={2}>
-          {filteredPolls.map(renderPollCard)}
-        </Stack>
-      )}
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          {loadError}
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={() => refetch()} 
+          sx={{ mt: 1 }}
+        >
+          Reintentar
+        </Button>
+      </Paper>
+    </Box>
+  );
+}
+
+  return (
+    <Box className="foraria-page-container">
+      <PageHeader
+        title="Votaciones del Consorcio"
+        tabs={[
+          { label: "Todas", value: "todas" },
+          { label: "Activas", value: "actives" },
+          { label: "Finalizadas", value: "finalizada" },
+          ...(isAdministrador ? [{ label: "Pendientes", value: "pendientes" }] : [])
+        ]}
+        selectedTab={tab}
+        onTabChange={(v) => setTab(v as typeof tab)}
+        actions={
+          isAdministrador && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<AddIcon />}
+              onClick={() => setShowNewVoteModal(true)}
+              sx={{ borderRadius: 999, fontWeight: 600 }}
+            >
+              Nueva Votación
+            </Button>
+          )
+        }
+      />
+
+     {filteredPolls.length === 0 ? (
+  <Paper
+    sx={{
+      p: 6,
+      textAlign: "center",
+      border: "1px dashed #d0d0d0",
+      borderRadius: 3,
+      backgroundColor: "#fafafa",
+    }}
+  >
+    <HowToVoteIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+    <Typography variant="h5" color="text.primary" gutterBottom>
+      No hay votaciones disponibles
+    </Typography>
+    <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+      {tab === "actives" 
+        ? "No hay votaciones activas en este momento."
+        : tab === "finalizada"
+        ? "No hay votaciones finalizadas aún."
+        : tab === "pendientes"
+        ? "No hay votaciones pendientes de aprobación."
+        : "Aún no se han creado votaciones para este consorcio."
+      }
+    </Typography>
+    <Typography variant="body2" color="text.secondary">
+      {isAdministrador 
+        ? "Podés crear una nueva votación haciendo clic en el botón 'Nueva Votación'."
+        : "Las votaciones aparecerán aquí cuando la administración las cree."
+      }
+    </Typography>
+  </Paper>
+) : (
+  <Stack spacing={2}>
+    {filteredPolls.map(renderPollCard)}
+  </Stack>
+)}
 
       {/* Modal con componente NewVote */}
       <Dialog
