@@ -1,4 +1,4 @@
-import { callService, CallDto, CallListItemDto } from "./callService";
+import { callService, CallDto, CallListItemDto,} from "./callService";
 
 export interface TranscriptionLine {
   speaker: string;
@@ -14,10 +14,10 @@ export interface Meeting {
   description: string;
   date: string;
   time: string;
-  duration: string;  // "2 horas", "45 minutos" (por ahora placeholder)
+  duration: string;
   location: string;
   organizer: string;
-  participants: string[]; // por ahora sólo usamos length
+  participants: string[];
   status: MeetingStatus;
   tags: string[];
   hasRecording?: boolean;
@@ -26,7 +26,10 @@ export interface Meeting {
 
 let meetingsStore: Meeting[] = [];
 
-function toLocalDateTimeParts(iso: string | null): { date: string; time: string } {
+function toLocalDateTimeParts(iso: string | null): {
+  date: string;
+  time: string;
+} {
   if (!iso) {
     const now = new Date();
     return {
@@ -48,13 +51,18 @@ function mapBackendStatusToMeetingStatus(
 ): MeetingStatus {
   const now = new Date();
   const start = startedAt ? new Date(startedAt) : null;
-
-  if (status === "Finished" || endedAt) return "finished";
+  const normalized = (status || "").toLowerCase();
+  if (normalized === "ended" || normalized === "finished" || endedAt) {
+    return "finished";
+  }
   if (start && start > now) return "scheduled";
   return "inProgress";
 }
 
-function buildTags(meetingStatus: MeetingStatus, meetingType?: string): string[] {
+function buildTags(
+  meetingStatus: MeetingStatus,
+  meetingType?: string
+): string[] {
   const tags: string[] = [];
   if (meetingStatus === "scheduled") tags.push("Programada");
   if (meetingStatus === "finished") tags.push("Finalizada");
@@ -73,9 +81,9 @@ function mapCallListItemToMeeting(item: CallListItemDto): Meeting {
     description: item.description,
     date,
     time,
-    duration: "-",                // por ahora sin duración real
+    duration: "-",
     location: item.location,
-    organizer: "Administrador",   // revisar
+    organizer: "Administrador",
     participants: Array(item.participantsCount).fill("Participante"),
     status,
     tags: buildTags(status, item.meetingType),
@@ -105,18 +113,45 @@ export function mapCallToMeeting(call: CallDto): Meeting {
   };
 }
 
-export async function fetchMeetingsByConsortium(consortiumId: number): Promise<Meeting[]> {
+export async function fetchMeetingsByConsortium(
+  consortiumId: number
+): Promise<Meeting[]> {
   const calls = await callService.getByConsortium(consortiumId);
-  meetingsStore = calls
+
+  const meetings = await Promise.all(
+    calls.map(async (call) => {
+      let uniqueParticipantCount = call.participantsCount;
+
+      try {
+        const participants = await callService.getParticipants(call.id);
+        const uniqueUserIds = Array.from(
+          new Set(participants.map((p) => p.userId))
+        );
+        uniqueParticipantCount = uniqueUserIds.length;
+      } catch (err) {
+        console.error(`Error obteniendo participantes de la llamada ${call.id}:`, err);
+      }
+
+      const fixedCall: CallListItemDto = {
+        ...call,
+        participantsCount: uniqueParticipantCount,
+      };
+
+      return mapCallListItemToMeeting(fixedCall);
+    })
+  );
+
+  meetingsStore = meetings
+    .slice()
     .sort(
       (a, b) =>
-        new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
-    )
-    .map(mapCallListItemToMeeting);
+        new Date(b.date + "T" + b.time).getTime() -
+        new Date(a.date + "T" + a.time).getTime()
+    );
+
   return meetingsStore;
 }
 
-// Mantener helpers para stats/filtros
 export function getMeetings(): Meeting[] {
   return meetingsStore;
 }
@@ -133,11 +168,13 @@ export function filterMeetingsByStatus(
 }
 
 export function getStats(meetings: Meeting[]) {
-  const scheduled = meetings.filter((m) => m.status === "scheduled").length;
+  const finished = meetings.filter((m) => m.status === "finished").length;
   const inProgress = meetings.filter((m) => m.status === "inProgress").length;
-  const withTranscription = meetings.filter((m) => m.transcription?.length).length;
+  const withTranscription = meetings.filter(
+    (m) => m.transcription?.length
+  ).length;
   const thisMonth = meetings.length;
-  return { scheduled, inProgress, withTranscription, thisMonth };
+  return { finished, inProgress, withTranscription, thisMonth };
 }
 
 export function addMeeting(meeting: Meeting) {
