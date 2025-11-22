@@ -73,11 +73,6 @@ function formatDateNumeric(dateString?: string | null) {
     : d.toLocaleDateString("es-AR", { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-function toSlug(text: string) {
-  return text.toLowerCase()
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
-}
 
 function toCategorySlug(text: string): string {
   const normalized = text.toLowerCase()
