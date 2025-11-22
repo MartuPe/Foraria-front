@@ -305,15 +305,6 @@ export default function NewUser({ open, onClose, onCreated }: Props) {
                 <Alert severity="success" sx={{ borderRadius: 2 }}>
                   <Stack>
                     <strong>Usuario creado correctamente.</strong>
-                    <span>
-                      <b>Email:</b> {success.email}
-                    </span>
-                    <span>
-                      <b>Contraseña temporal:</b>{" "}
-                      <Typography component="span" sx={{ fontFamily: "monospace" }}>
-                        {success.temporaryPassword}
-                      </Typography>
-                    </span>
                   </Stack>
                 </Alert>
               </Grid>

@@ -4,7 +4,7 @@
   justify-content: center;
   align-items: center;
   padding: 24px;
-  background-color: #f4f2d8;
+
 }
 
 .foraria-wrapper {
@@ -69,7 +69,6 @@
 
   .foraria-form-container {
     max-width: 100%;
-    min-height: 100vh;
     border-radius: 0;
     box-shadow: none;
     padding: 32px 20px 24px;
