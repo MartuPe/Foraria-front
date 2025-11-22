@@ -323,13 +323,12 @@ const loadInitial = async () => {
     const handleReceiveOffer = async (payload: {
       from: string;
       offer: any;
+      fromUserId?: number;
     }) => {
       console.log("ReceiveOffer:", payload);
-
-      const remoteUserId = connectionUsersRef.current.get(payload.from);
-      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
+      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
-
       try {
         await rtcRef.current.receiveOffer(remoteUserId, payload.offer);
       } catch (e) {
@@ -337,17 +336,15 @@ const loadInitial = async () => {
       }
     };
 
-    const handleReceiveAnswer = async (payload: {
+      const handleReceiveAnswer = async (payload: {
       from: string;
       answer: any;
+      fromUserId?: number;
     }) => {
       console.log("ReceiveAnswer:", payload);
-
-      const remoteUserId = connectionUsersRef.current.get(payload.from);
-      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
-
+      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
-
       try {
         await rtcRef.current.receiveAnswer(remoteUserId, payload.answer);
       } catch (e) {
@@ -358,19 +355,14 @@ const loadInitial = async () => {
     const handleReceiveIceCandidate = async (payload: {
       from: string;
       candidate: any;
+      fromUserId?: number;
     }) => {
-      console.log("❄ ReceiveIceCandidate:", payload);
-
-      const remoteUserId = connectionUsersRef.current.get(payload.from);
-      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
-
+      console.log("ReceiveIceCandidate:", payload);
+      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
-
       try {
-        await rtcRef.current.receiveIceCandidate(
-          remoteUserId,
-          payload.candidate
-        );
+        await rtcRef.current.receiveIceCandidate(remoteUserId, payload.candidate);
       } catch (e) {
         console.error("Error al procesar ICE:", e);
       }
