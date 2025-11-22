@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
-import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Skeleton, Pagination, Box, Select, Paper } from "@mui/material";
+import { Card, CardContent, Typography, Stack, Button, Dialog, DialogContent, Snackbar, Alert, TextField, MenuItem, InputAdornment, Pagination, Box, Select, Paper } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import SortIcon from "@mui/icons-material/Sort";
@@ -181,27 +181,6 @@ console.log(localStorage.getItem("consortiumId"))
     return filtered.slice(start, start + pageSize);
   }, [filtered, page]);
 
-  const SkeletonCard = () => (
-    <Card variant="outlined" sx={{ borderRadius: 2 }}>
-      <CardContent>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          spacing={1}
-        >
-          <Box sx={{ flex: 1 }}>
-            <Skeleton variant="text" width={220} height={28} />
-            <Skeleton variant="text" width={280} />
-            <Skeleton variant="text" width={200} />
-          </Box>
-          <Stack direction="row" spacing={1}>
-            <Skeleton variant="rounded" width={130} height={36} />
-            <Skeleton variant="rounded" width={120} height={36} />
-          </Stack>
-        </Stack>
-      </CardContent>
-    </Card>
-  );
 
   return (
     <Box className="foraria-page-container">
