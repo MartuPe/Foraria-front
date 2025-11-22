@@ -21,7 +21,7 @@ interface RouteParams extends Record<string, string | undefined> {
   callId?: string;
 }
 
-const HUB_URL = "https://localhost:7245/callhub";
+const HUB_URL = "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/callhub";
 
 export default function CallRoom() {
   const { meetingId, callId } = useParams<RouteParams>();
@@ -225,12 +225,9 @@ const loadInitial = async () => {
         joinedAt: existing?.joinedAt ?? new Date().toISOString(),
       });
     });
-
-    // 🔥 Sólo devolvemos lo que vino en CurrentParticipants
     return Array.from(map.values());
   });
 };
-
 
     const handleUserJoined = (payload: {
       userId: number;
