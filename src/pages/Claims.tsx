@@ -30,7 +30,7 @@ const Claims: React.FC = () => {
   const [openNew, setOpenNew] = useState(false);
   const [openAcceptId, setOpenAcceptId] = useState<number | null>(null);
   const [openRejectId, setOpenRejectId] = useState<number | null>(null);
-
+  const isAdministrador = storage.role === "Administrador";
   const API_BASE = (process.env.REACT_APP_API_URL?.replace(/\/+$/,"") || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net");
   const userRole = storage.role ?? "";
   const canManageClaims = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
@@ -86,6 +86,7 @@ const Claims: React.FC = () => {
     return parts.length > 1 ? parts.pop()?.toLowerCase() ?? "" : "";
   };
   const normalize = (s?: string | null) => (s ?? "").toString().trim().toLowerCase();
+  
   const stateChipFor = (raw?: string | null) => {
     const s = normalize(raw);
     if (!s) return { label: "Nuevo", color: "primary" as const, variant: "filled" as const };
@@ -112,7 +113,13 @@ const Claims: React.FC = () => {
     <Box className="foraria-page-container">
       <PageHeader
         title="Reclamos"
-        actions={<Button variant="contained" color="secondary" onClick={() => setOpenNew(true)}>+ Nuevo Reclamo</Button>}
+        actions={
+  !isAdministrador ? (
+    <Button variant="contained" color="secondary" onClick={() => setOpenNew(true)}>
+      + Nuevo Reclamo
+    </Button>
+  ) : null
+}
         showSearch
         onSearchChange={setSearch}
         tabs={[
@@ -153,14 +160,16 @@ const Claims: React.FC = () => {
             <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
               Aún no se han creado reclamos en el sistema. Comienza creando tu primer reclamo.
             </Typography>
-            <Button 
-              variant="contained" 
-              color="secondary" 
-              size="large"
-              onClick={() => setOpenNew(true)}
-            >
-              + Crear Primer Reclamo
-            </Button>
+           {!isAdministrador && (
+  <Button 
+    variant="contained" 
+    color="secondary" 
+    size="large"
+    onClick={() => setOpenNew(true)}
+  >
+    + Crear Primer Reclamo
+  </Button>
+)}
           </Paper>
         ) : isFilteredEmpty ? (
           
@@ -188,12 +197,14 @@ const Claims: React.FC = () => {
             const adminResponseText = c.claimResponse?.description?.trim() ?? "";
             const adminResponseDate = c.claimResponse?.responseDate ?? undefined;
             const files = c.claim.archive ? [{ url: `${API_BASE}${c.claim.archive}`, type: fileTypeFromPath(c.claim.archive) }] : [];
-            const actions = canManageClaims
-              ? [
-                  { label: "Aceptar", variant: "contained" as const, color: "primary" as const, onClick: () => setOpenAcceptId(id) },
-                  { label: "Rechazar", variant: "outlined" as const, color: "error" as const, onClick: () => setOpenRejectId(id) },
-                ]
-              : [];
+            const normalizedState = c.claim.state;
+            const actions =
+          canManageClaims && (normalizedState === "" || normalizedState === "Nuevo")
+    ? [
+        { label: "Aceptar", variant: "contained" as const, color: "primary" as const, onClick: () => setOpenAcceptId(id) },
+        { label: "Rechazar", variant: "outlined" as const, color: "error" as const, onClick: () => setOpenRejectId(id) },
+      ]
+    : [];
             const stateChip = stateChipFor(c.claim.state);
             const priorityChip = priorityChipFor(c.claim.priority);
             const categoryChip = categoryChipFor(c.claim.category);
