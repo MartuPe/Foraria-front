@@ -1,7 +1,6 @@
 import React from "react";
 import { useEffect } from "react";
 import { storage } from "../../utils/storage";
-import { registerFirebaseToken } from "../../notifications/registerToken";
 
 import {
   Box,
@@ -10,7 +9,7 @@ import {
   useMediaQuery,
   Badge,
   Snackbar,
-  Alert as MuiAlert            // <-- añadido
+  Alert as MuiAlert
 } from "@mui/material";
 
 import {
@@ -25,8 +24,6 @@ import { AdminSidebar } from "./AdminSidebar";
 // 📌 Agregados
 import { useNotifications } from "../../notifications/useNotification";
 import NotificationModal from "../../notifications/notificationModal";
-import { onMessage } from "firebase/messaging";
-import { messaging } from "../../firebase";
 const DRAWER_WIDTH = 240;
 
 export default function Layout() {
@@ -50,60 +47,75 @@ export default function Layout() {
   // 📌 Notificaciones (hook)
   const { notifications, unread, markAsRead, load } = useNotifications();
   const [openNotif, setOpenNotif] = React.useState(false);
-
-  // Estado para toast foreground
   const [pushToast, setPushToast] = React.useState<{ open: boolean; title: string; body: string }>({
     open: false,
     title: "",
     body: ""
-  }); // <-- añadido
+  });
 
-  // Listener push foreground
+  const isBrowser = typeof window !== "undefined" && typeof navigator !== "undefined"; // nuevo
+  const isTestEnv = process.env.NODE_ENV === "test";                                   // nuevo
+
+  // Listener push foreground (carga diferida)
   React.useEffect(() => {
-    const unsub = onMessage(messaging, (payload) => {
-      console.log("Push recibida en foreground:", payload);
-      load(); // refrescar listado
+    if (!isBrowser || isTestEnv) return; // evita ejecución en tests
+    let unsub: (() => void) | undefined;
 
-      const title = payload.notification?.title || "Nueva notificación";
-      const body = payload.notification?.body || "Tienes una actualización.";
+    (async () => {
+      try {
+        const [{ onMessage }, { messaging }] = await Promise.all([
+          import("firebase/messaging"),
+          import("../../firebase") // debe exportar messaging (puede ser undefined si se protege allí)
+        ]);
 
-      // Mostrar toast interno
-      setPushToast({ open: true, title, body });
-
-      // Notificación nativa (si hay permiso)
-      if (typeof Notification !== "undefined") {
-        if (Notification.permission === "granted") {
-          new Notification(title, {
-            body,
-            icon: "/favicon.ico"
-          });
-        } else if (Notification.permission === "default") {
-          Notification.requestPermission().then((perm) => {
-            if (perm === "granted") {
-              new Notification(title, { body, icon: "/favicon.ico" });
-            }
-          });
+        if (!messaging) {
+          console.warn("[Layout] messaging no disponible, se omite listener.");
+          return;
         }
+
+        unsub = onMessage(messaging, (payload) => {
+          load();
+          const title = payload.notification?.title || "Nueva notificación";
+            const body = payload.notification?.body || "Tienes una actualización.";
+          setPushToast({ open: true, title, body });
+
+          if ("Notification" in window) {
+            if (Notification.permission === "granted") {
+              new Notification(title, { body, icon: "/favicon.ico" });
+            } else if (Notification.permission === "default") {
+              Notification.requestPermission().then((perm) => {
+                if (perm === "granted") {
+                  new Notification(title, { body, icon: "/favicon.ico" });
+                }
+              });
+            }
+          }
+        });
+      } catch (e) {
+        console.warn("[Layout] Error inicializando listener de mensajes:", e);
       }
-    });
-    return () => unsub();
-  }, [load]); // <-- añadido dependencia load
+    })();
 
-  // 📌 Registrar token Firebase si hay sesión
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [load, isBrowser, isTestEnv]);
+
+  // Registrar token Firebase (diferido y omitido en test)
   useEffect(() => {
+    if (!isBrowser || isTestEnv) return;
     const jwt = storage.token;
-
-    if (!jwt) {
-      console.log("Usuario no logueado, no registro token.");
-      return;
-    }
-
-    registerFirebaseToken()
-      .then(() => console.log("Token Firebase registrado OK"))
-      .catch((err) =>
-        console.error("Error registrando token Firebase:", err)
-      );
-  }, []);
+    if (!jwt) return;
+    (async () => {
+      try {
+        const mod = await import("../../notifications/registerToken");
+        await mod.registerFirebaseToken();
+        console.log("Token Firebase registrado OK");
+      } catch (err) {
+        console.error("Error registrando token Firebase:", err);
+      }
+    })();
+  }, [isBrowser, isTestEnv]);
 
   return (
     <Box
