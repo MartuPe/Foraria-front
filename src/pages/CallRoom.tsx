@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, FormEvent, useRef,} from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Box, IconButton, Typography, Stack, Paper, Tooltip, Button, Divider, TextField,} from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CallEndIcon from "@mui/icons-material/CallEnd";
@@ -23,6 +23,13 @@ interface RouteParams extends Record<string, string | undefined> {
 
 const HUB_URL = "https://localhost:7245/callhub";
 
+function normalizeParticipants(list: CallParticipantDto[] | undefined) {
+  return (list ?? []).map((p) => ({
+    ...p,
+    isConnected: p.leftAt ? false : p.isConnected ?? true,
+  }));
+}
+
 export default function CallRoom() {
   const { meetingId, callId } = useParams<RouteParams>();
   const navigate = useNavigate();
@@ -37,21 +44,20 @@ export default function CallRoom() {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
   const numericMeetingId = Number(meetingId);
   const numericCallId = Number(callId);
-
   const meeting = useMemo(
     () => (numericMeetingId ? getMeetingById(numericMeetingId) : undefined),
     [numericMeetingId]
   );
-
   const currentUserId = Number(localStorage.getItem("userId") ?? 0);
   const role = storage.role as Role | undefined;
   const isAdminRole = role === Role.ADMIN || role === Role.CONSORCIO;
+  const location = useLocation()
+  const isAdminRoute = location.pathname.startsWith("/admin");
   const canEndCall = !!call && isAdminRole && call.createdByUserId === currentUserId;
   const rtcRef = useRef<RTCClient | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const connectionUsersRef = useRef<Map<string, number>>(new Map());
   const remoteVideoRefs = useRef<Map<number, HTMLVideoElement | null>>(new Map());
-
   const setRemoteVideoRef =
     (userId: number) => (el: HTMLVideoElement | null) => {
       remoteVideoRefs.current.set(userId, el);
@@ -85,7 +91,7 @@ export default function CallRoom() {
         if (cancelled) return;
 
         setCall(callDetails);
-        setParticipants(state.participants ?? []);
+        setParticipants(normalizeParticipants(state.participants));
         setMessages(state.messages ?? []);
       } catch (e) {
         console.error(e);
@@ -102,7 +108,7 @@ export default function CallRoom() {
         .getState(numericCallId)
         .then((state) => {
           if (!cancelled) {
-            setParticipants(state.participants ?? []);
+            setParticipants(normalizeParticipants(state.participants));
             setMessages(state.messages ?? []);
           }
         })
@@ -123,7 +129,7 @@ export default function CallRoom() {
 
       try {
         await connection.invoke("JoinCall", numericCallId.toString(), currentUserId);
-        console.log("👉 JoinCall enviado:", numericCallId, currentUserId);
+        console.log("JoinCall enviado:", numericCallId, currentUserId);
       } catch (err) {
         console.error("Error al invocar JoinCall:", err);
       }
@@ -135,7 +141,9 @@ export default function CallRoom() {
 
   useEffect(() => {
     if (!numericCallId || Number.isNaN(numericCallId)) return;
+
     let cancelled = false;
+
     const initMediaAndRtc = async () => {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
@@ -164,7 +172,14 @@ export default function CallRoom() {
               numericCallId.toString(),
               toUserId,
               candidate
-            )
+            ),
+          (userId, remoteStream) => {
+            console.log("🎥 Llega stream remoto para userId:", userId);
+            const videoEl = remoteVideoRefs.current.get(userId);
+            if (videoEl) {
+              videoEl.srcObject = remoteStream;
+            }
+          }
         );
 
         await rtcRef.current.setLocalStream(stream);
@@ -204,6 +219,7 @@ export default function CallRoom() {
     const handleCurrentParticipants = (
       payload: { connectionId: string; userId: number }[]
     ) => {
+      console.log("📥 CurrentParticipants:", payload);
       setParticipants((prev) => {
         const map = new Map<number, CallParticipantDto>();
         prev.forEach((p) => {
@@ -218,10 +234,9 @@ export default function CallRoom() {
           const updated: CallParticipantDto = {
             id: existing?.id ?? Math.random(),
             userId: u.userId,
-            isCameraOn: existing?.isCameraOn ?? false,
+            isCameraOn: existing?.isCameraOn ?? true,
             isMuted: existing?.isMuted ?? true,
             isConnected: true,
-            // campo obligatorio en el DTO
             joinedAt:
               (existing as any)?.joinedAt ?? new Date().toISOString(),
           };
@@ -237,10 +252,8 @@ export default function CallRoom() {
       userId: number;
       connectionId: string;
     }) => {
-      console.log("UserJoined recibido:", payload);
-
+      console.log("➕ UserJoined recibido:", payload);
       connectionUsersRef.current.set(payload.connectionId, payload.userId);
-
       setParticipants((prev) => {
         const exists = prev.some((p) => p.userId === payload.userId);
         if (exists) {
@@ -252,7 +265,7 @@ export default function CallRoom() {
         const newParticipant: CallParticipantDto = {
           id: Math.random(),
           userId: payload.userId,
-          isCameraOn: false,
+          isCameraOn: true,
           isMuted: true,
           isConnected: true,
           joinedAt: new Date().toISOString(),
@@ -261,7 +274,7 @@ export default function CallRoom() {
         return [...prev, newParticipant];
       });
 
-      if (rtcRef.current && currentUserId < payload.userId) {
+      if (rtcRef.current) {
         rtcRef.current
           .createOffer(payload.userId)
           .catch((e) => console.error("Error creando offer:", e));
@@ -272,12 +285,11 @@ export default function CallRoom() {
       userId: number;
       connectionId: string;
     }) => {
-      console.log("UserLeft recibido:", payload);
+      console.log("➖ UserLeft recibido:", payload);
 
       setParticipants((prev) =>
         prev.map((p) =>
-          p.userId === payload.userId ? { ...p, isConnected: false } : p
-        )
+          p.userId === payload.userId ? { ...p, isConnected: false, leftAt: new Date().toISOString() } : p)
       );
 
       rtcRef.current?.closePeer(payload.userId);
@@ -328,16 +340,14 @@ export default function CallRoom() {
       from: string;
       offer: any;
     }) => {
+      console.log("ReceiveOffer:", payload);
+
       const remoteUserId = connectionUsersRef.current.get(payload.from);
+      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
 
       try {
         await rtcRef.current.receiveOffer(remoteUserId, payload.offer);
-        const stream = rtcRef.current.getRemoteStream(remoteUserId);
-        const videoEl = remoteVideoRefs.current.get(remoteUserId);
-        if (stream && videoEl) {
-          videoEl.srcObject = stream;
-        }
       } catch (e) {
         console.error("Error al procesar offer:", e);
       }
@@ -347,7 +357,11 @@ export default function CallRoom() {
       from: string;
       answer: any;
     }) => {
+      console.log("ReceiveAnswer:", payload);
+
       const remoteUserId = connectionUsersRef.current.get(payload.from);
+      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
+
       if (!remoteUserId || !rtcRef.current) return;
 
       try {
@@ -361,7 +375,11 @@ export default function CallRoom() {
       from: string;
       candidate: any;
     }) => {
+      console.log("❄ ReceiveIceCandidate:", payload);
+
       const remoteUserId = connectionUsersRef.current.get(payload.from);
+      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
+
       if (!remoteUserId || !rtcRef.current) return;
 
       try {
@@ -410,7 +428,9 @@ export default function CallRoom() {
       if (connected && numericCallId && currentUserId) {
         await send("LeaveCall", numericCallId.toString(), currentUserId);
       }
-      navigate("/reuniones");
+
+      const basePath = isAdminRoute ? "/admin/reuniones" : "/reuniones";
+      navigate(basePath);
     }
   };
 
@@ -422,7 +442,8 @@ export default function CallRoom() {
     } catch (e) {
       console.error(e);
     } finally {
-      navigate("/reuniones");
+      const basePath = isAdminRoute ? "/admin/reuniones" : "/reuniones";
+      navigate(basePath);
     }
   };
 
@@ -444,7 +465,8 @@ export default function CallRoom() {
     }
   };
 
-  const title = meeting?.title ?? (call ? `Llamada #${call.id}` : "Reunión en curso");
+  const title =
+    meeting?.title ?? (call ? `Llamada #${call.id}` : "Reunión en curso");
   const subtitle = meeting ? `${meeting.date} · ${meeting.time} · ${meeting.location}` : call ? `Estado: ${call.status}` : "Llamada en curso";
 
   const visibleParticipants = useMemo(() => {
@@ -486,37 +508,26 @@ export default function CallRoom() {
           </Box>
         </Stack>
 
-        <Button
-          variant="contained"
-          color={canEndCall ? "error" : "secondary"}
-          startIcon={<CallEndIcon />}
-          onClick={canEndCall ? handleEndCall : handleLeaveCall}
-        >
+        <Button variant="contained" color={canEndCall ? "error" : "secondary"} startIcon={<CallEndIcon />} onClick={canEndCall ? handleEndCall : handleLeaveCall} >
           {canEndCall ? "Finalizar llamada" : "Salir de la llamada"}
         </Button>
       </Box>
 
       {error && (
-        <Typography variant="body2" color="error" sx={{ mb: 1, textAlign: "center" }}>
+        <Typography variant="body2" color="error" sx={{ mb: 1, textAlign: "center" }} >
           {error}
         </Typography>
       )}
 
       <Box className="foraria-call-room-body">
         <Paper className="foraria-call-room-video" elevation={0}>
-          <Typography variant="body2" color="common.white" sx={{ mb: 2, opacity: 0.9 }}>
+          <Typography variant="body2" color="common.white" sx={{ mb: 2, opacity: 0.9 }} >
             Videollamada en curso.
           </Typography>
 
           <Box className="foraria-call-room-video-grid">
             <Box className="foraria-call-room-video-tile">
-              <video
-                ref={localVideoRef}
-                autoPlay
-                playsInline
-                muted
-                className="foraria-call-video-element"
-              />
+              <video ref={localVideoRef} autoPlay playsInline muted className="foraria-call-video-element" />
               <Typography variant="caption" sx={{ mt: 0.5, opacity: 0.9 }}>
                 Vos
               </Typography>
@@ -527,22 +538,13 @@ export default function CallRoom() {
               .map((p) => {
                 const name = `Participante #${p.userId}`;
                 return (
-                  <Box
-                    key={p.id}
-                    className={ "foraria-call-room-video-tile" +
-                      (!p.isCameraOn ? " foraria-call-room-video-tile--off" : "")}
-                  >
-                    <video
-                      ref={setRemoteVideoRef(p.userId)}
-                      autoPlay
-                      playsInline
-                      className="foraria-call-video-element"
-                    />
-                    <Typography variant="caption" sx={{ mt: 0.5, opacity: 0.9 }}>
+                  <Box key={p.id} className={ "foraria-call-room-video-tile" + (p.isCameraOn === false ? " foraria-call-room-video-tile--off" : "")}>
+                    <video ref={setRemoteVideoRef(p.userId)} autoPlay playsInline className="foraria-call-video-element"/>
+                    <Typography variant="caption" sx={{ mt: 0.5, opacity: 0.9 }} >
                       {name}
                     </Typography>
-                    {!p.isCameraOn && (
-                      <Typography variant="caption" sx={{ mt: 0.25, opacity: 0.7 }} >
+                    {p.isCameraOn === false && (
+                      <Typography variant="caption" sx={{ mt: 0.25, opacity: 0.7 }}>
                         Cámara apagada
                       </Typography>
                     )}
@@ -551,18 +553,17 @@ export default function CallRoom() {
               })}
           </Box>
 
-          <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ mt: 3 }} >
+          <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ mt: 3 }}>
             <Tooltip title={micOn ? "Silenciar" : "Activar micrófono"}>
-              <IconButton onClick={() => setMicOn((m) => !m)}
+              <IconButton
+                onClick={() => setMicOn((m) => !m)}
                 className={"foraria-call-control-btn" + (!micOn ? " foraria-call-control-btn--off" : "")}>
                 {micOn ? (<MicOutlinedIcon color="primary" />) : (<MicOffOutlinedIcon className="foraria-call-icon-off" />)}
               </IconButton>
             </Tooltip>
 
             <Tooltip title={camOn ? "Apagar cámara" : "Encender cámara"}>
-              <IconButton
-                onClick={() => setCamOn((c) => !c)}
-                className={"foraria-call-control-btn" + (!camOn ? " foraria-call-control-btn--off" : "")}>
+              <IconButton onClick={() => setCamOn((c) => !c)} className={"foraria-call-control-btn" + (!camOn ? " foraria-call-control-btn--off" : "")}>
                 {camOn ? (<VideocamOutlinedIcon color="primary" />) : (<VideocamOffOutlinedIcon className="foraria-call-icon-off" />)}
               </IconButton>
             </Tooltip>
@@ -603,7 +604,9 @@ export default function CallRoom() {
                 <Stack direction="row" spacing={1} alignItems="center">
                   <PersonOutlineIcon fontSize="small" />
                   <span>
-                    {p.userId === currentUserId ? "Vos" : `Usuario #${p.userId}`}
+                    {p.userId === currentUserId
+                      ? "Vos"
+                      : `Usuario #${p.userId}`}
                   </span>
                 </Stack>
 
@@ -643,13 +646,20 @@ export default function CallRoom() {
 
           <Box className="foraria-call-room-chat-list">
             {messages.length === 0 && (
-              <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontStyle: "italic" }}
+              >
                 Todavía no hay mensajes en el chat.
               </Typography>
             )}
 
             {messages.map((m) => (
-              <Box key={m.id} className="foraria-call-room-chat-message">
+              <Box
+                key={m.id}
+                className="foraria-call-room-chat-message"
+              >
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>
                   Usuario #{m.userId}{" "}
                   <span className="foraria-call-room-chat-time">
@@ -665,8 +675,22 @@ export default function CallRoom() {
           </Box>
 
           <form onSubmit={handleSendMessage}>
-            <TextField size="small"fullWidth variant="outlined" placeholder="Escribí un mensaje..." value={newMessage} onChange={(e) => setNewMessage(e.target.value)}/>
-            <Button type="submit" variant="contained" color="secondary" size="small" fullWidth sx={{ mt: 0.75 }}>
+            <TextField
+              size="small"
+              fullWidth
+              variant="outlined"
+              placeholder="Escribí un mensaje..."
+              value={newMessage}
+              onChange={(e) => setNewMessage(e.target.value)}
+            />
+            <Button
+              type="submit"
+              variant="contained"
+              color="secondary"
+              size="small"
+              fullWidth
+              sx={{ mt: 0.75 }}
+            >
               Enviar
             </Button>
           </form>

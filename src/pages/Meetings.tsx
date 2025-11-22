@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Typography, Stack, Button, Dialog, DialogContent, } from "@mui/material";
+import { Box, Typography, Stack, Button, Dialog, DialogContent,} from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import ArticleIcon from "@mui/icons-material/Article";
 import QueryBuilderIcon from "@mui/icons-material/QueryBuilder";
 import PersonIcon from "@mui/icons-material/Person";
@@ -9,7 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import PageHeader from "../components/SectionHeader";
 import InfoCard from "../components/InfoCard";
 import { ForariaStatusModal } from "../components/StatCardForms";
-import { getStats, Meeting, fetchMeetingsByConsortium, } from "../services/meetingService";
+import { getStats, Meeting, fetchMeetingsByConsortium,} from "../services/meetingService";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import "../styles/meetings.css";
@@ -37,7 +38,9 @@ export default function Meetings() {
   });
 
   const [callDialogOpen, setCallDialogOpen] = useState(false);
-  const [selectedMeetingForCall, setSelectedMeetingForCall] = useState<Meeting | null>(null);
+  const [selectedMeetingForCall, setSelectedMeetingForCall] =
+    useState<Meeting | null>(null);
+
   const navigate = useNavigate();
   const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
@@ -58,7 +61,7 @@ export default function Meetings() {
           setStatusModal({
             open: true,
             title: "Sin consorcio",
-            message: "No se encontró el consorcio asociado. Verificá tu sesión o configuración.",
+            message:"No se encontró el consorcio asociado. Verificá tu sesión o configuración.",
             variant: "error",
           });
           return;
@@ -105,13 +108,9 @@ export default function Meetings() {
   const handleJoinSuccess = (call: CallDto) => {
     if (!selectedMeetingForCall) return;
     setCallDialogOpen(false);
-
     const base = isAdminRoute ? `/admin/reuniones/${selectedMeetingForCall.id}` : `/reuniones/${selectedMeetingForCall.id}`;
-
     navigate(`${base}/llamada/${call.id}`, {
-      state: {
-        meetingId: selectedMeetingForCall.id,
-      },
+      state: { meetingId: selectedMeetingForCall.id,},
     });
   };
 
@@ -128,7 +127,7 @@ export default function Meetings() {
         title="Reuniones"
         actions={
           canManageMeetings ? (
-            <Button variant="contained" color="secondary" onClick={() => setOpenNewMeet(true)} >
+            <Button variant="contained" color="secondary" onClick={() => setOpenNewMeet(true)}>
               + Nueva reunión
             </Button>
           ) : undefined
@@ -137,9 +136,9 @@ export default function Meetings() {
         onSearchChange={(q) => console.log("Buscar:", q)}
         stats={[
           {
-            icon: <CalendarTodayIcon />,
-            title: "Programadas",
-            value: stats.scheduled,
+            icon: <CheckCircleOutlinedIcon />,
+            title: "Finalizadas",
+            value: stats.finished,
             color: "primary",
           },
           {
@@ -189,8 +188,8 @@ export default function Meetings() {
                   value: "",
                   icon: <CalendarTodayIcon />,
                 },
-                { label: m.duration, value: "", icon: <QueryBuilderIcon /> },
-                { label: m.location, value: "", icon: <VideocamIcon /> },
+                //{ label: m.duration, value: "", icon: <QueryBuilderIcon /> },
+                //{ label: m.location, value: "", icon: <VideocamIcon /> },
                 {
                   label: `${m.participants.length} participantes`,
                   value: "",
@@ -202,22 +201,21 @@ export default function Meetings() {
                 color: "secondary" as const,
               }))}
               showDivider
-              extraActions={[
-                {
-                  label: "Unirse",
-                  color: "secondary",
-                  variant: "contained",
-                  onClick: () => handleOpenJoinPreview(m),
-                  icon: <VideocamIcon />,
-                },
-              ]}
+              extraActions={
+                m.status === "finished" ? undefined : [{label: "Unirse", color: "secondary" as const, variant: "contained" as const, onClick: () => handleOpenJoinPreview(m), icon: <VideocamIcon />,},]
+              }
             />
           ))}
       </Stack>
 
       <ForariaStatusModal
         open={statusModal.open}
-        onClose={() => setStatusModal((prev) => ({ ...prev, open: false,})) }
+        onClose={() =>
+          setStatusModal((prev) => ({
+            ...prev,
+            open: false,
+          }))
+        }
         variant={statusModal.variant}
         title={statusModal.title}
         message={statusModal.message}
