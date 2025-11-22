@@ -35,7 +35,7 @@ export interface CallMessageDto {
   id: number;
   userId: number;
   message: string;
-  sentAt: string;
+  sentAt: Date;
 }
 
 export interface CallStateDto {
@@ -62,7 +62,7 @@ export const callService = {
   join: (callId: number, userId: number) =>
     api.post(`/calls/${callId}/join`, { userId }),
 
-  end: (callId: number) => api.post(`/api/calls/${callId}/end`),
+  end: (callId: number) => api.post(`/calls/${callId}/end`),
 
   getDetails: (callId: number) =>
     api.get<CallDto>(`/calls/${callId}`).then((r) => r.data),
