@@ -5,7 +5,7 @@ import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import ArticleIcon from "@mui/icons-material/Article";
 import QueryBuilderIcon from "@mui/icons-material/QueryBuilder";
 import PersonIcon from "@mui/icons-material/Person";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import PageHeader from "../components/SectionHeader";
 import InfoCard from "../components/InfoCard";
 import { ForariaStatusModal } from "../components/StatCardForms";
@@ -22,10 +22,8 @@ type TabKey = "todas" | "actives" | "finalizada";
 export default function Meetings() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState<boolean>(false);
-
   const [tab, setTab] = useState<TabKey>("todas");
   const [openNewMeet, setOpenNewMeet] = useState(false);
-
   const [statusModal, setStatusModal] = useState<{
     open: boolean;
     title: string;
@@ -39,11 +37,10 @@ export default function Meetings() {
   });
 
   const [callDialogOpen, setCallDialogOpen] = useState(false);
-  const [selectedMeetingForCall, setSelectedMeetingForCall] =
-    useState<Meeting | null>(null);
-
+  const [selectedMeetingForCall, setSelectedMeetingForCall] = useState<Meeting | null>(null);
   const navigate = useNavigate();
-
+  const location = useLocation();
+  const isAdminRoute = location.pathname.startsWith("/admin");
   const userRole = storage.role ?? "";
   const canManageMeetings = [Role.ADMIN, Role.CONSORCIO].includes(
     userRole as Role
@@ -107,8 +104,11 @@ export default function Meetings() {
 
   const handleJoinSuccess = (call: CallDto) => {
     if (!selectedMeetingForCall) return;
+    setCallDialogOpen(false);
 
-    navigate(`/reuniones/${selectedMeetingForCall.id}/llamada/${call.id}`, {
+    const base = isAdminRoute ? `/admin/reuniones/${selectedMeetingForCall.id}` : `/reuniones/${selectedMeetingForCall.id}`;
+
+    navigate(`${base}/llamada/${call.id}`, {
       state: {
         meetingId: selectedMeetingForCall.id,
       },

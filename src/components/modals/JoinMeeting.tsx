@@ -128,8 +128,7 @@ export default function CallDialog({
 
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
-      <DialogTitle
-        sx={{display: "flex", alignItems: "center", justifyContent: "space-between", pr: 1, }} >
+      <DialogTitle component="div" sx={{display: "flex", alignItems: "center", justifyContent: "space-between", pr: 1, }} >
         <Typography variant="h6">
           Unirse a la reunión{meeting ? `: ${meeting.title}` : ""}
         </Typography>
