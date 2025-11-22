@@ -23,13 +23,6 @@ interface RouteParams extends Record<string, string | undefined> {
 
 const HUB_URL = "https://localhost:7245/callhub";
 
-function normalizeParticipants(list: CallParticipantDto[] | undefined) {
-  return (list ?? []).map((p) => ({
-    ...p,
-    isConnected: p.leftAt ? false : p.isConnected ?? true,
-  }));
-}
-
 export default function CallRoom() {
   const { meetingId, callId } = useParams<RouteParams>();
   const navigate = useNavigate();
@@ -68,6 +61,14 @@ export default function CallRoom() {
         }
       }
     };
+    const orderedMessages = useMemo(() => {
+      return [...messages].sort((a, b) => {
+        const da = new Date(a.sentAt).getTime();
+        const db = new Date(b.sentAt).getTime();
+        return da - db; // primero los más viejos
+      });
+    }, [messages]);
+
 
   useEffect(() => {
     if (!numericCallId || Number.isNaN(numericCallId)) {
@@ -78,46 +79,30 @@ export default function CallRoom() {
 
     let cancelled = false;
 
-    const loadInitial = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+const loadInitial = async () => {
+  try {
+    setLoading(true);
+    setError(null);
+    const [callDetails, state] = await Promise.all([
+      callService.getDetails(numericCallId),
+      callService.getState(numericCallId),
+    ]);
 
-        const [callDetails, state] = await Promise.all([
-          callService.getDetails(numericCallId),
-          callService.getState(numericCallId),
-        ]);
+    if (cancelled) return;
 
-        if (cancelled) return;
-
-        setCall(callDetails);
-        setParticipants(normalizeParticipants(state.participants));
-        setMessages(state.messages ?? []);
-      } catch (e) {
-        console.error(e);
-        if (!cancelled) setError("No se pudo cargar la llamada.");
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    };
+    setCall(callDetails);
+    setMessages(state.messages ?? []);
+  } catch (e) {
+    console.error(e);
+    if (!cancelled) setError("No se pudo cargar la llamada.");
+  } finally {
+    if (!cancelled) setLoading(false);
+  }
+};
 
     loadInitial();
-
-    const interval = window.setInterval(() => {
-      callService
-        .getState(numericCallId)
-        .then((state) => {
-          if (!cancelled) {
-            setParticipants(normalizeParticipants(state.participants));
-            setMessages(state.messages ?? []);
-          }
-        })
-        .catch((e) => console.error(e));
-    }, 5000);
-
     return () => {
       cancelled = true;
-      window.clearInterval(interval);
     };
   }, [numericCallId]);
 
@@ -216,37 +201,36 @@ export default function CallRoom() {
     if (!connected) return;
     if (!numericCallId) return;
 
-    const handleCurrentParticipants = (
-      payload: { connectionId: string; userId: number }[]
-    ) => {
-      console.log("📥 CurrentParticipants:", payload);
-      setParticipants((prev) => {
-        const map = new Map<number, CallParticipantDto>();
-        prev.forEach((p) => {
-          if (p.isConnected) {
-            map.set(p.userId, p);
-          }
-        });
+   const handleCurrentParticipants = (
+  payload: { connectionId: string; userId: number }[]
+) => {
+  console.log("📥 CurrentParticipants:", payload);
 
-        payload.forEach((u) => {
-          connectionUsersRef.current.set(u.connectionId, u.userId);
-          const existing = map.get(u.userId);
-          const updated: CallParticipantDto = {
-            id: existing?.id ?? Math.random(),
-            userId: u.userId,
-            isCameraOn: existing?.isCameraOn ?? true,
-            isMuted: existing?.isMuted ?? true,
-            isConnected: true,
-            joinedAt:
-              (existing as any)?.joinedAt ?? new Date().toISOString(),
-          };
+  setParticipants((prev) => {
+    const prevByUser = new Map<number, CallParticipantDto>();
+    prev.forEach((p) => prevByUser.set(p.userId, p));
 
-          map.set(u.userId, updated);
-        });
+    const map = new Map<number, CallParticipantDto>();
 
-        return Array.from(map.values());
+    payload.forEach((u) => {
+      connectionUsersRef.current.set(u.connectionId, u.userId);
+
+      const existing = prevByUser.get(u.userId);
+      map.set(u.userId, {
+        id: existing?.id ?? Math.random(),
+        userId: u.userId,
+        isCameraOn: existing?.isCameraOn ?? true,
+        isMuted: existing?.isMuted ?? true,
+        isConnected: true,
+        joinedAt: existing?.joinedAt ?? new Date().toISOString(),
       });
-    };
+    });
+
+    // 🔥 Sólo devolvemos lo que vino en CurrentParticipants
+    return Array.from(map.values());
+  });
+};
+
 
     const handleUserJoined = (payload: {
       userId: number;
@@ -339,13 +323,12 @@ export default function CallRoom() {
     const handleReceiveOffer = async (payload: {
       from: string;
       offer: any;
+      fromUserId?: number;
     }) => {
       console.log("ReceiveOffer:", payload);
-
-      const remoteUserId = connectionUsersRef.current.get(payload.from);
-      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
+      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
-
       try {
         await rtcRef.current.receiveOffer(remoteUserId, payload.offer);
       } catch (e) {
@@ -353,17 +336,15 @@ export default function CallRoom() {
       }
     };
 
-    const handleReceiveAnswer = async (payload: {
+      const handleReceiveAnswer = async (payload: {
       from: string;
       answer: any;
+      fromUserId?: number;
     }) => {
       console.log("ReceiveAnswer:", payload);
-
-      const remoteUserId = connectionUsersRef.current.get(payload.from);
-      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
-
+      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
-
       try {
         await rtcRef.current.receiveAnswer(remoteUserId, payload.answer);
       } catch (e) {
@@ -374,19 +355,14 @@ export default function CallRoom() {
     const handleReceiveIceCandidate = async (payload: {
       from: string;
       candidate: any;
+      fromUserId?: number;
     }) => {
-      console.log("❄ ReceiveIceCandidate:", payload);
-
-      const remoteUserId = connectionUsersRef.current.get(payload.from);
-      console.log("➡ from connectionId mapeado a userId:", remoteUserId);
-
+      console.log("ReceiveIceCandidate:", payload);
+      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
-
       try {
-        await rtcRef.current.receiveIceCandidate(
-          remoteUserId,
-          payload.candidate
-        );
+        await rtcRef.current.receiveIceCandidate(remoteUserId, payload.candidate);
       } catch (e) {
         console.error("Error al procesar ICE:", e);
       }
@@ -655,7 +631,7 @@ export default function CallRoom() {
               </Typography>
             )}
 
-            {messages.map((m) => (
+            {orderedMessages.map((m) => (
               <Box
                 key={m.id}
                 className="foraria-call-room-chat-message"
