@@ -31,7 +31,7 @@ const Claims: React.FC = () => {
   const [openAcceptId, setOpenAcceptId] = useState<number | null>(null);
   const [openRejectId, setOpenRejectId] = useState<number | null>(null);
 
-  const API_BASE = (process.env.REACT_APP_API_URL?.replace(/\/+$/,"") || "https://localhost:7245");
+  const API_BASE = (process.env.REACT_APP_API_URL?.replace(/\/+$/,"") || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net");
   const userRole = storage.role ?? "";
   const canManageClaims = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
 

@@ -36,7 +36,7 @@ export default function ClaimForm({ onSuccess, onCancel }: ClaimFormProps) {
   });
 
   const { mutate, loading, error } = useMutation(
-    "https://localhost:7245/api/Claim",
+    "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Claim",
     "post"
   );
 
