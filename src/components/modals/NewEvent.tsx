@@ -45,9 +45,9 @@ export default function ClaimForm() {
             onChange={(e) => {}}
             className="foraria-form-input"
           >
-            <MenuItem value="Pileta">Mantenimiento</MenuItem>
-            <MenuItem value="SUM">Servicio</MenuItem>
-            <MenuItem value="Parilla">Administracion</MenuItem>
+            <MenuItem value="Mantenimiento">Mantenimiento</MenuItem>
+            <MenuItem value="Servicio">Servicio</MenuItem>
+            <MenuItem value="Administracion">Administracion</MenuItem>
           </TextField>
         </div>
         <div className="foraria-form-group group-size">
@@ -58,9 +58,9 @@ export default function ClaimForm() {
             onChange={(e) => {}}
             className="foraria-form-input"
           >
-            <MenuItem value="Pileta">Factura</MenuItem>
-            <MenuItem value="SUM">Recibo</MenuItem>
-            <MenuItem value="Parilla">Presupuesto</MenuItem>
+            <MenuItem value="Factura">Factura</MenuItem>
+            <MenuItem value="Recibo">Recibo</MenuItem>
+            <MenuItem value="Presupuesto">Presupuesto</MenuItem>
           </TextField>
         </div>
         </div>
