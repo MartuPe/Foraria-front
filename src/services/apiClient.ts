@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // CORREGIR: Usar HTTPS y puerto 7245
-const BASE_URL = process.env.REACT_APP_API_URL || 'https://localhost:7245';
+const BASE_URL = process.env.REACT_APP_API_URL || 'https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net';
 
 console.log('🔗 Backend URL desde .env:', process.env.REACT_APP_API_URL);
 console.log('🔗 BASE_URL final:', BASE_URL);

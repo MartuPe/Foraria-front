@@ -30,7 +30,7 @@ type Invoice = {
   description?: string | null;
   filePath?: string | null;
 };
-const token = localStorage.getItem("accessToken");
+
 type ExpenseInner = {
   id: number;
   // description: string;
@@ -54,6 +54,7 @@ export default function ExpensesPage() {
   const [items, setItems] = useState<ExpenseDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  
   const [header, setHeader] = useState<{
     unidad: string;
     titular: string;
@@ -103,10 +104,11 @@ export default function ExpensesPage() {
     }
 
     const fetchDetails = async () => {
+        const token = localStorage.getItem("accessToken");
       setLoading(true);
       setLoadError(null);
       try {
-        const url = `https://localhost:7245/api/ExpenseDetail?id=${residenceId}`;
+        const url = `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/ExpenseDetail?id=${residenceId}`;
         const resp = await axios.get<ExpenseDetail[]>(url, { headers: { Authorization: `bearer ${token}` }});
         if (!mounted) return;
         const data = resp.data || [];
@@ -285,12 +287,14 @@ export default function ExpensesPage() {
 
     try {
       setLoadingPaymentFor(detail.id);
+        const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        `https://localhost:7245/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
+        `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
         { method: "POST" ,
           headers:  {Authorization: `bearer ${token}`} 
         }
       );
+      
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);

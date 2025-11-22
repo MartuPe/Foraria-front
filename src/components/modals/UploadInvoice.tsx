@@ -36,7 +36,8 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
   const [supplierAddress, setSupplierAddress] = useState<string | null>(null);
   const [description, setDescription] = useState("");
   const [ocrItems, setOcrItems] = useState<any[]>([]); // <--- guardamos items OCR
-const token = localStorage.getItem("accessToken");
+  const token = localStorage.getItem("accessToken");
+  const consortiumIdStorage = localStorage.getItem('consortiumId')
   const [files, setFiles] = useState<FileWithPreview[]>([]);
   const [ocrLoading, setOcrLoading] = useState(false);
   const [ocrError, setOcrError] = useState<string | null>(null);
@@ -60,7 +61,7 @@ const token = localStorage.getItem("accessToken");
     formData.append("file", file);
 
     try {
-      const { data } = await axios.post("https://localhost:7245/api/Ocr/process-invoice", formData, {
+      const { data } = await axios.post("https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Ocr/process-invoice", formData, {
         headers: { "Content-Type": "multipart/form-data", Authorization: `bearer ${token}` },
       });
 
@@ -168,7 +169,7 @@ const token = localStorage.getItem("accessToken");
         purchaseOrder: "",
         confidenceScore: 0,
         processedAt: new Date().toISOString(),
-        consortiumId,  
+        consortiumId: Number(consortiumIdStorage),  
         items: ocrItems.length > 0 ? ocrItems : [
           {
             description: description || "Factura",

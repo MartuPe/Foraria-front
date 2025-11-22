@@ -12,13 +12,16 @@ import { ThemeProvider } from '@mui/material/styles';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
-  <React.StrictMode>
     <ThemeProvider theme={theme}>  {}
       <App />
     </ThemeProvider>
-  </React.StrictMode>
 );
-
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register("/firebase-messaging-sw.js")
+    .then((reg) => console.log("SW registrado", reg))
+    .catch((err) => console.log("Error registrando SW:", err));
+}
 
 
 

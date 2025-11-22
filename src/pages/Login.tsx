@@ -51,7 +51,7 @@ const Login: React.FC = () => {
       const requires = res.requiresPasswordChange === true;
 
       // Verificar si debe actualizar información primero
-      if (requires && (role === Role.OWNER || role === Role.TENANT)) {
+      if (requires) {
         navigate("/actualizarInformacion");
         return;
       }

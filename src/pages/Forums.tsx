@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Box, Card, CardContent, Typography, Chip, Button, Stack, Dialog, DialogContent,
-  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton, Tabs, Tab,
+  CircularProgress, Avatar, TextField, Collapse, Divider, Paper, IconButton,
   DialogTitle, DialogActions
 } from "@mui/material";
 
@@ -11,7 +11,7 @@ import {
   TrendingUp as TrendingIcon, ThumbUp as ThumbUpIcon, ThumbDown as ThumbDownIcon,
   Reply as ReplyIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon,
   Send as SendIcon, VisibilityOutlined, PushPinOutlined, PushPin,
-  EditOutlined, DeleteOutline, FilterList as FilterListIcon,
+  EditOutlined, DeleteOutline,
   LockOutlined
 } from "@mui/icons-material";
 
@@ -78,7 +78,32 @@ function toSlug(text: string) {
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
 }
+function toCategorySlug(text: string): string {
+  const normalized = text.toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+  
+ 
+  const categoryMap: Record<string, string> = {
+    "garage y parking": "garage-parking",
+    "espacios comunes": "espacios-comunes",
+    "administración": "administracion",
+    "administracion": "administracion",
+    "seguridad": "seguridad",
+    "mantenimiento": "mantenimiento",
+    "general": "general",
+    "todas": "todas"
+  };
 
+  if (categoryMap[normalized]) {
+    return categoryMap[normalized];
+  }
+  
+
+  return normalized
+    .replace(/\s+/g, "-")
+    .replace(/[^a-z0-9-]/g, "");
+}
 const ADMIN_TAB_COLORS: Record<string, string> = {
   Todas: "#666666",
   General: "#1472c4ff",
@@ -137,7 +162,7 @@ const Forums: React.FC = () => {
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
   const API_BASE =
-    process.env.REACT_APP_API_URL || "https://localhost:7245/api";
+    process.env.REACT_APP_API_URL || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api";
 
   // Modal de estado general (éxito / error)
   const [statusModal, setStatusModal] = useState<{
@@ -208,39 +233,32 @@ const Forums: React.FC = () => {
     "Todas";
   const setAdminCategory = (cat: string) => setSearchParams({ category: cat });
 
-  const currentCategoryName = useMemo(() => {
-    if (!forumsRaw) {
-      switch (isAdmin ? adminCategory : slugFromPath) {
-        case "administracion":
-        case "Administración":
-          return "Administración";
-        case "seguridad":
-        case "Seguridad":
-          return "Seguridad";
-        case "mantenimiento":
-        case "Mantenimiento":
-          return "Mantenimiento";
-        case "espacios-comunes":
-        case "Espacios Comunes":
-          return "Espacios Comunes";
-        case "garage-parking":
-        case "Garage y Parking":
-          return "Garage y Parking";
-        case "Todas":
-          return "Todas";
-        default:
-          return "General";
-      }
-    }
-    const key = isAdmin ? adminCategory : slugFromPath;
-    if (key === "Todas") return "Todas";
-    const found = forumsRaw.find(
-      (f) => toSlug(f.categoryName) === toSlug(key)
-    );
-    return found?.categoryName ?? "General";
-  }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
+ const currentCategoryName = useMemo(() => {
+  if (!forumsRaw) {
+ 
+    const key = (isAdmin ? adminCategory : slugFromPath).toLowerCase();
+    
+  
+    if (key === "todas") return "Todas";
+    if (key === "general") return "General";
+    if (key.includes("administracion") || key === "administracion") return "Administración";
+    if (key.includes("seguridad")) return "Seguridad";
+    if (key.includes("mantenimiento")) return "Mantenimiento";
+    if (key.includes("espacios") || key === "espacios-comunes") return "Espacios Comunes";
+    if (key.includes("garage") || key === "garage-parking" || key === "garage-y-parking") return "Garage y Parking";
+    
+    return "General";
+  }
+  
+  const key = isAdmin ? adminCategory : slugFromPath;
+  if (key === "Todas") return "Todas";
+  
+  const found = forumsRaw.find(
+    (f) => toSlug(f.categoryName) === toSlug(key) || toCategorySlug(f.categoryName) === toCategorySlug(key)
+  );
+  return found?.categoryName ?? "General";
+}, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
 
-  // ids de foros para la categoría actual
   const forumIdsForCategory = useMemo(() => {
     if (!forumsRaw) return new Set<number>();
     if (isAdmin && adminCategory === "Todas") {
@@ -254,7 +272,7 @@ const Forums: React.FC = () => {
     );
   }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
 
-  // forumId resuelto para crear post
+
   const resolvedForumId = useMemo(() => {
     if (!forumsRaw) return null;
     if (isAdmin && adminCategory === "Todas")
@@ -266,14 +284,14 @@ const Forums: React.FC = () => {
     return found ? found.id : null;
   }, [forumsRaw, isAdmin, adminCategory, currentCategoryName]);
 
-  // threads filtrados por categoría actual
+
   const postsRaw = useMemo(() => {
     if (!threadsRaw) return [];
     if (!forumsRaw) return threadsRaw;
     return threadsRaw.filter((t) => forumIdsForCategory.has(t.forumId ?? -1));
   }, [threadsRaw, forumsRaw, forumIdsForCategory]);
 
-  // Stats del foro
+
   useEffect(() => {
     let mounted = true;
     if (!resolvedForumId) {
@@ -309,7 +327,7 @@ const Forums: React.FC = () => {
 })();
   }, [resolvedForumId, API_BASE]);
 
-  // Reacciones + mensajes por thread
+ 
   useEffect(() => {
     if (!postsRaw || postsRaw.length === 0) {
       setEnriched({});
@@ -381,7 +399,7 @@ const Forums: React.FC = () => {
     return () => { mounted = false; controllers.forEach(c => c.abort()); };
   }, [postsRaw, API_BASE]);
 
-  // Proyección de posts para UI
+  
   const posts = useMemo(() => {
     if (!postsRaw) return [];
     return postsRaw.map((p) => ({
@@ -408,7 +426,7 @@ const Forums: React.FC = () => {
     }));
   }, [postsRaw, forumsRaw]);
 
-  // KPIs
+  
   const computedStats = useMemo(() => {
     const totalPosts = posts.length;
     const activeUsers =
@@ -432,17 +450,17 @@ const Forums: React.FC = () => {
     [forumStats, computedStats]
   );
 
-  // Reacciones / respuestas
+
   const [expandedThreads, setExpandedThreads] = useState<Set<number>>(
     new Set()
   );
   const [replyText, setReplyText] = useState<Record<number, string>>({});
   const [sendingReply, setSendingReply] = useState<number | null>(null);
 
-  // edición de mensajes individuales
+
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
 
-  // edición de threads
+
   const [editOpen, setEditOpen] = useState(false);
   const [threadBeingEdited, setThreadBeingEdited] = useState<{
     id: number;
@@ -1465,143 +1483,67 @@ if (!res.ok) throw new Error("Error al crear mensaje");
       </Card>
     );
   };
-
+console.log(currentCategoryName)
   const currentTabKey = isAdmin ? adminCategory : currentCategoryName;
 
   return (
     <Box className="foraria-page-container" sx={{ ml: 0 }}>
       <PageHeader
-        title={`Foro ${currentCategoryName !== "Todas" ? `- ${currentCategoryName}` : ""}`}
-        actions={
-          <Button
-            variant="contained"
-            color="secondary"
-            startIcon={<AddIcon />}
-            onClick={() => setOpen(true)}
-            sx={{ borderRadius: 999, fontWeight: 600 }}
-          >
-            Nuevo Post
-          </Button>
-        }
-      />
+  title={`Foro ${currentCategoryName !== "Todas" ? `- ${currentCategoryName}` : ""}`}
+  actions={
+    <Button
+      variant="contained"
+      color="secondary"
+      startIcon={<AddIcon />}
+      onClick={() => setOpen(true)}
+      sx={{ borderRadius: 999, fontWeight: 600 }}
+    >
+      Nuevo Post
+    </Button>
+  }
+  stats={[
+    {
+      icon: <ChatIcon color="action" />,
+      title: "Posts Totales",
+      value: String(headerStats.totalPosts),
+      color: "primary",
+    },
+    {
+      icon: <GroupsIcon color="action" />,
+      title: "Participantes",
+      value: String(headerStats.activeUsers),
+      color: "success",
+    },
+    {
+      icon: <TrendingIcon color="action" />,
+      title: "Respuestas",
+      value: String(headerStats.totalResponses),
+      color: "secondary",
+    },
+  ]}
+  tabs={
+    isAdmin
+      ? [
+          { label: "Todas", value: "Todas" },
+          ...CATEGORY_LABELS.map((c) => ({ label: c, value: c })),
+        ]
+      : CATEGORY_LABELS.map((c) => ({ label: c, value: c }))
+  }
+  selectedTab={currentTabKey}
+  onTabChange={(v) => {
+  console.log("🔍 Tab clicked:", v);
+  console.log("🔍 Generated slug:", toCategorySlug(v));
+  
+  if (isAdmin) {
+    setAdminCategory(v);
+  } else {
+    const slug = toCategorySlug(v);
+    console.log("🔍 Navigating to:", `/forums/${slug}`);
+    navigate(`/forums/${slug}`);
+  }
+}}
 
-      {/* KPIs */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        sx={{ mb: 2 }}
-      >
-        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <ChatIcon color="primary" />
-              <Box>
-                <Typography variant="overline" color="text.secondary">
-                  Posts Totales
-                </Typography>
-                <Typography variant="h6">
-                  {headerStats.totalPosts}
-                </Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <GroupsIcon color="success" />
-              <Box>
-                <Typography variant="overline" color="text.secondary">
-                  Participantes
-                </Typography>
-                <Typography variant="h6" color="success.main">
-                  {headerStats.activeUsers}
-                </Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-        <Card variant="outlined" sx={{ flex: 1, borderRadius: 2 }}>
-          <CardContent>
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <TrendingIcon color="secondary" />
-              <Box>
-                <Typography variant="overline" color="text.secondary">
-                  Respuestas
-                </Typography>
-                <Typography variant="h6" color="secondary.main">
-                  {headerStats.totalResponses}
-                </Typography>
-              </Box>
-            </Stack>
-          </CardContent>
-        </Card>
-      </Stack>
-
-      {/* Filtros */}
-      <Paper
-        elevation={0}
-        variant="outlined"
-        sx={{ p: 2, borderRadius: 2, mb: 2 }}
-      >
-        <Stack
-          direction="row"
-          alignItems="center"
-          gap={1}
-          sx={{ mb: 1.5 }}
-        >
-          <FilterListIcon color="primary" sx={{ fontSize: 20 }} />
-          <Typography
-            variant="subtitle1"
-            color="primary"
-            sx={{ fontWeight: 600 }}
-          >
-            Filtros
-          </Typography>
-        </Stack>
-        <Tabs
-          value={currentTabKey}
-          onChange={(_, v) => {
-            if (isAdmin) setAdminCategory(v);
-            else {
-              const slug = toSlug(v);
-              navigate(`/forums/${slug}`);
-            }
-          }}
-          variant="scrollable"
-          scrollButtons="auto"
-          sx={{
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 600,
-              minHeight: 36,
-              px: 2,
-              mr: 1,
-              border: "1px solid",
-              borderColor: "divider",
-              borderRadius: 2,
-              color: "text.primary",
-              "&:hover": { backgroundColor: "action.hover" },
-            },
-            "& .Mui-selected": {
-              color: "white !important",
-              backgroundColor: (t) =>
-                ADMIN_TAB_COLORS[currentTabKey] ||
-                t.palette.primary.main,
-              borderColor: (t) =>
-                ADMIN_TAB_COLORS[currentTabKey] ||
-                t.palette.primary.main,
-              boxShadow: "0 2px 8px rgba(8,61,119,0.25)",
-            },
-            "& .MuiTabs-indicator": { display: "none" },
-          }}
-        >
-          {isAdmin && <Tab label="Todas" value="Todas" />}
-          {CATEGORY_LABELS.map((c) => (
-            <Tab key={c} label={c} value={c} />
-          ))}
-        </Tabs>
-      </Paper>
+/>
 
       {loading && (
         <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
@@ -1661,6 +1603,7 @@ if (!res.ok) throw new Error("Error al crear mensaje");
           <Typography variant="h5" color="text.primary" gutterBottom>
             No hay posts en {currentCategoryName}
           </Typography>
+          
           <Typography
             variant="body1"
             color="text.secondary"
@@ -1688,7 +1631,7 @@ if (!res.ok) throw new Error("Error al crear mensaje");
       {!loading && !loadError && posts.length > 0 && (
         <Stack spacing={2}>{posts.map(renderThread)}</Stack>
       )}
-
+     
       {/* Dialog para crear nuevo post */}
       <Dialog
         open={open}

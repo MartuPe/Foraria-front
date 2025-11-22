@@ -36,7 +36,7 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
   const [day, setDay] = React.useState<string>(date ? toInputDate(date) : "");
   const [time, setTime] = React.useState<string | null>(null);
   const [pressedTime, setPressedTime] = React.useState<string | null>(null); // efecto visual
-
+  const consortiumId = localStorage.getItem("consortiumId");
   const [errors, setErrors] = React.useState<FormErrors>({});
 
   const [dialog, setDialog] = React.useState<{
@@ -49,7 +49,9 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
     message: "",
   });
 
-  const { data: reservas, loading: loadingReservas } = useGet("/Reserve");
+const urlReserveConsortium = `/Reserve/${consortiumId}`;
+
+  const { data: reservas, loading: loadingReservas } = useGet(urlReserveConsortium);
   const { mutate: crearReserva, loading: creando } = useMutation("/Reserve", "post");
 
   const isPastDate = React.useMemo(() => {
@@ -61,17 +63,44 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
   }, [day]);
 
   const horariosOcupados = React.useMemo(() => {
-    if (!reservas || !Array.isArray(reservas) || !area || !day) return [];
-    return reservas
-      .filter((r: any) => r.place_id === getPlaceId(area))
-      .map((r: any) => {
-        const dateObj = new Date(r.createdAt);
-        const rDay = toInputDate(dateObj);
-        const rTime = dateObj.toTimeString().slice(0, 5);
-        return rDay === day ? rTime : null;
-      })
-      .filter(Boolean) as string[];
-  }, [reservas, area, day]);
+  if (!reservas || !Array.isArray(reservas) || !area || !day) return [];
+
+  const placeId = getPlaceId(area);
+  if (!placeId) return [];
+
+  const occupied = reservas
+    .map((r: any) => {
+      // Usar el campo que realmente envía tu backend en reservas del calendario
+      // Cambia 'dateReserve' por el nombre correcto si es otro
+      const dateStr = r.dateReserve ?? null;
+      if (!dateStr) return null;
+
+      // Parsear la ISO y normalizar a la fecha local (sin hora)
+      const d = new Date(dateStr);
+      if (Number.isNaN(d.getTime())) return null;
+
+      // comprobar lugar
+      if (Number(r.place_id) !== placeId) return null;
+
+      // formatear a "YYYY-MM-DD" para comparar con el input date
+      const rDay =
+        d.getFullYear() +
+        "-" +
+        String(d.getMonth() + 1).padStart(2, "0") +
+        "-" +
+        String(d.getDate()).padStart(2, "0");
+
+      if (rDay !== day) return null;
+
+      // Obtener hora en formato "HH:MM"
+      const rTime = d.toTimeString().slice(0, 5);
+      return rTime;
+    })
+    .filter(Boolean) as string[];
+
+  // devolver únicos y ordenados
+  return Array.from(new Set(occupied)).sort();
+}, [reservas, area, day]);
 
   React.useEffect(() => {
     setTime(null);
@@ -144,6 +173,8 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
       case "Pileta": return 1;
       case "SUM": return 2;
       case "Parrilla": return 3;
+      case "Gimnasio": return 4;
+      case "Terraza": return 5;
       default: return 0;
     }
   }
@@ -192,6 +223,8 @@ export default function NewReserve({ date, onCancel, onConfirm }: NewReserveProp
               <MenuItem value="Pileta">Pileta</MenuItem>
               <MenuItem value="SUM">SUM</MenuItem>
               <MenuItem value="Parrilla">Parrilla</MenuItem>
+              <MenuItem value="Gimnasio">Gimnasio</MenuItem>
+              <MenuItem value="Terraza">Terraza</MenuItem>
             </TextField>
           </Stack>
 

@@ -56,7 +56,7 @@ export default function NewDocument({ onSuccess, onCancel }: NewDocumentProps) {
     
     try {
       // TODO: Ajustar endpoint de upload según backend
-      const response = await fetch('https://localhost:7245/api/Upload', {
+      const response = await fetch('https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Upload', {
         method: 'POST',
         body: formData,
         headers: {
@@ -74,7 +74,7 @@ export default function NewDocument({ onSuccess, onCancel }: NewDocumentProps) {
     } catch (err) {
       console.error("Error uploading file:", err);
       // 🔧 FALLBACK: Si no hay endpoint de upload, usar URL temporal
-      return `https://localhost:7245/uploads/${file.name}`;
+      return `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/uploads/${file.name}`;
     }
   };
 

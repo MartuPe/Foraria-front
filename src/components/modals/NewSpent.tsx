@@ -88,9 +88,11 @@ const onDrop = (acceptedFiles: File[]) => {
             onChange={(e) => {}}
             className="foraria-form-input"
           >
-            <MenuItem value="Pileta">Mantenimiento</MenuItem>
-            <MenuItem value="SUM">Servicio</MenuItem>
-            <MenuItem value="Parilla">Administracion</MenuItem>
+              <MenuItem value="Pileta">Pileta</MenuItem>
+              <MenuItem value="SUM">SUM</MenuItem>
+              <MenuItem value="Parrilla">Parrilla</MenuItem>
+              <MenuItem value="Gimnasio">Gimnasio</MenuItem>
+              <MenuItem value="Terraza">Terraza</MenuItem>
           </TextField>
         </div>
         <div className="foraria-form-group group-size">
@@ -101,9 +103,9 @@ const onDrop = (acceptedFiles: File[]) => {
             onChange={(e) => {}}
             className="foraria-form-input"
           >
-            <MenuItem value="Pileta">Factura</MenuItem>
-            <MenuItem value="SUM">Recibo</MenuItem>
-            <MenuItem value="Parilla">Presupuesto</MenuItem>
+            <MenuItem value="Factura">Factura</MenuItem>
+            <MenuItem value="Recibo">Recibo</MenuItem>
+            <MenuItem value="Presupuesto">Presupuesto</MenuItem>
           </TextField>
         </div>
         </div>
