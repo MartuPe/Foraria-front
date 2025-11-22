@@ -169,7 +169,7 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
         purchaseOrder: "",
         confidenceScore: 0,
         processedAt: new Date().toISOString(),
-        consortiumId: consortiumIdStorage,  
+        consortiumId: Number(consortiumIdStorage),  
         items: ocrItems.length > 0 ? ocrItems : [
           {
             description: description || "Factura",
