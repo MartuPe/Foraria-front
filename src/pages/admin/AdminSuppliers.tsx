@@ -9,25 +9,18 @@ import {
   DialogContent,
   Snackbar,
   Alert,
-  TextField,
-  MenuItem,
-  InputAdornment,
   Pagination,
   Box,
-  Select,
-  Paper
+  Paper,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-import SortIcon from "@mui/icons-material/Sort";
 import { supplierService, Supplier } from "../../services/supplierService";
 import NewSupplier from "../../components/modals/NewSupplier";
 import SupplierDetail from "../../components/modals/SupplierDetail";
 import PageHeader from "../../components/SectionHeader";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
 import AddOutlined from "@mui/icons-material/AddOutlined";
-import InventoryIcon from "@mui/icons-material/Inventory";
-import PeopleIcon from "@mui/icons-material/People";
 import BusinessIcon from "@mui/icons-material/Business";
 
 const CATEGORIES = ["Mantenimiento", "Limpieza", "Seguridad", "Jardinería"] as const;
@@ -43,8 +36,6 @@ export default function Suppliers() {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toDeleteId, setToDeleteId] = useState<number | null>(null);
-  const [totalSuppliers] = useState<number>(0);
-  const [activeSuppliers] = useState<number>(0);
   const consortiumId = Number(localStorage.getItem("consortiumId"));
 
   const [snack, setSnack] = useState({
@@ -62,7 +53,7 @@ export default function Suppliers() {
 
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
-  const [category, setCategory] = useState("");
+  const [category, setCategory] = useState<string>(""); // "" = Todos
   const [sort, setSort] = useState<SortKey>("nameAsc");
   const [page, setPage] = useState(1);
   const pageSize = 6;
@@ -73,28 +64,32 @@ export default function Suppliers() {
   }, [q]);
 
   const fetchSuppliers = useCallback(async () => {
-     setLoading(true);
-     setLoadError(null);
-     try {
-       const data = await supplierService.getAll(consortiumId);
+    setLoading(true);
+    setLoadError(null);
+    try {
+      const data = await supplierService.getAll(consortiumId);
 
-       if (!Array.isArray(data)) {
-         setLoadError("Respuesta inesperada del servidor");
-         setSuppliers([]);
-       } else {
-         setSuppliers(data);
-       }
-     } catch (err: any) {
-       const message = err?.response?.data?.error || err.message?.toString() || "Error inesperado";
-       if (String(message).includes("404") || String(message).toLowerCase().includes("not found")) {
-         setSuppliers([]);
-       } else {
-         setLoadError("No se pudieron cargar los proveedores");
-       }
-     } finally {
-       setLoading(false);
-     }
-   }, [consortiumId]);
+      if (!Array.isArray(data)) {
+        setLoadError("Respuesta inesperada del servidor");
+        setSuppliers([]);
+      } else {
+        setSuppliers(data);
+      }
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.error || err.message?.toString() || "Error inesperado";
+      if (
+        String(message).includes("404") ||
+        String(message).toLowerCase().includes("not found")
+      ) {
+        setSuppliers([]);
+      } else {
+        setLoadError("No se pudieron cargar los proveedores");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, [consortiumId]);
 
   useEffect(() => {
     fetchSuppliers();
@@ -127,8 +122,10 @@ export default function Suppliers() {
   const filtered = useMemo(() => {
     let list = suppliers;
 
+    // filtro por categoría (si hay)
     if (category) list = list.filter((s) => s.supplierCategory === category);
 
+    // filtro por texto
     if (qDebounced)
       list = list.filter((s) =>
         `${s.commercialName} ${s.businessName} ${s.email} ${s.phone} ${s.supplierCategory}`
@@ -149,7 +146,9 @@ export default function Suppliers() {
         case "dateOld":
           return byDate(a.registrationDate) - byDate(b.registrationDate);
         case "category":
-          return (a.supplierCategory ?? "").localeCompare(b.supplierCategory ?? "");
+          return (a.supplierCategory ?? "").localeCompare(
+            b.supplierCategory ?? ""
+          );
         default:
           return 0;
       }
@@ -160,6 +159,15 @@ export default function Suppliers() {
   useEffect(() => setPage(1), [qDebounced, category, sort]);
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  // Tabs para el PageHeader: igual que Reclamos, pero por categoría
+  const supplierTabs = useMemo(
+    () => [
+      { label: "Todos", value: "" },
+      ...CATEGORIES.map((c) => ({ label: c, value: c })),
+    ],
+    []
+  );
 
   return (
     <Box className="foraria-page-container">
@@ -178,10 +186,9 @@ export default function Suppliers() {
             Nuevo Proveedor
           </Button>
         }
-        stats={[
-          { icon: <InventoryIcon />, title: "Total Proveedores", value: totalSuppliers, color: "primary" },
-          { icon: <PeopleIcon />, title: "Activos", value: activeSuppliers, color: "success" },
-        ]}
+        tabs={supplierTabs}
+        selectedTab={category}                 // "" = Todos
+        onTabChange={(v) => setCategory(v as string)}
       />
 
       <Stack spacing={2}>
@@ -195,7 +202,9 @@ export default function Suppliers() {
           </Paper>
         ) : filtered.length === 0 ? (
           <Paper sx={{ p: 6, borderRadius: 3, textAlign: "center" }}>
-            <Typography variant="h6" color="text.secondary">No se encontraron proveedores</Typography>
+            <Typography variant="h6" color="text.secondary">
+              No se encontraron proveedores
+            </Typography>
           </Paper>
         ) : (
           paged.map((s) => (
@@ -224,7 +233,10 @@ export default function Suppliers() {
                   <Box>
                     <Typography
                       variant="h6"
-                      sx={{ cursor: "pointer", "&:hover": { textDecoration: "underline" } }}
+                      sx={{
+                        cursor: "pointer",
+                        "&:hover": { textDecoration: "underline" },
+                      }}
                       onClick={() => openDetailFor(s.id!)}
                     >
                       {s.commercialName}
@@ -238,10 +250,19 @@ export default function Suppliers() {
                   </Box>
 
                   <Stack direction="row" spacing={1}>
-                    <Button variant="outlined" startIcon={<VisibilityIcon />} onClick={() => openDetailFor(s.id!)}>
+                    <Button
+                      variant="outlined"
+                      startIcon={<VisibilityIcon />}
+                      onClick={() => openDetailFor(s.id!)}
+                    >
                       Ver
                     </Button>
-                    <Button variant="outlined" color="error" startIcon={<DeleteOutlineIcon />} onClick={() => askDelete(s.id!)}>
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      startIcon={<DeleteOutlineIcon />}
+                      onClick={() => askDelete(s.id!)}
+                    >
                       Eliminar
                     </Button>
                   </Stack>
@@ -254,7 +275,12 @@ export default function Suppliers() {
 
       {filtered.length > pageSize && (
         <Stack alignItems="center" mt={2}>
-          <Pagination count={totalPages} page={page} onChange={(_, p) => setPage(p)} shape="rounded" />
+          <Pagination
+            count={totalPages}
+            page={page}
+            onChange={(_, p) => setPage(p)}
+            shape="rounded"
+          />
         </Stack>
       )}
 
