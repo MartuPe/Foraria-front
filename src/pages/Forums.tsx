@@ -965,9 +965,6 @@ const Forums: React.FC = () => {
                     onClick={() => togglePinLocal(thread.threadId)}
                     sx={{ color: "warning.main" }}
                   >
-                    {meta.pinned ? (
-                    ) : (
-                    )}
                   </IconButton>
 
                   <IconButton
