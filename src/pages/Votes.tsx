@@ -661,7 +661,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
               </Stack>
             </Stack>
 
-            {isAdministrador && ( 
+          
               <Box>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
                   <Typography 
@@ -696,7 +696,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
                   }}
                 />
               </Box>
-            )}
+            
 
             {totalVotes > 0 && (isActive || isPending) && isAdministrador && recentParticipants.length > 0 && ( 
               <Stack direction="row" alignItems="center" spacing={2}>
