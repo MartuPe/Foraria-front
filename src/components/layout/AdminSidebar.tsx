@@ -50,7 +50,6 @@ const menuItems = [
 ];
 
 const forosSubMenu = [
-  { id: "foros-todas",            label: "Todas",            icon: <ForumsIcon />,         path: "/admin/foros?category=Todas" },
   { id: "foros-general",          label: "General",          icon: <ForumsIcon />,         path: "/admin/foros?category=General" },
   { id: "foros-administracion",   label: "Administración",   icon: <AdminPanelSettings />, path: "/admin/foros?category=Administración" },
   { id: "foros-seguridad",        label: "Seguridad",        icon: <Security />,           path: "/admin/foros?category=Seguridad" },
