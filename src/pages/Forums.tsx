@@ -10,9 +10,8 @@ import {
   Add as AddIcon, ChatBubbleOutline as ChatIcon, Groups as GroupsIcon,
   TrendingUp as TrendingIcon, ThumbUp as ThumbUpIcon, ThumbDown as ThumbDownIcon,
   Reply as ReplyIcon, ExpandMore as ExpandMoreIcon, ExpandLess as ExpandLessIcon,
-  Send as SendIcon, VisibilityOutlined, PushPinOutlined, PushPin,
+  Send as SendIcon,
   EditOutlined, DeleteOutline,
-  LockOutlined
 } from "@mui/icons-material";
 
 import PageHeader from "../components/SectionHeader";
@@ -960,7 +959,6 @@ const Forums: React.FC = () => {
                     onClick={() => {}}
                     sx={{ color: "primary.main" }}
                   >
-                    <VisibilityOutlined fontSize="small" />
                   </IconButton>
                   <IconButton
                     size="small"
@@ -968,9 +966,7 @@ const Forums: React.FC = () => {
                     sx={{ color: "warning.main" }}
                   >
                     {meta.pinned ? (
-                      <PushPin fontSize="small" />
                     ) : (
-                      <PushPinOutlined fontSize="small" />
                     )}
                   </IconButton>
 
@@ -984,7 +980,6 @@ const Forums: React.FC = () => {
                       closingThreadId === thread.threadId || isClosed
                     }
                   >
-                    <LockOutlined fontSize="small" />
                   </IconButton>
 
                   <IconButton
