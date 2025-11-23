@@ -77,13 +77,15 @@ function formatDateNumeric(dateString?: string | null) {
 function toCategorySlug(text: string): string {
   const normalized = text.toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, "");
   
   const categoryMap: Record<string, string> = {
-    "garage y parking": "garage-parking",
-    "espacios comunes": "espacios-comunes",
-    "administración": "administracion",
+    "garageeparking": "garageyparking",
+    "garageyparking": "garageyparking",
+    "espacioscomunes": "espacioscomunes",
     "administracion": "administracion",
+    "administración": "administracion",
     "seguridad": "seguridad",
     "mantenimiento": "mantenimiento",
     "general": "general"
@@ -94,8 +96,7 @@ function toCategorySlug(text: string): string {
   }
 
   return normalized
-    .replace(/\s+/g, "-")
-    .replace(/[^a-z0-9-]/g, "");
+    .replace(/[^a-z0-9]/g, "");
 }
 
 const ADMIN_TAB_COLORS: Record<string, string> = {
@@ -263,12 +264,12 @@ const Forums: React.FC = () => {
   const resolvedForumId = useMemo(() => {
     if (!forumsRaw || forumsRaw.length === 0) {
       const categoryToIdMap: Record<string, number> = {
-        "General": 1,
-        "Administración": 2,
-        "Seguridad": 3,
-        "Mantenimiento": 4,
-        "Espacios Comunes": 5,
-        "Garage y Parking": 6,
+        "General": 0,
+        "Administración": 1,
+        "Seguridad": 2,
+        "Mantenimiento": 3,
+        "Espacios Comunes": 4,
+        "Garage y Parking": 5,
       };
       return categoryToIdMap[currentCategoryName] ?? 1;
     }
