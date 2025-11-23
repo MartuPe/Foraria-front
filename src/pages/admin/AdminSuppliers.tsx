@@ -16,28 +16,36 @@ import {
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import AddOutlined from "@mui/icons-material/AddOutlined";
+import BusinessIcon from "@mui/icons-material/Business";
+
 import { supplierService, Supplier } from "../../services/supplierService";
 import NewSupplier from "../../components/modals/NewSupplier";
 import SupplierDetail from "../../components/modals/SupplierDetail";
 import PageHeader from "../../components/SectionHeader";
 import ConfirmDialog from "../../components/ui/ConfirmDialog";
-import AddOutlined from "@mui/icons-material/AddOutlined";
-import BusinessIcon from "@mui/icons-material/Business";
 
-const CATEGORIES = ["Mantenimiento", "Limpieza", "Seguridad", "Jardinería"] as const;
-type SortKey = "nameAsc" | "nameDesc" | "dateNew" | "dateOld" | "category";
 type SnackSeverity = "success" | "error" | "info";
 
-export default function Suppliers() {
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [loading, setLoading] = useState(true);
+const CATEGORIES = ["Mantenimiento", "Limpieza", "Seguridad", "Jardinería"] as const;
+
+export default function AdminSuppliers() {
+  // ignoramos el primer valor del estado para que no marque 'loading' como unused
+  const [, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [openNew, setOpenNew] = useState(false);
   const [openDetail, setOpenDetail] = useState(false);
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [toDeleteId, setToDeleteId] = useState<number | null>(null);
   const consortiumId = Number(localStorage.getItem("consortiumId"));
+
+  const [q, setQ] = useState("");
+  const [qDebounced, setQDebounced] = useState("");
+  const [category, setCategory] = useState("");
+  const [page, setPage] = useState(1);
+  const pageSize = 6;
 
   const [snack, setSnack] = useState({
     open: false,
@@ -52,41 +60,19 @@ export default function Suppliers() {
     []
   );
 
-  const [q, setQ] = useState("");
-  const [qDebounced, setQDebounced] = useState("");
-  const [category, setCategory] = useState<string>(""); // "" = Todos
-  const [sort, setSort] = useState<SortKey>("nameAsc");
-  const [page, setPage] = useState(1);
-  const pageSize = 6;
-
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q.trim().toLowerCase()), 250);
     return () => clearTimeout(t);
   }, [q]);
 
   const fetchSuppliers = useCallback(async () => {
-    setLoading(true);
     setLoadError(null);
+    setLoading(true);
     try {
       const data = await supplierService.getAll(consortiumId);
-
-      if (!Array.isArray(data)) {
-        setLoadError("Respuesta inesperada del servidor");
-        setSuppliers([]);
-      } else {
-        setSuppliers(data);
-      }
-    } catch (err: any) {
-      const message =
-        err?.response?.data?.error || err.message?.toString() || "Error inesperado";
-      if (
-        String(message).includes("404") ||
-        String(message).toLowerCase().includes("not found")
-      ) {
-        setSuppliers([]);
-      } else {
-        setLoadError("No se pudieron cargar los proveedores");
-      }
+      setSuppliers(Array.isArray(data) ? data : []);
+    } catch {
+      setLoadError("No se pudieron cargar los proveedores");
     } finally {
       setLoading(false);
     }
@@ -102,7 +88,7 @@ export default function Suppliers() {
   };
 
   const handleDelete = async () => {
-    if (toDeleteId == null) return;
+    if (!toDeleteId) return;
     try {
       await supplierService.remove(toDeleteId);
       setSuppliers((prev) => prev.filter((s) => s.id !== toDeleteId));
@@ -115,55 +101,31 @@ export default function Suppliers() {
     }
   };
 
-  const openDetailFor = (id: number) => {
-    setSelectedId(id);
-    setOpenDetail(true);
-  };
-
   const filtered = useMemo(() => {
-    let list = suppliers;
-
-    if (category) list = list.filter((s) => s.supplierCategory === category);
-
-    if (qDebounced)
-      list = list.filter((s) =>
-        `${s.commercialName} ${s.businessName} ${s.email} ${s.phone} ${s.supplierCategory}`
-          .toLowerCase()
-          .includes(qDebounced)
-      );
-
-    const byDate = (d?: string) => (d ? new Date(d).getTime() : 0);
-
-    return [...list].sort((a, b) => {
-      switch (sort) {
-        case "nameAsc":
-          return (a.commercialName ?? "").localeCompare(b.commercialName ?? "");
-        case "nameDesc":
-          return (b.commercialName ?? "").localeCompare(a.commercialName ?? "");
-        case "dateNew":
-          return byDate(b.registrationDate) - byDate(a.registrationDate);
-        case "dateOld":
-          return byDate(a.registrationDate) - byDate(b.registrationDate);
-        case "category":
-          return (a.supplierCategory ?? "").localeCompare(b.supplierCategory ?? "");
-        default:
-          return 0;
-      }
+    return suppliers.filter((s) => {
+      const text = `${s.commercialName} ${s.businessName} ${s.email} ${s.phone} ${s.supplierCategory}`.toLowerCase();
+      const matchCategory = !category || s.supplierCategory === category;
+      const matchSearch = !qDebounced || text.includes(qDebounced);
+      return matchCategory && matchSearch;
     });
-  }, [suppliers, qDebounced, category, sort]);
+  }, [suppliers, qDebounced, category]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
-  useEffect(() => setPage(1), [qDebounced, category, sort]);
-
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  const supplierTabs = useMemo(
-    () => [
-      { label: "Todos", value: "" },
-      ...CATEGORIES.map((c) => ({ label: c, value: c })),
-    ],
-    []
-  );
+  const chipStyles = {
+    ml: 1,
+    borderRadius: 2,
+    fontSize: "0.75rem",
+    bgcolor: "#f4f4f4",
+    borderColor: "#e0e0e0",
+    "& .MuiChip-label": { px: 1.2 },
+  } as const;
+
+  const tabs = [
+    { label: "Todos", value: "" },
+    ...CATEGORIES.map((c) => ({ label: c, value: c })),
+  ];
 
   return (
     <Box className="foraria-page-container">
@@ -171,6 +133,9 @@ export default function Suppliers() {
         title="Gestión de Proveedores"
         showSearch
         onSearchChange={setQ}
+        tabs={tabs}
+        selectedTab={category}
+        onTabChange={(v) => setCategory(v as string)}
         actions={
           <Button
             variant="contained"
@@ -182,22 +147,16 @@ export default function Suppliers() {
             Nuevo Proveedor
           </Button>
         }
-        tabs={supplierTabs}
-        selectedTab={category}
-        onTabChange={(v) => setCategory(v as string)}
       />
 
       <Stack spacing={2}>
         {loadError ? (
-          <Paper sx={{ p: 6, borderRadius: 3, textAlign: "center" }}>
+          <Paper sx={{ p: 6, textAlign: "center", borderRadius: 3 }}>
             <BusinessIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
             <Typography variant="h6">{loadError}</Typography>
-            <Button variant="contained" onClick={fetchSuppliers} sx={{ mt: 2 }}>
-              Reintentar
-            </Button>
           </Paper>
         ) : filtered.length === 0 ? (
-          <Paper sx={{ p: 6, borderRadius: 3, textAlign: "center" }}>
+          <Paper sx={{ p: 6, textAlign: "center", borderRadius: 3 }}>
             <Typography variant="h6" color="text.secondary">
               No se encontraron proveedores
             </Typography>
@@ -235,7 +194,10 @@ export default function Suppliers() {
                           cursor: "pointer",
                           "&:hover": { textDecoration: "underline" },
                         }}
-                        onClick={() => openDetailFor(s.id!)}
+                        onClick={() => {
+                          setSelectedId(s.id!);
+                          setOpenDetail(true);
+                        }}
                       >
                         {s.commercialName}
                       </Typography>
@@ -245,13 +207,11 @@ export default function Suppliers() {
                         label={s.supplierCategory || "Sin categoría"}
                         color="default"
                         variant="outlined"
+                        sx={chipStyles}
                       />
                     </Stack>
 
-                    <Typography variant="body2">
-                      {s.businessName}
-                    </Typography>
-
+                    <Typography variant="body2">{s.businessName}</Typography>
                     <Typography variant="body2" color="text.secondary" mt={0.5}>
                       {s.email} {s.phone && `| ${s.phone}`}
                     </Typography>
@@ -261,7 +221,10 @@ export default function Suppliers() {
                     <Button
                       variant="outlined"
                       startIcon={<VisibilityIcon />}
-                      onClick={() => openDetailFor(s.id!)}
+                      onClick={() => {
+                        setSelectedId(s.id!);
+                        setOpenDetail(true);
+                      }}
                     >
                       Ver
                     </Button>
