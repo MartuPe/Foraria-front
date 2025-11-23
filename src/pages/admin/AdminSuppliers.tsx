@@ -12,6 +12,7 @@ import {
   Pagination,
   Box,
   Paper,
+  Chip,
 } from "@mui/material";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -122,10 +123,8 @@ export default function Suppliers() {
   const filtered = useMemo(() => {
     let list = suppliers;
 
-    // filtro por categoría (si hay)
     if (category) list = list.filter((s) => s.supplierCategory === category);
 
-    // filtro por texto
     if (qDebounced)
       list = list.filter((s) =>
         `${s.commercialName} ${s.businessName} ${s.email} ${s.phone} ${s.supplierCategory}`
@@ -146,9 +145,7 @@ export default function Suppliers() {
         case "dateOld":
           return byDate(a.registrationDate) - byDate(b.registrationDate);
         case "category":
-          return (a.supplierCategory ?? "").localeCompare(
-            b.supplierCategory ?? ""
-          );
+          return (a.supplierCategory ?? "").localeCompare(b.supplierCategory ?? "");
         default:
           return 0;
       }
@@ -160,7 +157,6 @@ export default function Suppliers() {
 
   const paged = filtered.slice((page - 1) * pageSize, page * pageSize);
 
-  // Tabs para el PageHeader: igual que Reclamos, pero por categoría
   const supplierTabs = useMemo(
     () => [
       { label: "Todos", value: "" },
@@ -187,7 +183,7 @@ export default function Suppliers() {
           </Button>
         }
         tabs={supplierTabs}
-        selectedTab={category}                 // "" = Todos
+        selectedTab={category}
         onTabChange={(v) => setCategory(v as string)}
       />
 
@@ -231,20 +227,32 @@ export default function Suppliers() {
                   spacing={1}
                 >
                   <Box>
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        cursor: "pointer",
-                        "&:hover": { textDecoration: "underline" },
-                      }}
-                      onClick={() => openDetailFor(s.id!)}
-                    >
-                      {s.commercialName}
-                    </Typography>
+                    {/* Título + categoría estilo Foros */}
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          cursor: "pointer",
+                          "&:hover": { textDecoration: "underline" },
+                        }}
+                        onClick={() => openDetailFor(s.id!)}
+                      >
+                        {s.commercialName}
+                      </Typography>
+
+                      <Chip
+                        size="small"
+                        label={s.supplierCategory || "Sin categoría"}
+                        color="default"
+                        variant="outlined"
+                      />
+                    </Stack>
+
                     <Typography variant="body2">
-                      {s.businessName} – {s.supplierCategory}
+                      {s.businessName}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+
+                    <Typography variant="body2" color="text.secondary" mt={0.5}>
                       {s.email} {s.phone && `| ${s.phone}`}
                     </Typography>
                   </Box>
