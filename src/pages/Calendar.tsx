@@ -58,7 +58,7 @@ export default function Calendar() {
   React.useEffect(() => {
     import("@fullcalendar/core/locales/es")
       .then((m) => setFcLocale(m.default ?? m))
-      .catch(() => {});
+      .catch(() => { });
   }, []);
 
   React.useEffect(() => {
@@ -101,10 +101,18 @@ export default function Calendar() {
             color="secondary"
             startIcon={<AddRounded />}
             onClick={() => setOpenReserve(true)}
-            sx={{ px: { xs: 2, md: 3 }, py: { xs: 0.75, md: 1 } }} // responsive
+            sx={{
+              px: { xs: 2, sm: 2.5 },
+              fontWeight: 600,
+              textTransform: "none",
+              boxShadow: "0 6px 16px rgba(245,158,11,.25)",
+              width: { xs: "100%", sm: "auto" },
+            }}
           >
-            {isMobile ? "Reservar" : "Reservar espacio común"}
+            {isMobile ? "Reservar espacio" : "Reservar espacio común"}
           </Button>
+
+
         }
       />
       <Paper
@@ -112,7 +120,7 @@ export default function Calendar() {
         variant="outlined"
         className="foraria-profile-section"
         sx={{
-          mt: 2,
+          mt: 0,
           p: { xs: 1, sm: 1.5, md: 2 },              // responsive
           borderRadius: 3,
           borderColor: "divider",
@@ -203,7 +211,7 @@ export default function Calendar() {
             firstDay={0}
             height="auto"
             fixedWeekCount={false}
-            dayMaxEventRows={isMobile ? 3 : 2}        
+            dayMaxEventRows={isMobile ? 3 : 2}
             events={events}
             dateClick={onDateClick}
             headerToolbar={false}

@@ -142,10 +142,17 @@ export default function AdminSuppliers() {
             color="secondary"
             startIcon={<AddOutlined />}
             onClick={() => setOpenNew(true)}
-            sx={{ px: 2.5, fontWeight: 600, textTransform: "none" }}
+            sx={{
+              width: { xs: "100%", sm: "auto" },
+              px: 2.5,
+              fontWeight: 600,
+              textTransform: "none",
+              boxShadow: "0 6px 16px rgba(245,158,11,.25)",
+            }}
           >
             Nuevo Proveedor
           </Button>
+
         }
       />
 

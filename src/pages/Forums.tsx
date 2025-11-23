@@ -1492,14 +1492,22 @@ console.log(currentCategoryName)
   title={`Foro ${currentCategoryName !== "Todas" ? `- ${currentCategoryName}` : ""}`}
   actions={
     <Button
-      variant="contained"
-      color="secondary"
-      startIcon={<AddIcon />}
-      onClick={() => setOpen(true)}
-      sx={{ borderRadius: 999, fontWeight: 600 }}
-    >
-      Nuevo Post
-    </Button>
+  variant="contained"
+  color="secondary"
+  startIcon={<AddIcon />}
+  onClick={() => setOpen(true)}
+  sx={{
+    borderRadius: 999,
+    fontWeight: 600,
+    px: { xs: 2, sm: 2.5 },
+    width: { xs: "100%", sm: "auto" },
+    textTransform: "none",
+    boxShadow: "0 6px 16px rgba(245,158,11,.25)",
+  }}
+>
+  Nuevo Post
+</Button>
+
   }
   stats={[
     {
