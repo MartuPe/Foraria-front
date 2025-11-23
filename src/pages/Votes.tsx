@@ -1,11 +1,11 @@
 import { useEffect, useState, useMemo } from "react";
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Button,
+import { 
+  Box, 
+  Card, 
+  CardContent, 
+  Typography, 
+  Chip, 
+  Button, 
   Stack,
   Dialog,
   DialogTitle,
@@ -24,10 +24,10 @@ import {
   FormControl,
   InputLabel,
   CircularProgress,
-  RadioGroup,
-  FormControlLabel,
+  RadioGroup,            
+  FormControlLabel,      
   Radio,
-  Paper
+  Paper                  
 } from "@mui/material";
 import {
   Add as AddIcon,
@@ -39,15 +39,15 @@ import {
   Share as ShareIcon,
   Notifications as NotificationsIcon,
   CalendarToday as CalendarTodayIcon,
-  HowToVote as HowToVoteIcon
+  HowToVote as HowToVoteIcon 
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
 import { useGet } from "../hooks/useGet";
 import { useMutation } from "../hooks/useMutation";
 import { useSignalR } from "../hooks/useSignalR";
 import { api } from "../api/axios";
-import { storage } from "../utils/storage";
-import SuccessModal from "../components/modals/SuccessModal";
+import { storage } from "../utils/storage"; 
+import SuccessModal from "../components/modals/SuccessModal"; 
 import NewVote from "../components/modals/NewVote"; // Importar tu componente
 
 export interface PollOption {
@@ -121,40 +121,40 @@ interface PollVoteResult {
 
 export default function VotesPrueba() {
   const isAdministrador = storage.role === "Administrador" || storage.role === "Consorcio";
-
+  
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada" | "pendientes">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
-  const [loadError, setLoadError] = useState<string | null>(null);
+const [loadError, setLoadError] = useState<string | null>(null);
   // Estados de votación
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
   const [userVotes, setUserVotes] = useState<Set<number>>(new Set());
   const [showAlreadyVotedModal, setShowAlreadyVotedModal] = useState(false);
-  const [showVoteErrorModal, setShowVoteErrorModal] = useState(false);
-  const [voteErrorMessage, setVoteErrorMessage] = useState<string>("");
+  const [showVoteErrorModal, setShowVoteErrorModal] = useState(false);       
+  const [voteErrorMessage, setVoteErrorMessage] = useState<string>("");       
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [pollVoters, setPollVoters] = useState<Record<number, { userId: number; userName: string }[]>>({});
+  const [pollVoters, setPollVoters] = useState<Record<number, { userId: number; userName: string }[]>>({}); 
 
   // Estados para admin - NewVote modal y editar
   const [showNewVoteModal, setShowNewVoteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPoll, setEditingPoll] = useState<Poll | null>(null);
-
+  
   // Estados para editar poll
   const [newPoll, setNewPoll] = useState<Partial<CreatePollDto & { state: string }>>({
     title: '',
     description: '',
     categoryPoll_id: 1,
-    state: 'activa',
+    state: 'activa', 
     pollOptions: ['', '']
   });
   const [editErrors, setEditErrors] = useState<string[]>([]);
 
   const { data: pollsData, loading, error, refetch } = useGet<Poll[]>(
-    "/polls/with-results"
-  );
+  "/polls/with-results"
+);
   const [selectedPollResults, setSelectedPollResults] = useState<Poll | null>(null);
 
   const handleOpenResultsModal = (poll: Poll) => {
@@ -186,36 +186,36 @@ export default function VotesPrueba() {
     fetchUserCount();
   }, []);
 
-  useEffect(() => {
-    // Si hay datos, cargarlos y limpiar error
-    if (pollsData) {
-      setPolls(pollsData);
+ useEffect(() => {
+  // Si hay datos, cargarlos y limpiar error
+  if (pollsData) {
+    setPolls(pollsData);
+    setLoadError(null);
+  }
+  
+  // Manejar errores
+  if (error) {
+    const errorMsg = typeof error === 'string' ? error : String(error);
+    
+    // Detectar si es un error 404 o "no se encontraron"
+    const is404 = errorMsg.toLowerCase().includes("404") || 
+                  errorMsg.toLowerCase().includes("not found") ||
+                  errorMsg.toLowerCase().includes("status code 404");
+    
+    const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
+                      errorMsg.toLowerCase().includes("no hay");
+    
+    if (is404 || isNotFound) {
+      // Para 404, mostramos lista vacía SIN mensaje de error
+      setPolls([]);
       setLoadError(null);
+    } else {
+      // Para otros errores, mostramos mensaje de error
+      setPolls([]);
+      setLoadError("No se pudieron cargar las votaciones. Intentá nuevamente más tarde.");
     }
-
-    // Manejar errores
-    if (error) {
-      const errorMsg = typeof error === 'string' ? error : String(error);
-
-      // Detectar si es un error 404 o "no se encontraron"
-      const is404 = errorMsg.toLowerCase().includes("404") ||
-        errorMsg.toLowerCase().includes("not found") ||
-        errorMsg.toLowerCase().includes("status code 404");
-
-      const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
-        errorMsg.toLowerCase().includes("no hay");
-
-      if (is404 || isNotFound) {
-        // Para 404, mostramos lista vacía SIN mensaje de error
-        setPolls([]);
-        setLoadError(null);
-      } else {
-        // Para otros errores, mostramos mensaje de error
-        setPolls([]);
-        setLoadError("No se pudieron cargar las votaciones. Intentá nuevamente más tarde.");
-      }
-    }
-  }, [pollsData, error]);
+  }
+}, [pollsData, error]);
 
   useEffect(() => {
     if (!connected) return;
@@ -224,12 +224,12 @@ export default function VotesPrueba() {
         prevPolls.map((poll) =>
           poll.id === voteData.pollId
             ? {
-              ...poll,
-              pollResults: voteData.results.map((r: { pollOptionId: number; votesCount: number }) => ({
-                pollOptionId: r.pollOptionId,
-                votesCount: r.votesCount,
-              })),
-            }
+                ...poll,
+                pollResults: voteData.results.map((r: { pollOptionId: number; votesCount: number }) => ({
+                  pollOptionId: r.pollOptionId,
+                  votesCount: r.votesCount,
+                })),
+              }
             : poll
         )
       );
@@ -281,7 +281,7 @@ export default function VotesPrueba() {
         return next;
       });
       handleCloseVoteModal();
-      setShowSuccessModal(true);
+      setShowSuccessModal(true); 
     } catch (err: any) {
       const status = err?.response?.status;
       const data = err?.response?.data;
@@ -357,7 +357,7 @@ export default function VotesPrueba() {
       title: poll.title,
       description: poll.description,
       categoryPoll_id: poll.categoryPollId,
-      state: poll.state?.toLowerCase(),
+      state: poll.state?.toLowerCase(), 
       startDate: poll.startDate,
       endDate: poll.endDate,
       pollOptions: poll.pollOptions.map(opt => opt.text)
@@ -366,10 +366,10 @@ export default function VotesPrueba() {
     setShowEditModal(true);
   };
 
-  const fetchPollVoters = async (pollId: number) => {
+  const fetchPollVoters = async (pollId: number) => {                
     if (!isAdministrador || pollVoters[pollId]) return;
     try {
-      const { data } = await api.get(`/votes/poll/${pollId}/users`);
+      const { data } = await api.get(`/votes/poll/${pollId}/users`);  
       setPollVoters(prev => ({ ...prev, [pollId]: data }));
     } catch (e) {
       console.error("Error obteniendo votantes reales:", e);
@@ -383,7 +383,7 @@ export default function VotesPrueba() {
     );
 
     const totalVotes = Array.from(resultsMap.values()).reduce((s, v) => s + v, 0);
-
+    
     const optionsWithResults = poll.pollOptions.map(option => {
       const votes = resultsMap.get(option.id) || 0;
       const percentage = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
@@ -404,7 +404,7 @@ export default function VotesPrueba() {
     };
   };
 
-  const getRecentParticipants = (pollId: number) => {
+  const getRecentParticipants = (pollId: number) => {                
     if (!isAdministrador) return [];
     const cached = pollVoters[pollId];
     if (cached) return cached.slice(-6);
@@ -419,15 +419,15 @@ export default function VotesPrueba() {
     const isDraft = stateLower === "borrador";
     const isRejected = stateLower === "rechazada";
     const { totalVotes, participationPercent } = getDetailedResults(poll);
-    const recentParticipants = getRecentParticipants(poll.id);
+    const recentParticipants = getRecentParticipants(poll.id); 
     const hasVoted = userVotes.has(poll.id);
-    const isPollOpen = isActive || isPending || isDraft;
+    const isPollOpen = isActive || isPending || isDraft; 
 
     return (
-      <Card
-        key={poll.id}
-        variant="outlined"
-        sx={{
+      <Card 
+        key={poll.id} 
+        variant="outlined" 
+        sx={{ 
           borderRadius: 3,
           border: isActive ? '2px solid' : isPending ? '2px dashed' : '1px solid',
           borderColor: isActive ? 'success.main' : isPending ? 'warning.main' : 'grey.300',
@@ -439,8 +439,8 @@ export default function VotesPrueba() {
           opacity: isActive ? 1 : isPending ? 0.9 : 0.85,
           '&:hover': {
             transform: isActive || isPending ? 'translateY(-6px) scale(1)' : 'translateY(-2px)',
-            boxShadow: isActive || isPending
-              ? '0 12px 24px rgba(0,0,0,0.15)'
+            boxShadow: isActive || isPending 
+              ? '0 12px 24px rgba(0,0,0,0.15)' 
               : '0 4px 12px rgba(0,0,0,0.08)',
             borderColor: isActive ? 'success.dark' : isPending ? 'warning.dark' : 'grey.400',
             opacity: 1
@@ -528,10 +528,10 @@ export default function VotesPrueba() {
             <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
               <Box sx={{ flex: 1 }}>
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
-                  <Typography
-                    variant="h6"
+                  <Typography 
+                    variant="h6" 
                     color={isActive ? "primary" : isPending ? "warning.dark" : "text.secondary"}
-                    sx={{
+                    sx={{ 
                       fontWeight: isActive || isPending ? 600 : 500,
                     }}
                   >
@@ -543,10 +543,10 @@ export default function VotesPrueba() {
                     </IconButton>
                   )}
                 </Stack>
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
-                  sx={{
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
                     mb: 1.5,
                     opacity: isActive || isPending ? 1 : 0.8
                   }}
@@ -554,16 +554,16 @@ export default function VotesPrueba() {
                   {poll.description}
                 </Typography>
               </Box>
-
+              
               <Stack direction="row" spacing={1}>
-                <Chip
+                <Chip 
                   label={poll.state || "Cerrada"}
                   color={
-                    isPending ? "warning" :
-                      isActive ? "success" :
-                        isRejected ? "error" :
-                          isDraft ? "info" :
-                            "default"
+                    isPending ? "warning" : 
+                    isActive ? "success" :
+                    isRejected ? "error" :
+                    isDraft ? "info" :
+                    "default"
                   }
                   size="small"
                   variant={isActive || isPending ? "filled" : "outlined"}
@@ -577,10 +577,10 @@ export default function VotesPrueba() {
             </Stack>
 
             {(isActive || isPending || isDraft) && poll.endDate && (
-              <Alert
+              <Alert 
                 severity={isPending ? "warning" : "info"}
                 icon={<AccessTimeIcon />}
-                sx={{
+                sx={{ 
                   backgroundColor: isPending ? 'warning.50' : 'info.50',
                   border: '1px solid',
                   borderColor: isPending ? 'warning.200' : 'info.200'
@@ -589,7 +589,7 @@ export default function VotesPrueba() {
                 <Typography variant="body2" fontWeight={600}>
                   {isPending ? 'Pendiente aprobación' : `Finaliza: ${new Date(poll.endDate).toLocaleDateString('es-ES', {
                     day: 'numeric',
-                    month: 'short',
+                    month: 'short', 
                     year: 'numeric',
                     hour: '2-digit',
                     minute: '2-digit'
@@ -599,9 +599,9 @@ export default function VotesPrueba() {
             )}
 
             {!isActive && !isPending && !isDraft && (
-              <Alert
+              <Alert 
                 severity={isRejected ? "error" : "success"}
-                sx={{
+                sx={{ 
                   backgroundColor: isRejected ? 'error.50' : 'grey.100',
                   border: '1px solid',
                   borderColor: isRejected ? 'error.200' : 'grey.300',
@@ -622,12 +622,12 @@ export default function VotesPrueba() {
 
             <Stack direction="row" alignItems="center" spacing={3} flexWrap="wrap">
               <Stack direction="row" alignItems="center" spacing={0.5}>
-                <CalendarTodayIcon
-                  fontSize="small"
+                <CalendarTodayIcon 
+                  fontSize="small" 
                   sx={{ color: isActive || isPending ? 'action.active' : 'action.disabled' }}
                 />
-                <Typography
-                  variant="body2"
+                <Typography 
+                  variant="body2" 
                   color={isActive || isPending ? "text.secondary" : "text.disabled"}
                 >
                   {new Date(poll.createdAt).toLocaleDateString('es-ES', {
@@ -637,14 +637,14 @@ export default function VotesPrueba() {
                   })}
                 </Typography>
               </Stack>
-
+              
               <Stack direction="row" alignItems="center" spacing={0.5}>
-                <PeopleIcon
-                  fontSize="small"
+                <PeopleIcon 
+                  fontSize="small" 
                   sx={{ color: isActive || isPending ? 'action.active' : 'action.disabled' }}
                 />
-                <Typography
-                  variant="body2"
+                <Typography 
+                  variant="body2" 
                   color={isActive || isPending ? "text.secondary" : "text.disabled"}
                 >
                   {totalVotes} {totalVotes === 1 ? 'voto' : 'votos'}
@@ -652,8 +652,8 @@ export default function VotesPrueba() {
               </Stack>
 
               <Stack direction="row" alignItems="center" spacing={0.5}>
-                <Typography
-                  variant="body2"
+                <Typography 
+                  variant="body2" 
                   color={isActive || isPending ? "text.secondary" : "text.disabled"}
                 >
                   {participationPercent}% participación
@@ -661,36 +661,36 @@ export default function VotesPrueba() {
               </Stack>
             </Stack>
 
-            {isAdministrador && (
+            {isAdministrador && ( 
               <Box>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-                  <Typography
-                    variant="caption"
+                  <Typography 
+                    variant="caption" 
                     color={isActive || isPending ? "text.secondary" : "text.disabled"}
                   >
                     Participación
                   </Typography>
-                  <Typography
-                    variant="caption"
+                  <Typography 
+                    variant="caption" 
                     color={isActive || isPending ? "text.secondary" : "text.disabled"}
                     fontWeight={600}
                   >
                     {totalVotes}/{totalUsers}
                   </Typography>
                 </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={participationPercent}
-                  sx={{
-                    height: 10,
+                <LinearProgress 
+                  variant="determinate" 
+                  value={participationPercent} 
+                  sx={{ 
+                    height: 10, 
                     borderRadius: 5,
                     backgroundColor: isActive || isPending ? 'grey.200' : 'grey.100',
                     '& .MuiLinearProgress-bar': {
                       borderRadius: 5,
                       background: isActive || isPending
-                        ? (participationPercent > 50
-                          ? 'linear-gradient(90deg, #4caf50 0%, #81c784 100%)'
-                          : 'linear-gradient(90deg, #ff9800 0%, #ffb74d 100%)')
+                        ? (participationPercent > 50 
+                            ? 'linear-gradient(90deg, #4caf50 0%, #81c784 100%)'
+                            : 'linear-gradient(90deg, #ff9800 0%, #ffb74d 100%)')
                         : 'linear-gradient(90deg, #9e9e9e 0%, #bdbdbd 100%)'
                     }
                   }}
@@ -698,7 +698,7 @@ export default function VotesPrueba() {
               </Box>
             )}
 
-            {totalVotes > 0 && (isActive || isPending) && isAdministrador && recentParticipants.length > 0 && (
+            {totalVotes > 0 && (isActive || isPending) && isAdministrador && recentParticipants.length > 0 && ( 
               <Stack direction="row" alignItems="center" spacing={2}>
                 <Typography variant="caption" color="text.secondary">
                   Votaron recientemente:
@@ -709,7 +709,7 @@ export default function VotesPrueba() {
                       .split(" ")
                       .map(p => p[0])
                       .join("")
-                      .slice(0, 2)
+                      .slice(0,2)
                       .toUpperCase();
                     return (
                       <Tooltip key={participant.userId} title={participant.userName}>
@@ -735,7 +735,7 @@ export default function VotesPrueba() {
                     startIcon={<HowToVoteIcon />}
                     onClick={() => handleOpenVoteModal(poll)}
                     disabled={isVoting}
-                    sx={{
+                    sx={{ 
                       borderRadius: 999,
                       px: 3,
                       py: 1,
@@ -783,8 +783,8 @@ export default function VotesPrueba() {
 
                 {(isActive || isPending || isDraft) && (
                   <Tooltip title="Recibir notificaciones">
-                    <IconButton
-                      size="small"
+                    <IconButton 
+                      size="small" 
                       color="default"
                       sx={{
                         transition: 'all 0.2s ease-in-out',
@@ -835,7 +835,7 @@ export default function VotesPrueba() {
         if (Array.isArray(arr)) {
           setUserVotes(new Set(arr.map(Number)));
         }
-      } catch { }
+      } catch {}
     }
   }, []);
 
@@ -851,73 +851,73 @@ export default function VotesPrueba() {
   };
 
   if (loading) {
-    return (
-      <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
-        <Stack direction="row" spacing={2} alignItems="center">
-          <CircularProgress />
-          <Typography>Cargando votaciones…</Typography>
-        </Stack>
-      </Box>
-    );
-  }
+  return (
+    <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+      <Stack direction="row" spacing={2} alignItems="center">
+        <CircularProgress />
+        <Typography>Cargando votaciones…</Typography>
+      </Stack>
+    </Box>
+  );
+}
 
-  // NUEVO: Mostrar error si existe
-  if (loadError) {
-    return (
-      <Box className="foraria-page-container">
-        <PageHeader
-          title="Votaciones del Consorcio"
-          tabs={[
-            { label: "Todas", value: "todas" },
-            { label: "Activas", value: "actives" },
-            { label: "Finalizadas", value: "finalizada" },
-            ...(isAdministrador ? [{ label: "Pendientes", value: "pendientes" }] : [])
-          ]}
-          selectedTab={tab}
-          onTabChange={(v) => setTab(v as typeof tab)}
-          actions={
-            isAdministrador && (
-              <Button
-                variant="contained"
-                color="secondary"
-                startIcon={<AddIcon />}
-                onClick={() => setShowNewVoteModal(true)}
-                sx={{ borderRadius: 999, fontWeight: 600 }}
-              >
-                Nueva Votación
-              </Button>
-            )
-          }
-        />
-
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: "center",
-            border: "1px dashed #d0d0d0",
-            borderRadius: 3,
-            backgroundColor: "#fafafa",
-            mt: 2
-          }}
+// NUEVO: Mostrar error si existe
+if (loadError) {
+  return (
+    <Box className="foraria-page-container">
+      <PageHeader
+        title="Votaciones del Consorcio"
+        tabs={[
+          { label: "Todas", value: "todas" },
+          { label: "Activas", value: "actives" },
+          { label: "Finalizadas", value: "finalizada" },
+          ...(isAdministrador ? [{ label: "Pendientes", value: "pendientes" }] : [])
+        ]}
+        selectedTab={tab}
+        onTabChange={(v) => setTab(v as typeof tab)}
+        actions={
+          isAdministrador && (
+            <Button
+              variant="contained"
+              color="secondary"
+              startIcon={<AddIcon />}
+              onClick={() => setShowNewVoteModal(true)}
+              sx={{ borderRadius: 999, fontWeight: 600 }}
+            >
+              Nueva Votación
+            </Button>
+          )
+        }
+      />
+      
+      <Paper
+        sx={{
+          p: 6,
+          textAlign: "center",
+          border: "1px dashed #d0d0d0",
+          borderRadius: 3,
+          backgroundColor: "#fafafa",
+          mt: 2
+        }}
+      >
+        <HowToVoteIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          Error al cargar votaciones
+        </Typography>
+        <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+          {loadError}
+        </Typography>
+        <Button 
+          variant="contained" 
+          onClick={() => refetch()} 
+          sx={{ mt: 1 }}
         >
-          <HowToVoteIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h5" color="text.primary" gutterBottom>
-            Error al cargar votaciones
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
-            {loadError}
-          </Typography>
-          <Button
-            variant="contained"
-            onClick={() => refetch()}
-            sx={{ mt: 1 }}
-          >
-            Reintentar
-          </Button>
-        </Paper>
-      </Box>
-    );
-  }
+          Reintentar
+        </Button>
+      </Paper>
+    </Box>
+  );
+}
 
   return (
     <Box className="foraria-page-container">
@@ -938,56 +938,50 @@ export default function VotesPrueba() {
               color="secondary"
               startIcon={<AddIcon />}
               onClick={() => setShowNewVoteModal(true)}
-              sx={{
-                width: { xs: "100%", sm: "auto" },
-                fontWeight: 600,
-                textTransform: "none",
-                boxShadow: "0 6px 16px rgba(245,158,11,.25)",
-              }}
+              sx={{ borderRadius: 999, fontWeight: 600 }}
             >
               Nueva Votación
             </Button>
-
           )
         }
       />
 
-      {filteredPolls.length === 0 ? (
-        <Paper
-          sx={{
-            p: 6,
-            textAlign: "center",
-            border: "1px dashed #d0d0d0",
-            borderRadius: 3,
-            backgroundColor: "#fafafa",
-          }}
-        >
-          <HowToVoteIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
-          <Typography variant="h5" color="text.primary" gutterBottom>
-            No hay votaciones disponibles
-          </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-            {tab === "actives"
-              ? "No hay votaciones activas en este momento."
-              : tab === "finalizada"
-                ? "No hay votaciones finalizadas aún."
-                : tab === "pendientes"
-                  ? "No hay votaciones pendientes de aprobación."
-                  : "Aún no se han creado votaciones para este consorcio."
-            }
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            {isAdministrador
-              ? "Podés crear una nueva votación haciendo clic en el botón 'Nueva Votación'."
-              : "Las votaciones aparecerán aquí cuando la administración las cree."
-            }
-          </Typography>
-        </Paper>
-      ) : (
-        <Stack spacing={2}>
-          {filteredPolls.map(renderPollCard)}
-        </Stack>
-      )}
+     {filteredPolls.length === 0 ? (
+  <Paper
+    sx={{
+      p: 6,
+      textAlign: "center",
+      border: "1px dashed #d0d0d0",
+      borderRadius: 3,
+      backgroundColor: "#fafafa",
+    }}
+  >
+    <HowToVoteIcon sx={{ fontSize: 80, color: "text.disabled", mb: 2 }} />
+    <Typography variant="h5" color="text.primary" gutterBottom>
+      No hay votaciones disponibles
+    </Typography>
+    <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
+      {tab === "actives" 
+        ? "No hay votaciones activas en este momento."
+        : tab === "finalizada"
+        ? "No hay votaciones finalizadas aún."
+        : tab === "pendientes"
+        ? "No hay votaciones pendientes de aprobación."
+        : "Aún no se han creado votaciones para este consorcio."
+      }
+    </Typography>
+    <Typography variant="body2" color="text.secondary">
+      {isAdministrador 
+        ? "Podés crear una nueva votación haciendo clic en el botón 'Nueva Votación'."
+        : "Las votaciones aparecerán aquí cuando la administración las cree."
+      }
+    </Typography>
+  </Paper>
+) : (
+  <Stack spacing={2}>
+    {filteredPolls.map(renderPollCard)}
+  </Stack>
+)}
 
       {/* Modal con componente NewVote */}
       <Dialog
@@ -996,7 +990,7 @@ export default function VotesPrueba() {
         maxWidth="md"
         fullWidth
       >
-        <NewVote
+        <NewVote 
           onSuccess={handleNewVoteSuccess}
           onCancel={handleNewVoteCancel}
         />
@@ -1066,7 +1060,7 @@ export default function VotesPrueba() {
                 fullWidth
                 label="Fecha de inicio"
                 type="datetime-local"
-                value={newPoll.startDate ? new Date(newPoll.startDate).toISOString().slice(0, 16) : ''}
+                value={newPoll.startDate ? new Date(newPoll.startDate).toISOString().slice(0,16) : ''}
                 onChange={(e) => setNewPoll(prev => ({ ...prev, startDate: e.target.value }))}
                 InputLabelProps={{ shrink: true }}
               />
@@ -1074,7 +1068,7 @@ export default function VotesPrueba() {
                 fullWidth
                 label="Fecha de fin"
                 type="datetime-local"
-                value={newPoll.endDate ? new Date(newPoll.endDate).toISOString().slice(0, 16) : ''}
+                value={newPoll.endDate ? new Date(newPoll.endDate).toISOString().slice(0,16) : ''}
                 onChange={(e) => setNewPoll(prev => ({ ...prev, endDate: e.target.value }))}
                 InputLabelProps={{ shrink: true }}
               />
@@ -1092,7 +1086,7 @@ export default function VotesPrueba() {
           </Button>
         </DialogActions>
       </Dialog>
-
+      
       {/* Modal de Resultados */}
       <Dialog
         open={!!selectedPollResults}
@@ -1110,10 +1104,10 @@ export default function VotesPrueba() {
                   {selectedPollResults.description}
                 </Typography>
               </DialogTitle>
-
+              
               <DialogContent>
                 <Divider sx={{ mb: 3 }} />
-
+                
                 {/* Resumen */}
                 <Stack spacing={2} sx={{ mb: 3 }}>
                   <Stack direction="row" spacing={4}>
@@ -1126,9 +1120,9 @@ export default function VotesPrueba() {
                       <Typography variant="h4" color="secondary">{results.participationPercent}%</Typography>
                     </Box>
                     <Box sx={{ flex: 1 }}>
-                      <LinearProgress
-                        variant="determinate"
-                        value={results.participationPercent}
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={results.participationPercent} 
                         sx={{ height: 12, borderRadius: 6, mt: 1 }}
                       />
                       <Typography variant="caption" color="text.secondary">
@@ -1140,7 +1134,7 @@ export default function VotesPrueba() {
                   {results.winner && (
                     <Alert severity="success" sx={{ mt: 2 }}>
                       <Typography variant="subtitle1">
-                        <strong>Opción ganadora:</strong> "{results.winner.text}"
+                        <strong>Opción ganadora:</strong> "{results.winner.text}" 
                         ({results.winner.votes} votos - {results.winner.percentage}%)
                       </Typography>
                     </Alert>
@@ -1161,9 +1155,9 @@ export default function VotesPrueba() {
                             {option.votes} votos ({option.percentage}%)
                           </Typography>
                         </Stack>
-                        <LinearProgress
-                          variant="determinate"
-                          value={option.percentage}
+                        <LinearProgress 
+                          variant="determinate" 
+                          value={option.percentage} 
                           sx={{ height: 8, borderRadius: 4 }}
                           color={index === 0 ? "success" : "primary"}
                         />
@@ -1172,7 +1166,7 @@ export default function VotesPrueba() {
                   ))}
                 </Stack>
               </DialogContent>
-
+              
               <DialogActions sx={{ p: 2 }}>
                 <Button onClick={handleCloseResultsModal} variant="contained">
                   Cerrar
@@ -1272,8 +1266,8 @@ export default function VotesPrueba() {
       </Dialog>
 
       <SuccessModal
-        open={showSuccessModal}
-        onClose={() => setShowSuccessModal(false)}
+        open={showSuccessModal}                 
+        onClose={() => setShowSuccessModal(false)} 
       />
     </Box>
   );
