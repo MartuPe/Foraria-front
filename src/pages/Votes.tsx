@@ -879,10 +879,30 @@ if (loadError) {
           isAdministrador && (
             <Button
               variant="contained"
-              color="secondary"
-              startIcon={<AddIcon />}
+              startIcon={<AddIcon sx={{ fontSize: 22 }} />}
               onClick={() => setShowNewVoteModal(true)}
-              sx={{ borderRadius: 999, fontWeight: 600 }}
+              sx={{
+                borderRadius: 3,
+                px: { xs: 2.5, sm: 3.5 },
+                py: { xs: 1.4, sm: 1.1 },
+                fontWeight: 600,
+                fontSize: { xs: '0.95rem', sm: '0.9rem' },
+                textTransform: 'none',
+                width: { xs: '100%', sm: 'auto' },
+                boxShadow: '0 6px 18px rgba(245,158,11,0.35)',
+                background: 'linear-gradient(135deg,#F59E0B 0%,#FBBF24 100%)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                '&:hover': {
+                  background: 'linear-gradient(135deg,#D97706 0%,#F59E0B 100%)',
+                  boxShadow: '0 8px 22px rgba(245,158,11,0.45)'
+                },
+                '&:active': {
+                  boxShadow: '0 4px 12px rgba(245,158,11,0.35)'
+                }
+              }}
             >
               Nueva Votación
             </Button>
@@ -935,10 +955,30 @@ if (loadError) {
           isAdministrador && (
             <Button
               variant="contained"
-              color="secondary"
-              startIcon={<AddIcon />}
+              startIcon={<AddIcon sx={{ fontSize: 22 }} />}
               onClick={() => setShowNewVoteModal(true)}
-              sx={{ borderRadius: 999, fontWeight: 600 }}
+              sx={{
+                borderRadius: 3,
+                px: { xs: 2.5, sm: 3.5 },
+                py: { xs: 1.4, sm: 1.1 },
+                fontWeight: 600,
+                fontSize: { xs: '0.95rem', sm: '0.9rem' },
+                textTransform: 'none',
+                width: { xs: '100%', sm: 'auto' },
+                boxShadow: '0 6px 18px rgba(245,158,11,0.35)',
+                background: 'linear-gradient(135deg,#F59E0B 0%,#FBBF24 100%)',
+                color: '#fff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                '&:hover': {
+                  background: 'linear-gradient(135deg,#D97706 0%,#F59E0B 100%)',
+                  boxShadow: '0 8px 22px rgba(245,158,11,0.45)'
+                },
+                '&:active': {
+                  boxShadow: '0 4px 12px rgba(245,158,11,0.35)'
+                }
+              }}
             >
               Nueva Votación
             </Button>
