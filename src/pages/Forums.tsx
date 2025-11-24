@@ -170,7 +170,7 @@ const Forums: React.FC = () => {
     title: "",
     message: "",
   });
-const user_id = Number(localStorage.getItem("userId"));
+
   const [replyErrors, setReplyErrors] = useState<Record<number, string>>({});
   const [deleteCommentDialogOpen, setDeleteCommentDialogOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<{
@@ -181,7 +181,7 @@ const user_id = Number(localStorage.getItem("userId"));
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
   const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
-  const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
+ 
 
   useEffect(() => {
     if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
@@ -466,14 +466,6 @@ const user_id = Number(localStorage.getItem("userId"));
       s.has(threadId) ? s.delete(threadId) : s.add(threadId);
       return s;
     });
-  };
-
-  const togglePinLocal = (threadId: number) => {
-    const key = String(threadId);
-    setEnriched((prev) => ({
-      ...prev,
-      [key]: { ...(prev[key] ?? {}), pinned: !prev[key]?.pinned },
-    }));
   };
 
   const toggleReactionForThread = async (threadId: number, reactionType: 1 | -1) => {
@@ -816,63 +808,6 @@ const user_id = Number(localStorage.getItem("userId"));
       setDeletingThreadId(null);
       setDeleteDialogOpen(false);
       setThreadToDelete(null);
-    }
-  };
-
-  const handleCloseThread = async (threadId: number) => {
-    if (!isAdmin) return;
-
-    try {
-      const token = localStorage.getItem("accessToken");
-      setClosingThreadId(threadId);
-      const headers: Record<string,string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/Thread/${threadId}/close`, {
-        method: "PATCH",
-        headers
-      });
-
-      if (res.status === 409) {
-        setStatusModal({
-          open: true,
-          variant: "error",
-          title: "Hilo ya cerrado",
-          message: "Este hilo ya se encuentra cerrado.",
-        });
-        await refetchThreads();
-        return;
-      }
-
-      if (!res.ok) {
-        console.error("Error al cerrar el hilo:", await res.text());
-        setStatusModal({
-          open: true,
-          variant: "error",
-          title: "No se pudo cerrar el hilo",
-          message: "No se pudo cerrar el hilo. Probá de nuevo más tarde.",
-        });
-        return;
-      }
-
-      setStatusModal({
-        open: true,
-        variant: "success",
-        title: "Hilo cerrado",
-        message: "El hilo se cerró correctamente.",
-      });
-      await refetchThreads();
-    } catch (e) {
-      console.error(e);
-      setStatusModal({
-        open: true,
-        variant: "error",
-        title: "No se pudo cerrar el hilo",
-        message: "Ocurrió un error al cerrar el hilo. Intentá nuevamente más tarde.",
-      });
-    } finally {
-      setClosingThreadId(null);
     }
   };
 
