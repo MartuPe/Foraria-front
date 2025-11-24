@@ -80,7 +80,7 @@ function toCategorySlug(text: string): string {
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .replace(/\s+/g, "");
-  
+
   const categoryMap: Record<string, string> = {
     "garageeparking": "garageyparking",
     "garageyparking": "garageyparking",
@@ -181,7 +181,7 @@ const Forums: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
   const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
- 
+
 
   useEffect(() => {
     if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
@@ -220,7 +220,7 @@ const Forums: React.FC = () => {
 
   const currentCategoryName = useMemo(() => {
     const key = (isAdmin ? adminCategory : slugFromPath).toLowerCase();
-    
+
     const slugToCategoryMap: Record<string, string> = {
       "general": "General",
       "administracion": "Administración",
@@ -232,25 +232,25 @@ const Forums: React.FC = () => {
       "garage-parking": "Garage y Parking",
       "garage y parking": "Garage y Parking"
     };
-    
+
     if (slugToCategoryMap[key]) {
       return slugToCategoryMap[key];
     }
-    
+
     if (forumsRaw) {
       const searchSlug = toCategorySlug(key);
       const found = forumsRaw.find((f) => toCategorySlug(f.categoryName) === searchSlug);
       if (found) return found.categoryName;
     }
-    
+
     return "General";
   }, [forumsRaw, isAdmin, adminCategory, slugFromPath]);
 
   const forumIdsForCategory = useMemo(() => {
     if (!forumsRaw) return new Set<number>();
-    
+
     const key = isAdmin ? adminCategory : slugFromPath;
-    
+
     return new Set(
       forumsRaw
         .filter((f) => {
@@ -274,15 +274,15 @@ const Forums: React.FC = () => {
       };
       return categoryToIdMap[currentCategoryName] ?? 1;
     }
-    
+
     const key = isAdmin ? adminCategory : slugFromPath;
     const searchSlug = toCategorySlug(key);
-    
+
     const found = forumsRaw.find((f) => {
       const forumSlug = toCategorySlug(f.categoryName);
       return forumSlug === searchSlug;
     });
-    
+
     return found ? found.id : null;
   }, [forumsRaw, isAdmin, adminCategory, slugFromPath, currentCategoryName]);
 
@@ -302,22 +302,22 @@ const Forums: React.FC = () => {
     (async () => {
       try {
         const token = localStorage.getItem("accessToken");
-        const headers: Record<string,string> = {
+        const headers: Record<string, string> = {
           Accept: 'application/json',
         };
         if (token) headers.Authorization = `Bearer ${token}`;
-        
+
         const res = await fetch(`${API_BASE}/Forum/${resolvedForumId}`, {
           signal: controller.signal,
           headers,
         });
-        
+
         if (!res.ok) {
           console.error('Error en la respuesta:', res.status, res.statusText);
           setForumStats(null);
           return;
         }
-        
+
         const json: Forum = await res.json();
         if (mounted) setForumStats(json);
       } catch (error) {
@@ -353,7 +353,7 @@ const Forums: React.FC = () => {
       };
       try {
         const token = localStorage.getItem("accessToken");
-        const headers: Record<string,string> = {
+        const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -367,7 +367,7 @@ const Forums: React.FC = () => {
       let messages: Message[] = [];
       try {
         const token = localStorage.getItem("accessToken");
-        const headers: Record<string,string> = {
+        const headers: Record<string, string> = {
           'Content-Type': 'application/json',
         };
         if (token) headers.Authorization = `Bearer ${token}`;
@@ -519,10 +519,10 @@ const Forums: React.FC = () => {
         return;
       }
       const token = localStorage.getItem("accessToken");
-      const headers: Record<string,string> = {};
+      const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
       const reacRes = await fetch(
-        `${API_BASE}/Reactions/thread/${threadId}`, {headers}
+        `${API_BASE}/Reactions/thread/${threadId}`, { headers }
       );
       if (!reacRes.ok) throw new Error("Reactions fallback failed");
       const reacJson: ReactionResponse = await reacRes.json();
@@ -541,9 +541,9 @@ const Forums: React.FC = () => {
     } catch {
       try {
         const token = localStorage.getItem("accessToken");
-        const headers: Record<string,string> = {};
+        const headers: Record<string, string> = {};
         if (token) headers.Authorization = `Bearer ${token}`;
-        const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, {headers});
+        const reacRes = await fetch(`${API_BASE}/Reactions/thread/${threadId}`, { headers });
         if (reacRes.ok) {
           const reacJson: ReactionResponse = await reacRes.json();
           setEnriched((p) => ({
@@ -586,7 +586,7 @@ const Forums: React.FC = () => {
   const reloadComments = async (threadId: number) => {
     try {
       const token = localStorage.getItem("accessToken");
-      const headers: Record<string,string> = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -631,9 +631,9 @@ const Forums: React.FC = () => {
 
     try {
       const token = localStorage.getItem("accessToken");
-      const headers: Record<string,string> = {};
+      const headers: Record<string, string> = {};
       if (token) headers.Authorization = `Bearer ${token}`;
-      
+
       const form = new FormData();
       form.append("Content", text);
       form.append("Thread_id", String(threadId));
@@ -654,7 +654,7 @@ const Forums: React.FC = () => {
       });
 
       if (!res.ok) throw new Error("Error al crear mensaje");
-      
+
       setReplyText((p) => ({
         ...p,
         [threadId]: "",
@@ -740,7 +740,7 @@ const Forums: React.FC = () => {
     try {
       const token = localStorage.getItem("accessToken");
       setDeletingThreadId(threadId);
-      const headers: Record<string,string> = {
+      const headers: Record<string, string> = {
         'Content-Type': 'application/json',
       };
       if (token) headers.Authorization = `Bearer ${token}`;
@@ -885,7 +885,7 @@ const Forums: React.FC = () => {
                 </Typography>
               </Box>
 
-              {thread.userId === currentUserId  &&(
+              {thread.userId === currentUserId && (
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
                   <IconButton
                     size="small"
@@ -1121,7 +1121,7 @@ const Forums: React.FC = () => {
                                         height: 36,
                                         bgcolor:
                                           comment.user_id ===
-                                          currentUserId
+                                            currentUserId
                                             ? "secondary.main"
                                             : "primary.main",
                                       }}
@@ -1141,7 +1141,7 @@ const Forums: React.FC = () => {
                                           color="primary"
                                           sx={{ fontWeight: 600 }}
                                         >
-                                         {comment.userFirstName}  {comment.userLastName}
+                                          {comment.userFirstName}  {comment.userLastName}
                                         </Typography>
 
                                         <Typography
@@ -1363,10 +1363,16 @@ const Forums: React.FC = () => {
             color="secondary"
             startIcon={<AddIcon />}
             onClick={() => setOpen(true)}
-            sx={{ borderRadius: 999, fontWeight: 600 }}
+            sx={{
+              width: { xs: "100%", sm: "auto" },               
+              fontWeight: 600,                                  
+              textTransform: "none",                            
+              boxShadow: "0 6px 16px rgba(245,158,11,.25)",     
+            }}
           >
             Nuevo Post
           </Button>
+
         }
         stats={[
           {
@@ -1458,7 +1464,7 @@ const Forums: React.FC = () => {
           <Typography variant="h5" color="text.primary" gutterBottom>
             No hay posts en {currentCategoryName}
           </Typography>
-          
+
           <Typography
             variant="body1"
             color="text.secondary"
@@ -1486,7 +1492,7 @@ const Forums: React.FC = () => {
       {!loading && !loadError && posts.length > 0 && (
         <Stack spacing={2}>{posts.map(renderThread)}</Stack>
       )}
-     
+
       <Dialog
         open={open}
         onClose={() => setOpen(false)}
@@ -1634,7 +1640,7 @@ const Forums: React.FC = () => {
             onClick={handleConfirmDeleteComment}
             disabled={deletingComment}
             startIcon={
-              deletingComment ? ( <CircularProgress size={16} /> ) : ( <DeleteOutline /> )
+              deletingComment ? (<CircularProgress size={16} />) : (<DeleteOutline />)
             }
           >
             {deletingComment ? "Eliminando..." : "Eliminar"}
