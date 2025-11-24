@@ -62,6 +62,8 @@ interface Message {
   thread_id: number;
   user_id: number;
   optionalFile?: string | null;
+  userFirstName: string;
+  userLastName: string;
 }
 
 function formatDateNumeric(dateString?: string | null) {
@@ -168,7 +170,7 @@ const Forums: React.FC = () => {
     title: "",
     message: "",
   });
-
+const user_id = Number(localStorage.getItem("userId"));
   const [replyErrors, setReplyErrors] = useState<Record<number, string>>({});
   const [deleteCommentDialogOpen, setDeleteCommentDialogOpen] = useState(false);
   const [commentToDelete, setCommentToDelete] = useState<{
@@ -325,6 +327,7 @@ const Forums: React.FC = () => {
     })();
     return () => { mounted = false; controller.abort(); };
   }, [resolvedForumId, API_BASE]);
+
 
   useEffect(() => {
     if (!postsRaw || postsRaw.length === 0) {
@@ -903,7 +906,6 @@ const Forums: React.FC = () => {
       typeof thread.state === "string" &&
       thread.state.toLowerCase() === "cerrado";
     const hasReplies = (meta.commentsCount ?? 0) > 0;
-
     return (
       <Card
         key={thread.id}
@@ -935,10 +937,6 @@ const Forums: React.FC = () => {
                       size="small"
                     />
                   ))}
-
-                  {isAdmin && meta.pinned && (
-                    <Chip label="Fijado" size="small" color="warning" />
-                  )}
                 </Stack>
                 <Typography
                   variant="body2"
@@ -952,33 +950,8 @@ const Forums: React.FC = () => {
                 </Typography>
               </Box>
 
-              {isAdmin && (
+              {thread.userId === currentUserId  &&(
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
-                  <IconButton
-                    size="small"
-                    onClick={() => {}}
-                    sx={{ color: "primary.main" }}
-                  >
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => togglePinLocal(thread.threadId)}
-                    sx={{ color: "warning.main" }}
-                  >
-                  </IconButton>
-
-                  <IconButton
-                    size="small"
-                    onClick={() => handleCloseThread(thread.threadId)}
-                    sx={{
-                      color: isClosed ? "text.secondary" : "warning.main",
-                    }}
-                    disabled={
-                      closingThreadId === thread.threadId || isClosed
-                    }
-                  >
-                  </IconButton>
-
                   <IconButton
                     size="small"
                     onClick={() =>
@@ -1233,7 +1206,7 @@ const Forums: React.FC = () => {
                                           color="primary"
                                           sx={{ fontWeight: 600 }}
                                         >
-                                          Usuario {comment.user_id}
+                                         {comment.userFirstName}  {comment.userLastName}
                                         </Typography>
 
                                         <Typography
