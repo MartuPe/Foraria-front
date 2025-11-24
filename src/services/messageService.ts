@@ -66,37 +66,33 @@ export async function createMessage(
 }
 
 /** PUT /api/Message/{id}  (multipart/form-data: Content, [File], [FilePathToUpdate], [RemoveFile]) */
-export async function updateMessage(
-  id: number,
-  content: string,
-  opts?: {
-    file?: File | null;
-    filePathToUpdate?: string;
-    removeFile?: boolean;
-  }
-): Promise<Message> {
-  const fd = new FormData();
-  fd.append("Content", content);
-  if (opts?.file) fd.append("File", opts.file);
-  if (opts?.filePathToUpdate)
-    fd.append("FilePathToUpdate", opts.filePathToUpdate);
-  if (typeof opts?.removeFile === "boolean")
-    fd.append("RemoveFile", String(opts.removeFile));
+export async function updateMessage(messageId: number, content: string): Promise<void> {
+  const token = localStorage.getItem("accessToken");
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
 
-  const res = await fetch(`${API_BASE}/Message/${id}`, {
-    method: "PUT",
-    body: fd,
-    headers: {
-      ...getAuthHeaders(),
-      // igual que antes: sin Content-Type manual
-    },
-  });
-  if (!res.ok) {
-    throw new Error(
-      (await res.text().catch(() => "")) || "Error actualizando mensaje"
-    );
+  const body = {
+    userId: Number(localStorage.getItem("userId")),
+    content: content,
+    file: null,
+    filePathToUpdate: null,
+    removeFile: true
+  };
+
+  const response = await fetch(
+    `${API_BASE}/Message/${messageId}`,
+    {
+      method: "PUT", // o "PATCH" dependiendo de tu API
+      headers,
+      body: JSON.stringify(body),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error("Error al actualizar el mensaje");
   }
-  return res.json();
 }
 
 /** DELETE /api/Message/{id}?userId={userId}  (Swagger indica userId en query) */

@@ -62,6 +62,8 @@ interface Message {
   thread_id: number;
   user_id: number;
   optionalFile?: string | null;
+  userFirstName: string;
+  userLastName: string;
 }
 
 function formatDateNumeric(dateString?: string | null) {
@@ -179,7 +181,7 @@ const Forums: React.FC = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [threadToDelete, setThreadToDelete] = useState<number | null>(null);
   const [deletingThreadId, setDeletingThreadId] = useState<number | null>(null);
-  const [closingThreadId, setClosingThreadId] = useState<number | null>(null);
+ 
 
   useEffect(() => {
     if ((forumsRaw && forumsRaw.length > 0) || (threadsRaw && threadsRaw.length > 0)) {
@@ -326,6 +328,7 @@ const Forums: React.FC = () => {
     return () => { mounted = false; controller.abort(); };
   }, [resolvedForumId, API_BASE]);
 
+
   useEffect(() => {
     if (!postsRaw || postsRaw.length === 0) {
       setEnriched({});
@@ -463,14 +466,6 @@ const Forums: React.FC = () => {
       s.has(threadId) ? s.delete(threadId) : s.add(threadId);
       return s;
     });
-  };
-
-  const togglePinLocal = (threadId: number) => {
-    const key = String(threadId);
-    setEnriched((prev) => ({
-      ...prev,
-      [key]: { ...(prev[key] ?? {}), pinned: !prev[key]?.pinned },
-    }));
   };
 
   const toggleReactionForThread = async (threadId: number, reactionType: 1 | -1) => {
@@ -816,63 +811,6 @@ const Forums: React.FC = () => {
     }
   };
 
-  const handleCloseThread = async (threadId: number) => {
-    if (!isAdmin) return;
-
-    try {
-      const token = localStorage.getItem("accessToken");
-      setClosingThreadId(threadId);
-      const headers: Record<string,string> = {
-        'Content-Type': 'application/json',
-      };
-      if (token) headers.Authorization = `Bearer ${token}`;
-      const res = await fetch(`${API_BASE}/Thread/${threadId}/close`, {
-        method: "PATCH",
-        headers
-      });
-
-      if (res.status === 409) {
-        setStatusModal({
-          open: true,
-          variant: "error",
-          title: "Hilo ya cerrado",
-          message: "Este hilo ya se encuentra cerrado.",
-        });
-        await refetchThreads();
-        return;
-      }
-
-      if (!res.ok) {
-        console.error("Error al cerrar el hilo:", await res.text());
-        setStatusModal({
-          open: true,
-          variant: "error",
-          title: "No se pudo cerrar el hilo",
-          message: "No se pudo cerrar el hilo. Probá de nuevo más tarde.",
-        });
-        return;
-      }
-
-      setStatusModal({
-        open: true,
-        variant: "success",
-        title: "Hilo cerrado",
-        message: "El hilo se cerró correctamente.",
-      });
-      await refetchThreads();
-    } catch (e) {
-      console.error(e);
-      setStatusModal({
-        open: true,
-        variant: "error",
-        title: "No se pudo cerrar el hilo",
-        message: "Ocurrió un error al cerrar el hilo. Intentá nuevamente más tarde.",
-      });
-    } finally {
-      setClosingThreadId(null);
-    }
-  };
-
   const openEditDialog = (thread: {
     threadId: number;
     title: string;
@@ -903,7 +841,6 @@ const Forums: React.FC = () => {
       typeof thread.state === "string" &&
       thread.state.toLowerCase() === "cerrado";
     const hasReplies = (meta.commentsCount ?? 0) > 0;
-
     return (
       <Card
         key={thread.id}
@@ -935,10 +872,6 @@ const Forums: React.FC = () => {
                       size="small"
                     />
                   ))}
-
-                  {isAdmin && meta.pinned && (
-                    <Chip label="Fijado" size="small" color="warning" />
-                  )}
                 </Stack>
                 <Typography
                   variant="body2"
@@ -952,33 +885,8 @@ const Forums: React.FC = () => {
                 </Typography>
               </Box>
 
-              {isAdmin && (
+              {thread.userId === currentUserId  &&(
                 <Stack direction="row" spacing={1} sx={{ ml: 2 }}>
-                  <IconButton
-                    size="small"
-                    onClick={() => {}}
-                    sx={{ color: "primary.main" }}
-                  >
-                  </IconButton>
-                  <IconButton
-                    size="small"
-                    onClick={() => togglePinLocal(thread.threadId)}
-                    sx={{ color: "warning.main" }}
-                  >
-                  </IconButton>
-
-                  <IconButton
-                    size="small"
-                    onClick={() => handleCloseThread(thread.threadId)}
-                    sx={{
-                      color: isClosed ? "text.secondary" : "warning.main",
-                    }}
-                    disabled={
-                      closingThreadId === thread.threadId || isClosed
-                    }
-                  >
-                  </IconButton>
-
                   <IconButton
                     size="small"
                     onClick={() =>
@@ -1233,7 +1141,7 @@ const Forums: React.FC = () => {
                                           color="primary"
                                           sx={{ fontWeight: 600 }}
                                         >
-                                          Usuario {comment.user_id}
+                                         {comment.userFirstName}  {comment.userLastName}
                                         </Typography>
 
                                         <Typography
