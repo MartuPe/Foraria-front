@@ -1,4 +1,3 @@
-// dashboardService.ts
 import { api } from "../api/axios";
 import { storage } from "../utils/storage";
 import { getEffectiveIds } from "./userService";
@@ -112,29 +111,27 @@ export async function fetchDashboard(): Promise<DashboardData> {
     ]);
 
   const pendingList = asArray(pendingRaw?.pendingExpenses);
-  const monthlyList = Array.isArray(monthlyRaw?.monthlyHistory)
-    ? monthlyRaw.monthlyHistory
-    : asArray(monthlyRaw);
+  const monthlyList = Array.isArray(monthlyRaw?.monthlyHistory) ? monthlyRaw.monthlyHistory : asArray(monthlyRaw);
+  const now = Date.now();
 
-  // ---- map de facturas pendientes (puede quedar vacío si el endpoint devuelve 404) ----
-  const pendingBills: PendingExpense[] = pendingList.map(
-    (e: any, idx: number) => ({
+  const pendingBills: PendingExpense[] = pendingList.map((e: any, idx: number) => {
+    const exp = new Date(e.expirationDate ?? Date.now());
+    const status: "overdue" | "upcoming" =
+      exp.getTime() < now ? "overdue" : "upcoming";
+
+    return {
       id: Number(e.id ?? idx),
       title: String(e.description ?? "Expensa"),
       code: String(e.code ?? e.id ?? idx),
       amount: Number(e.totalAmount ?? 0),
-      dueISO: new Date(e.expirationDate ?? Date.now()).toISOString(),
-      // acá podrías marcar "overdue" si la fecha ya venció
-      status: "upcoming",
-    })
-  );
+      dueISO: exp.toISOString(),
+      status,
+    };
+  });
 
-  // ---- totales del usuario (de /summary) ----
   const totalPending = Number(summary?.data?.totalPending ?? 0);
   const overdueCount = Number(summary?.data?.overdueInvoices ?? 0);
   const paidThisYear = Number(summary?.data?.totalPaidThisYear ?? 0);
-
-  // ---- donut "Mi Estado de Pagos": armamos porcentajes con esos montos ----
   const totalForPie = totalPending + paidThisYear;
 
   let paymentStatus: PaymentStatus[] = [];
@@ -146,14 +143,13 @@ export async function fetchDashboard(): Promise<DashboardData> {
       {
         label: "Pendiente",
         value: pct(totalPending),
-        color: "#f97316", // naranja
+        color: "#f97316",
       },
       {
         label: "Pagado este año",
         value: pct(paidThisYear),
-        color: "#22c55e", // verde
+        color: "#22c55e",
       },
-      // Opcional: mostrar cantidad de vencidas como trozo aparte (si quisieras)
       // {
       //   label: `Facturas vencidas (${overdueCount})`,
       //   value: 0,
@@ -162,7 +158,6 @@ export async function fetchDashboard(): Promise<DashboardData> {
     ];
   }
 
-  // ---- historial de pagos (gráfico de barras) ----
   const paymentsHistory = monthlyList.map((m: any) => ({
     label: String(m.month ?? m.monthName ?? m.label ?? ""),
     value: Number(m.totalPaid ?? 0),
@@ -170,27 +165,21 @@ export async function fetchDashboard(): Promise<DashboardData> {
 
   return {
     header: { welcomeTitle: "¡Bienvenido a tu Dashboard!" },
-
     kpis: {
       expensesThisMonth: Number(total?.totalAmount ?? 0),
       activePolls: Number(polls?.activePolls ?? 0),
       activeBookings: Number(reserves?.activeReservations ?? 0),
       notifications: 0,
     },
-
-    // de momento vacío hasta que tengas endpoint de desglose
     expenseBreakdown: [],
-
     pendingBills,
     paymentStatus,
-
     totals: {
       totalPending,
-      nextToDue: 0, // cuando el back lo tenga, lo mapeamos
+      nextToDue: 0,
       overdueCount,
       paidThisYear,
     },
-
     paymentsHistory,
   };
 }
