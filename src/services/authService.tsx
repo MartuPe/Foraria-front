@@ -72,6 +72,7 @@ console.log("Login response data:", data);
     role: roleDescription ?? "",
     consortiumId: consortiumId,
     residences: data.user.residences ?? [],
+    hasPermission: data.user.hasPermission ?? false,
   };
 
   storage.user = u;
@@ -93,6 +94,8 @@ console.log("Login response data:", data);
   } else {
     localStorage.removeItem("residenceId");
   }
+
+   localStorage.setItem("hasPermission", String(u.hasPermission));
 }
 
     // 4) Manejar requiresPasswordChange
