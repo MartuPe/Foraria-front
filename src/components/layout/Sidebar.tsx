@@ -383,54 +383,92 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </ListItemButton>
       </Box>
 
-      {/* Perfil */}
+  {/* Perfil */}
       <Box sx={{ p: 1.5, borderTop: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}>
-        <Box
-          onClick={() => handleNavigation("/perfil")}
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
-            borderRadius: 1.5,
-            backgroundColor: "rgba(255,255,255,0.08)",
-            cursor: "pointer",
-            "&:hover": { backgroundColor: "rgba(255,255,255,0.15)" },
-          }}
-        >
-          <Avatar sx={{ width: 36, height: 36, backgroundColor: "#f97316", color: "white", fontWeight: 700, fontSize: "1rem" }}>
-            U
-          </Avatar>
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography
-              variant="body2"
+        {(() => {
+          const stored = localStorage.getItem("user");
+          const user = stored ? JSON.parse(stored) : null;
+
+          const firstName = user?.firstName ?? "Usuario";
+          const lastName = user?.lastName ?? "";
+          const residence = user?.residences?.[0];
+
+          // Ejemplo: Piso 4, Número 2 → "4B"
+          let deptoLabel = "Sin residencia";
+          if (residence) {
+            const floor = residence.floor ?? "";
+            const number = residence.number ?? "";
+            const letter =
+              typeof number === "number"
+                ? String.fromCharCode(64 + number) // 1=A, 2=B...
+                : number;
+
+            deptoLabel = `Depto ${floor}${letter}`;
+          }
+
+          // Inicial del avatar
+          const avatarLetter = firstName?.[0]?.toUpperCase?.() ?? "U";
+
+          return (
+            <Box
+              onClick={() => handleNavigation("/perfil")}
               sx={{
-                fontWeight: 600,
-                color: "white",
-                fontSize: "0.875rem",
-                lineHeight: 1.2,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                p: 1.5,
+                borderRadius: 1.5,
+                backgroundColor: "rgba(255,255,255,0.08)",
+                cursor: "pointer",
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.15)" },
               }}
             >
-              Usuario
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "rgba(255,255,255,0.7)",
-                fontSize: "0.75rem",
-                lineHeight: 1.1,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Depto 4B
-            </Typography>
-          </Box>
-        </Box>
+              <Avatar
+                sx={{
+                  width: 36,
+                  height: 36,
+                  backgroundColor: "#f97316",
+                  color: "white",
+                  fontWeight: 700,
+                  fontSize: "1rem",
+                }}
+              >
+                {avatarLetter}
+              </Avatar>
+
+              <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    color: "white",
+                    fontSize: "0.875rem",
+                    lineHeight: 1.2,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {firstName} {lastName}
+                </Typography>
+
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: "rgba(255,255,255,0.7)",
+                    fontSize: "0.75rem",
+                    lineHeight: 1.1,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                  }}
+                >
+                  {deptoLabel}
+                </Typography>
+              </Box>
+            </Box>
+          );
+        })()}
       </Box>
     </Drawer>
   );
