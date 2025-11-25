@@ -29,8 +29,14 @@ export default function CallRoom() {
   const [call, setCall] = useState<CallDto | null>(null);
   const [participants, setParticipants] = useState<CallParticipantDto[]>([]);
   const [messages, setMessages] = useState<CallMessageDto[]>([]);
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  const [micOn, setMicOn] = useState<boolean>(() => {
+    const stored = localStorage.getItem("call_micOn");
+    return stored === null ? true : stored === "true";
+  });
+  const [camOn, setCamOn] = useState<boolean>(() => {
+    const stored = localStorage.getItem("call_camOn");
+    return stored === null ? true : stored === "true";
+  });
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
