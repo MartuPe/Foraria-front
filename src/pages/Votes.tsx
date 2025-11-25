@@ -99,6 +99,8 @@ const BACKEND_STATE_VALUES: Record<string, string> = {
   cerrada: 'Cerrada'
 };
 
+const tienePermisos = localStorage.getItem("hasPermission")
+
 interface PollCategory { id: number; name: string; }
 
 const POLL_CATEGORIES: PollCategory[] = [
@@ -728,7 +730,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
 
             <Stack direction="row" spacing={1} justifyContent="space-between" alignItems="center">
               <Stack direction="row" spacing={1}>
-                {isActive && !hasVoted && (
+                {isActive && !hasVoted && tienePermisos && (
                   <Button
                     variant="contained"
                     color="success"

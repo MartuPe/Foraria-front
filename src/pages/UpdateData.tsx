@@ -4,14 +4,13 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import PhotoCamera from "@mui/icons-material/PhotoCamera";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import isotipoColor from "../assets/Isotipo-Color.png";
 import { authService } from "../services/authService";
 import { storage } from "../utils/storage"; 
 import { Role } from "../constants/roles";
-const UpdateData: React.FC = () => {
-  const navigate = useNavigate();
 
+const UpdateData: React.FC = () => {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName]   = useState("");
   const [dni, setDni]             = useState("");
@@ -46,33 +45,44 @@ const UpdateData: React.FC = () => {
       confirmNewPassword,
     };
 
+    // Validar vacíos
     const empty: Record<string, boolean> = {};
     Object.entries(fields).forEach(([key, value]) => {
       if (!value.trim()) empty[key] = true;
     });
 
     if (Object.keys(empty).length > 0) {
-      setMsg({ emptyInputError : "No puede haber campos vacíos." });
+      setMsg({ emptyInputError: "No puede haber campos vacíos." });
       setErrorFields(empty);
       return;
     }
 
+    // Validar coincidencia
     if (newPassword !== confirmNewPassword) {
-      setMsg({ emptyInputError : "Las contraseñas nuevas no coinciden." });
+      setMsg({ emptyInputError: "Las contraseñas nuevas no coinciden." });
       setErrorFields({ newPassword: true, confirmNewPassword: true });
       return;
     }
 
-    const strongPasswordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.,;:\-_])[A-Za-z\d@$!%*?&.,;:\-_]{8,}$/;
+    // Validar fortaleza
+    const strongPasswordRegex =
+      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&.,;:\-_])[A-Za-z\d@$!%*?&.,;:\-_]{8,}$/;
 
     if (!strongPasswordRegex.test(newPassword)) {
-      setMsg({ emptyInputError : "La nueva contraseña debe tener al menos una mayúscula, una minúscula, un número y un caracter especial.", });
+      setMsg({
+        emptyInputError:
+          "La nueva contraseña debe tener al menos una mayúscula, una minúscula, un número y un caracter especial.",
+      });
       setErrorFields({ newPassword: true, confirmNewPassword: true });
       return;
     }
 
+    // Validar nombre y apellido
     if (firstName.trim().length < 3 || lastName.trim().length < 3) {
-      setMsg({ emptyInputError: "El nombre y el apellido deben tener al menos 3 letras." });
+      setMsg({
+        emptyInputError:
+          "El nombre y el apellido deben tener al menos 3 letras.",
+      });
       const err: Record<string, boolean> = {};
       if (firstName.trim().length < 3) err.firstName = true;
       if (lastName.trim().length < 3) err.lastName = true;
@@ -80,15 +90,18 @@ const UpdateData: React.FC = () => {
       return;
     }
 
+    // Validar DNI
     if (isNaN(Number(dni)) || !/^\d+$/.test(dni)) {
-      setMsg({ emptyInputError : "El DNI es inválido." });
+      setMsg({ emptyInputError: "El DNI es inválido." });
       setErrorFields({ dni: true });
       return;
     }
 
     setLoading(true);
+
     try {
-      await authService.updateFirstTime({
+      // 1) Llamar al servicio de actualización
+      const res = await authService.updateFirstTime({
         firstName,
         lastName,
         dni,
@@ -98,15 +111,25 @@ const UpdateData: React.FC = () => {
         photo,
       });
 
-    const role = storage.role as Role | null;
-    console.log(role)
-    if ( role === Role.ADMIN || role === Role.CONSORCIO  ) {
-      navigate("/admin/dashboard", { replace: true }); // mantuve tu typo; cambia a /admin/dashboard si corresponde
-    } else {
-      navigate("/dashboard", { replace: true });
-    }
+      console.log("Update response:", res);
+
+      // 2) El authService ya guardó todo, solo necesitamos redirigir
+      // Leer el rol actualizado desde storage
+      const role = storage.role;
+
+      console.log("Rol después de actualizar:", role);
+
+      // 3) Pequeño delay para asegurar que todo se guardó
+      await new Promise(resolve => setTimeout(resolve, 150));
+
+      // 4) Redirigir según rol con recarga completa
+      if (role === Role.ADMIN || role === Role.CONSORCIO) {
+        window.location.href = "/admin/dashboard";
+      } else {
+        window.location.href = "/dashboard";
+      }
     } catch (err: any) {
-      console.error(err);
+      console.error("Error en actualización:", err);
       const raw =
         err?.response?.data?.message ||
         err?.response?.data?.error ||
@@ -115,10 +138,10 @@ const UpdateData: React.FC = () => {
       const low = (raw || "").toString().toLowerCase();
 
       if (low.includes("contraseña") || low.includes("password")) {
-        setMsg({ emptyInputError : "La contraseña actual es incorrecta." });
+        setMsg({ emptyInputError: "La contraseña actual es incorrecta." });
         setErrorFields({ currentPassword: true });
       } else {
-        setMsg({ emptyInputError : "No se pudo actualizar la información." });
+        setMsg({ emptyInputError: "No se pudo actualizar la información." });
       }
     } finally {
       setLoading(false);
@@ -277,7 +300,8 @@ const UpdateData: React.FC = () => {
             className="field-message field-message--error field-message--emptyInputError"
             role="alert"
             aria-live="polite"
-          > {msg.emptyInputError}
+          >
+            {msg.emptyInputError}
           </div>
         )}
 

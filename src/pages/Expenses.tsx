@@ -38,7 +38,8 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import logoForaria from "../assets/Isotipo-Color.png";
 import { ForariaStatusModal } from "../components/StatCardForms";
-
+import { storage } from "../utils/storage";
+import { Role } from "../constants/roles";
 interface InvoiceItem {
   description: string;
   amount: number;
@@ -82,7 +83,7 @@ export default function ExpensesPage() {
   const [items, setItems] = useState<ExpenseDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-
+const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO || storage.role === Role.OWNER ;
   const [header, setHeader] = useState<{
     unidad: string;
     titular: string;
@@ -580,27 +581,26 @@ export default function ExpensesPage() {
                   ]}
                   showDivider
                   extraActions={[
-                    {
-                      label:
-                        loadingPaymentFor === detail.id
-                          ? "Redirigiendo..."
-                          : "Pagar",
-                      icon: <LocalAtmIcon />,
-                      variant: "contained",
-                      color: "primary",
-                      onClick: () => handleMercadoPago(detail),
-                    },
-                    {
-                      label: "Ver",
-                      icon: <VisibilityIcon />,
-                      onClick: () => setDetailsOpenFor(detail),
-                    },
-                    {
-                      label: "PDF",
-                      icon: <DownloadIcon />,
-                      onClick: () => generatePdf(detail),
-                    },
-                  ]}
+  ...(isAdmin
+    ? [{
+        label: loadingPaymentFor === detail.id ? "Redirigiendo..." : "Pagar",
+        icon: <LocalAtmIcon />,
+        variant: "contained" as const,
+        color: "primary" as const,
+        onClick: () => { void handleMercadoPago(detail); },
+      }]
+    : []),
+  {
+    label: "Ver",
+    icon: <VisibilityIcon />,
+    onClick: () => setDetailsOpenFor(detail),
+  },
+  {
+    label: "PDF",
+    icon: <DownloadIcon />,
+    onClick: () => generatePdf(detail),
+  },
+]}
                   sx={{ mb: 2 }}
                 />
               );
