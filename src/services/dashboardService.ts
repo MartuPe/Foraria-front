@@ -2,7 +2,11 @@ import { api } from "../api/axios";
 import { storage } from "../utils/storage";
 import { getEffectiveIds } from "./userService";
 
-export interface ExpenseCategory { label: string; value: number; color?: string }
+export interface ExpenseCategory {
+  label: string;
+  value: number;
+  color?: string;
+}
 export interface PendingExpense {
   id: number;
   title: string;
@@ -11,14 +15,28 @@ export interface PendingExpense {
   dueISO: string;
   status: "overdue" | "upcoming";
 }
-export interface PaymentStatus { label: string; value: number; color: string }
+export interface PaymentStatus {
+  label: string;
+  value: number; // porcentaje 0–100
+  color: string;
+}
 export interface DashboardData {
   header: { welcomeTitle: string };
-  kpis: { expensesThisMonth: number; activePolls: number; activeBookings: number; notifications: number };
+  kpis: {
+    expensesThisMonth: number;
+    activePolls: number;
+    activeBookings: number;
+    notifications: number;
+  };
   expenseBreakdown: ExpenseCategory[];
   pendingBills: PendingExpense[];
   paymentStatus: PaymentStatus[];
-  totals: { totalPending: number; nextToDue: number; overdueCount: number; paidThisYear: number };
+  totals: {
+    totalPending: number;
+    nextToDue: number;
+    overdueCount: number;
+    paidThisYear: number;
+  };
   paymentsHistory: { label: string; value: number }[];
 }
 
@@ -50,43 +68,103 @@ export async function fetchDashboard(): Promise<DashboardData> {
     consortiumId = ids.consortiumId;
   }
 
-  const [
-    total,
-    pendingRaw,
-    summary,
-    monthlyRaw,
-    polls,
-    reserves,
-  ] = await Promise.all([
-    safeGet<{ totalAmount: number }>("/dashboard/expenses/total", { consortiumId }, { totalAmount: 0 }),
-    safeGet<any>("/dashboard/expenses/pending", { consortiumId }, { pendingExpenses: [] }),
-    safeGet<{ data: { totalPending?: number; overdueInvoices?: number; totalPaidThisYear?: number } }>(
-      "/dashboard/expenses/summary",
-      { userId },
-      { data: {} }
-    ),
-    safeGet<any>("/dashboard/expenses/monthly-history", { userId }, []),
-    safeGet<{ activePolls: number }>("/dashboard/polls/active", { consortiumId }, { activePolls: 0 }),
-    safeGet<{ activeReservations: number }>("/dashboard/reservations/count", { consortiumId }, { activeReservations: 0 }),
-  ]);
+  const [total, pendingRaw, summary, monthlyRaw, polls, reserves] =
+    await Promise.all([
+      safeGet<{ totalAmount: number }>(
+        "/dashboard/expenses/total",
+        { consortiumId },
+        { totalAmount: 0 }
+      ),
+      safeGet<any>(
+        "/dashboard/expenses/pending",
+        { consortiumId },
+        { pendingExpenses: [] }
+      ),
+      safeGet<{
+        userId: number;
+        generatedAt: string;
+        data: {
+          totalPending?: number;
+          overdueInvoices?: number;
+          totalPaidThisYear?: number;
+        };
+      }>("/dashboard/expenses/summary", { userId }, {
+        userId: userId ?? 0,
+        generatedAt: "",
+        data: {},
+      }),
+      safeGet<any>(
+        "/dashboard/expenses/monthly-history",
+        { userId },
+        { monthlyHistory: [] }
+      ),
+      safeGet<{ activePolls: number }>(
+        "/dashboard/polls/active",
+        { consortiumId },
+        { activePolls: 0 }
+      ),
+      safeGet<{ activeReservations: number }>(
+        "/dashboard/reservations/count",
+        { consortiumId },
+        { activeReservations: 0 }
+      ),
+    ]);
 
   const pendingList = asArray(pendingRaw?.pendingExpenses);
-  const monthlyList = Array.isArray(monthlyRaw?.monthlyHistory)
-    ? monthlyRaw.monthlyHistory
-    : asArray(monthlyRaw);
+  const monthlyList = Array.isArray(monthlyRaw?.monthlyHistory) ? monthlyRaw.monthlyHistory : asArray(monthlyRaw);
+  const now = Date.now();
 
-  const pendingBills: PendingExpense[] = pendingList.map((e: any, idx: number) => ({
-    id: Number(e.id ?? idx),
-    title: String(e.description ?? "Expensa"),
-    code: String(e.code ?? e.id ?? idx),
-    amount: Number(e.totalAmount ?? 0),
-    dueISO: new Date(e.expirationDate ?? Date.now()).toISOString(),
-    status: "upcoming",
+  const pendingBills: PendingExpense[] = pendingList.map((e: any, idx: number) => {
+    const exp = new Date(e.expirationDate ?? Date.now());
+    const status: "overdue" | "upcoming" =
+      exp.getTime() < now ? "overdue" : "upcoming";
+
+    return {
+      id: Number(e.id ?? idx),
+      title: String(e.description ?? "Expensa"),
+      code: String(e.code ?? e.id ?? idx),
+      amount: Number(e.totalAmount ?? 0),
+      dueISO: exp.toISOString(),
+      status,
+    };
+  });
+
+  const totalPending = Number(summary?.data?.totalPending ?? 0);
+  const overdueCount = Number(summary?.data?.overdueInvoices ?? 0);
+  const paidThisYear = Number(summary?.data?.totalPaidThisYear ?? 0);
+  const totalForPie = totalPending + paidThisYear;
+
+  let paymentStatus: PaymentStatus[] = [];
+  if (totalForPie > 0) {
+    const pct = (v: number) =>
+      totalForPie === 0 ? 0 : Math.round((v / totalForPie) * 100);
+
+    paymentStatus = [
+      {
+        label: "Pendiente",
+        value: pct(totalPending),
+        color: "#f97316",
+      },
+      {
+        label: "Pagado este año",
+        value: pct(paidThisYear),
+        color: "#22c55e",
+      },
+      // {
+      //   label: `Facturas vencidas (${overdueCount})`,
+      //   value: 0,
+      //   color: "#ef4444",
+      // },
+    ];
+  }
+
+  const paymentsHistory = monthlyList.map((m: any) => ({
+    label: String(m.month ?? m.monthName ?? m.label ?? ""),
+    value: Number(m.totalPaid ?? 0),
   }));
 
   return {
     header: { welcomeTitle: "¡Bienvenido a tu Dashboard!" },
-
     kpis: {
       expensesThisMonth: Number(total?.totalAmount ?? 0),
       activePolls: Number(polls?.activePolls ?? 0),
@@ -95,19 +173,13 @@ export async function fetchDashboard(): Promise<DashboardData> {
     },
     expenseBreakdown: [],
     pendingBills,
-    // Hasta que el back devuelva porcentajes, dejamos vacío y tu UI ya muestra "Sin datos"
-    paymentStatus: [],
-
+    paymentStatus,
     totals: {
-      totalPending: Number(summary?.data?.totalPending ?? 0),
+      totalPending,
       nextToDue: 0,
-      overdueCount: Number(summary?.data?.overdueInvoices ?? 0),
-      paidThisYear: Number(summary?.data?.totalPaidThisYear ?? 0),
+      overdueCount,
+      paidThisYear,
     },
-
-    paymentsHistory: monthlyList.map((m: any) => ({
-      label: String(m.month ?? m.monthName ?? m.label ?? ""),
-      value: Number(m.totalPaid ?? 0),
-    })),
+    paymentsHistory,
   };
 }
