@@ -99,12 +99,16 @@ export default function Meetings() {
     });
   };
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("es-AR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  });
+  const formatLocalYMD = (dateStr: string) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString("es-AR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
+  };
 
   return (
     <Box className="foraria-page-container">
@@ -169,12 +173,10 @@ const formatDate = (iso: string) =>
               description={m.description}
               fields={[
                 {
-                  label: `${formatDate(m.date)} · ${m.time}`,
+                  label: `${formatLocalYMD(m.date)} · ${m.time}`,
                   value: "",
                   icon: <CalendarTodayIcon />,
                 },
-                //{ label: m.duration, value: "", icon: <QueryBuilderIcon /> },
-                //{ label: m.location, value: "", icon: <VideocamIcon /> },
                 {
                   label: `${m.participants.length} participantes`,
                   value: "",
