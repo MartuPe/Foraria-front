@@ -39,7 +39,7 @@ import autoTable from "jspdf-autotable";
 import logoForaria from "../assets/Isotipo-Color.png";
 import { ForariaStatusModal } from "../components/StatCardForms";
 import { storage } from "../utils/storage";
-import { Role, RoleGroups } from "../constants/roles";
+import { Role } from "../constants/roles";
 interface InvoiceItem {
   description: string;
   amount: number;

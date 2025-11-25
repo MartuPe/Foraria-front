@@ -201,7 +201,7 @@ export default function Meetings() {
               extraActions={
   m.status === "finished"
     ? undefined
-    : (localStorage.getItem("hasPermission") === "true"
+    : (tienePermisos === "true"
         ? [{ label: "Unirse", color: "secondary" as const, variant: "contained" as const, onClick: () => handleOpenJoinPreview(m), icon: <VideocamIcon /> }]
         : undefined)
 }

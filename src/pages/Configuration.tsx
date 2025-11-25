@@ -18,7 +18,6 @@ import {
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
 import { api } from "../api/axios";
-const API = "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net";
 
 const Configuration: React.FC = () => {
   // ----------- NOTIFICACIONES ORIGINALES -----------
@@ -37,9 +36,6 @@ const Configuration: React.FC = () => {
   const [tenantData, setTenantData] = useState<any>(null);
   const [loadingTenant, setLoadingTenant] = useState(true);
   const [tenantPermission, setTenantPermission] = useState(false);
-
-  const consortiumId = localStorage.getItem("consortiumId");
-  const residenceId = localStorage.getItem("residenceId");
 
  useEffect(() => {
   const consortiumId = localStorage.getItem("consortiumId");
