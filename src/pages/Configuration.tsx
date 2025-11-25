@@ -1,5 +1,5 @@
 // src/pages/Configuration.tsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -17,8 +17,11 @@ import {
   Sms as SmsIcon,
 } from "@mui/icons-material";
 import PageHeader from "../components/SectionHeader";
+import { api } from "../api/axios";
+const API = "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net";
 
 const Configuration: React.FC = () => {
+  // ----------- NOTIFICACIONES ORIGINALES -----------
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(false);
   const [smsNotifications, setSmsNotifications] = useState(false);
@@ -29,6 +32,85 @@ const Configuration: React.FC = () => {
   const [votacionesNotifications, setVotacionesNotifications] = useState(false);
   const [forosNotifications, setForosNotifications] = useState(true);
   const [mantenimientoNotifications, setMantenimientoNotifications] = useState(true);
+
+  // ----------- NUEVO: PERMISOS INQUILINO -----------
+  const [tenantData, setTenantData] = useState<any>(null);
+  const [loadingTenant, setLoadingTenant] = useState(true);
+  const [tenantPermission, setTenantPermission] = useState(false);
+
+  const consortiumId = localStorage.getItem("consortiumId");
+  const residenceId = localStorage.getItem("residenceId");
+
+ useEffect(() => {
+  const consortiumId = localStorage.getItem("consortiumId");
+  const residenceId = localStorage.getItem("residenceId");
+
+  if (!consortiumId || !residenceId) {
+    console.warn("No hay consortiumId o residenceId en localStorage");
+    setLoadingTenant(false);
+    return;
+  }
+
+  const fetchUsers = async () => {
+    try {
+      setLoadingTenant(true);
+      // usa axios (api) para respetar headers/autorización que ya tenés configurados
+      const { data } = await api.get(`/User/consortium/${consortiumId}`);
+
+      if (!Array.isArray(data)) {
+        console.warn("Respuesta inesperada de /User/consortium:", data);
+        setTenantData(null);
+        return;
+      }
+
+      // comparar role case-insensitive y comparar ids como strings
+      const tenant = data.find((u: any) => {
+        const role = (u.role ?? "").toString().toLowerCase();
+        const isTenant = role === "inquilino";
+        const hasResidence = Array.isArray(u.residences)
+          && u.residences.some((r: any) => String(r.id) === String(residenceId));
+        return isTenant && hasResidence;
+      });
+
+      if (!tenant) {
+        console.info("No se encontró inquilino para residenceId =", residenceId);
+        setTenantData(null);
+      } else {
+        setTenantData(tenant);
+        // si el backend devuelve hasPermission en el objeto, lo usamos
+        setTenantPermission(Boolean(tenant.hasPermission));
+      }
+    } catch (err: any) {
+      console.error("Error obteniendo usuarios del consorcio:", err?.response ?? err);
+      setTenantData(null);
+    } finally {
+      setLoadingTenant(false);
+    }
+  };
+
+  fetchUsers();
+}, []);
+
+ const handleTogglePermission = async (val: boolean) => {
+  if (!tenantData) return;
+
+  const endpoint = val ? "/Permission/transfer" : "/Permission/revoke";
+
+  try {
+    // body según tu API
+    const body = { tenantId: tenantData.id };
+
+    const { data } = await api.post(endpoint, body);
+
+    // si el call fue exitoso, actualizar estado local
+    setTenantPermission(val);
+    setTenantData((t: any) => ({ ...(t ?? {}), hasPermission: val }));
+    console.info(`${val ? "Otorgado" : "Revocado"} permiso a tenant ${tenantData.id}`, data);
+  } catch (err: any) {
+    console.error("Error al cambiar permisos:", err?.response ?? err);
+    // opcional: mostrar snackbar / alert con err.response.data?.message
+  }
+};
 
   const handleSaveConfiguration = () => {
     console.log("Configuración guardada");
@@ -45,13 +127,12 @@ const Configuration: React.FC = () => {
 
   return (
     <Box className="foraria-page-container" sx={{ ml: 0 }}>
-      <PageHeader
-        title="Configuración Personal"
-        stats={[]}
-      />
+      <PageHeader title="Configuración Personal" stats={[]} />
 
       <Paper elevation={0} variant="outlined" sx={{ p: 2.5, borderRadius: 3 }}>
         <Stack spacing={2.5}>
+
+          {/* ----------------- NOTIFICACIONES ----------------- */}
           <Stack direction="row" alignItems="center" spacing={1}>
             <NotificationsIcon color="primary" />
             <Typography variant="h6" fontWeight={600} color="primary">
@@ -103,6 +184,7 @@ const Configuration: React.FC = () => {
 
           <Divider />
 
+          {/* ----------------- TIPOS DE NOTIFICACIÓN ----------------- */}
           <Box>
             <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 600 }}>
               Tipos de Notificaciones
@@ -115,11 +197,52 @@ const Configuration: React.FC = () => {
                   title={t.title}
                   description={t.desc}
                   checked={t.checked}
-                  onChange={(val) => t.set(val)}
+                  onChange={(val: boolean) => t.set(val)}
                 />
               ))}
             </Stack>
           </Box>
+
+          <Divider />
+
+          {/* ----------------- NUEVO: PERMISOS DE INQUILINO ----------------- */}
+          <Box>
+            <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 600 }}>
+              Otorgar Permisos al Inquilino
+            </Typography>
+
+            {loadingTenant ? (
+              <Typography>Cargando inquilino...</Typography>
+            ) : tenantData ? (
+              <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                <Typography fontWeight={600}>
+                  {tenantData.firstName} {tenantData.lastName}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  {tenantData.mail}
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Tel: {tenantData.phoneNumber}
+                </Typography>
+
+                <Box mt={1}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={tenantPermission}
+                        onChange={(e) => handleTogglePermission(e.target.checked)}
+                        color="primary"
+                      />
+                    }
+                    label="Permitir al inquilino gestionar la unidad"
+                  />
+                </Box>
+              </Paper>
+            ) : (
+              <Typography>No se encontró un inquilino asociado.</Typography>
+            )}
+          </Box>
+
         </Stack>
       </Paper>
 
@@ -140,17 +263,9 @@ const Configuration: React.FC = () => {
 
 export default Configuration;
 
-/* ---------- Subcomponentes locales ---------- */
+/* ---------- SUBCOMPONENTES ORIGINALES ---------- */
 
-function ChannelItem({
-  icon,
-  label,
-  control,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  control: React.ReactNode;
-}) {
+function ChannelItem({ icon, label, control }: any) {
   return (
     <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1, borderRadius: 2 }}>
       <Box
@@ -167,22 +282,12 @@ function ChannelItem({
       >
         {icon}
       </Box>
-      <FormControlLabel control={control as any} label={label} />
+      <FormControlLabel control={control} label={label} />
     </Box>
   );
 }
 
-function TypeRow({
-  title,
-  description,
-  checked,
-  onChange,
-}: {
-  title: string;
-  description: string;
-  checked: boolean;
-  onChange: (val: boolean) => void;
-}) {
+function TypeRow({ title, description, checked, onChange }: any) {
   return (
     <Paper
       variant="outlined"
