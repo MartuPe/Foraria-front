@@ -90,46 +90,46 @@ export default function CallRoom() {
   );
 
   const ensureUserNameLoaded = useCallback(
-  async (userId: number) => {
-    if (!userId || userId === currentUserId) return;
-    if (userNames[userId]) return; // ya lo tengo
+    async (userId: number) => {
+      if (!userId || userId === currentUserId) return;
+      if (userNames[userId]) return;
 
-    try {
-      const user = await getUserById(userId);
-      const fullName = getUserDisplayName(user);
-      setUserNames(prev => (prev[userId] ? prev : { ...prev, [userId]: fullName }));
-    } catch (e) {
-      console.error("Error obteniendo usuario", userId, e);
-    }
-  },
-  [currentUserId, userNames]
-);
+      try {
+        const user = await getUserById(userId);
+        const fullName = getUserDisplayName(user);
+        setUserNames(prev => (prev[userId] ? prev : { ...prev, [userId]: fullName }));
+      } catch (e) {
+        console.error("Error obteniendo usuario", userId, e);
+      }
+    },
+    [currentUserId, userNames]
+  );
 
-const getDisplayName = (userId: number) =>
-  userId === currentUserId ? "Vos" : userNames[userId] ?? `Usuario #${userId}`;
-
-useEffect(() => {
-  const ids = new Set<number>();
-  participants.forEach((p) => {
-    if (p.userId && p.userId !== currentUserId) {
-      ids.add(p.userId);
-    }
-  });
-  messages.forEach((m) => {
-    if (m.userId && m.userId !== currentUserId) {
-      ids.add(m.userId);
-    }
-  });
-  ids.forEach((id) => {
-    ensureUserNameLoaded(id);
-  });
-}, [participants, messages, currentUserId, ensureUserNameLoaded]);
+  const getDisplayName = (userId: number) =>
+    userId === currentUserId ? "Vos" : userNames[userId] ?? `Usuario #${userId}`;
 
   useEffect(() => {
-  const el = chatListRef.current;
-  if (!el) return;
-  el.scrollTop = el.scrollHeight;
-}, [orderedMessages.length]);
+    const ids = new Set<number>();
+    participants.forEach((p) => {
+      if (p.userId && p.userId !== currentUserId) {
+        ids.add(p.userId);
+      }
+    });
+    messages.forEach((m) => {
+      if (m.userId && m.userId !== currentUserId) {
+        ids.add(m.userId);
+      }
+    });
+    ids.forEach((id) => {
+      ensureUserNameLoaded(id);
+    });
+  }, [participants, messages, currentUserId, ensureUserNameLoaded]);
+
+  useEffect(() => {
+    const el = chatListRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [orderedMessages.length]);
 
   useEffect(() => {
     localStorage.setItem("call_micOn", micOn ? "true" : "false");
@@ -278,7 +278,7 @@ useEffect(() => {
             id: existing?.id ?? Math.random(),
             userId: u.userId,
             isCameraOn: existing?.isCameraOn ?? true,
-            isMuted: existing?.isMuted ?? true,
+            isMuted: existing?.isMuted ?? false, // <-- corregido: por defecto NO muteado
             isConnected: true,
             joinedAt: existing?.joinedAt ?? new Date().toISOString(),
           });
@@ -304,7 +304,7 @@ useEffect(() => {
           id: Math.random(),
           userId: payload.userId,
           isCameraOn: true,
-          isMuted: true,
+          isMuted: false, // <-- corregido: entra con mic encendido
           isConnected: true,
           joinedAt: new Date().toISOString(),
         };
@@ -494,7 +494,14 @@ useEffect(() => {
 
   const videoParticipants = visibleParticipants.length
     ? visibleParticipants
-    : [{ id: -1, userId: 0, isCameraOn: false, isMuted: true, isConnected: false, joinedAt: new Date().toISOString(), } as CallParticipantDto,];
+    : [{
+      id: -1,
+      userId: 0,
+      isCameraOn: false,
+      isMuted: true,
+      isConnected: false,
+      joinedAt: new Date().toISOString(),
+    } as CallParticipantDto];
 
   return (
     <Box className="foraria-page-container foraria-call-room">
@@ -528,7 +535,7 @@ useEffect(() => {
         <Paper className="foraria-call-room-video" elevation={0}>
           <Box className="foraria-call-room-video-grid">
             <Box
-              className={ "foraria-call-room-video-tile" + (!camOn ? " foraria-call-room-video-tile--off" : "")}>
+              className={"foraria-call-room-video-tile" + (!camOn ? " foraria-call-room-video-tile--off" : "")}>
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -612,7 +619,15 @@ useEffect(() => {
           <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ mt: 3 }}>
             <Tooltip title={micOn ? "Silenciar" : "Activar micrófono"}>
               <IconButton
-                onClick={() => setMicOn((m) => !m)}
+                onClick={() => {
+                  setMicOn((prev) => {
+                    const next = !prev;
+                    if (connected && numericCallId && currentUserId) {
+                      send("ToggleMute", numericCallId.toString(), currentUserId, !next);
+                    }
+                    return next;
+                  });
+                }}
                 className={
                   "foraria-call-control-btn" +
                   (!micOn ? " foraria-call-control-btn--off" : "")
@@ -628,7 +643,15 @@ useEffect(() => {
 
             <Tooltip title={camOn ? "Apagar cámara" : "Encender cámara"}>
               <IconButton
-                onClick={() => setCamOn((c) => !c)}
+                onClick={() => {
+                  setCamOn((prev) => {
+                    const next = !prev;
+                    if (connected && numericCallId && currentUserId) {
+                      send("ToggleCamera", numericCallId.toString(), currentUserId, next);
+                    }
+                    return next;
+                  });
+                }}
                 className={
                   "foraria-call-control-btn" +
                   (!camOn ? " foraria-call-control-btn--off" : "")
@@ -654,7 +677,6 @@ useEffect(() => {
           )}
         </Paper>
 
-        {/* PANEL DERECHA: PARTICIPANTES + CHAT */}
         <Paper className="foraria-call-room-side" elevation={0}>
           <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 600 }}>
             Participantes ({visibleParticipants.length})
@@ -677,19 +699,28 @@ useEffect(() => {
                 </Stack>
 
                 <Stack direction="row" spacing={1} alignItems="center">
-                  {p.isMuted ? (
-                    <MicOffOutlinedIcon fontSize="small" />
-                  ) : (
-                    <MicOutlinedIcon fontSize="small" />
-                  )}
-                  {p.isCameraOn ? (
-                    <VideocamOutlinedIcon fontSize="small" />
-                  ) : (
-                    <VideocamOutlinedIcon fontSize="small" sx={{ opacity: 0.3 }} />
-                  )}
-                  <Typography variant="caption" color="text.secondary">
-                    {p.isConnected ? "Conectado" : "Desconectado"}
-                  </Typography>
+                  {(() => {
+                    const isLocal = p.userId === currentUserId;
+                    const micMuted = isLocal ? !micOn : !!p.isMuted;
+                    const cameraOn = isLocal ? camOn : p.isCameraOn !== false;
+                    return (
+                      <>
+                        {micMuted ? (
+                          <MicOffOutlinedIcon fontSize="small" />
+                        ) : (
+                          <MicOutlinedIcon fontSize="small" />
+                        )}
+                        {cameraOn ? (
+                          <VideocamOutlinedIcon fontSize="small" />
+                        ) : (
+                          <VideocamOffOutlinedIcon fontSize="small" />
+                        )}
+                        <Typography variant="caption" color="text.secondary">
+                          {p.isConnected ? "Conectado" : "Desconectado"}
+                        </Typography>
+                      </>
+                    );
+                  })()}
                 </Stack>
               </Box>
             ))}
