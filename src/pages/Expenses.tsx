@@ -217,7 +217,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
       case "paid":
         return "success";
       case "overdue":
-      case "defeated":
+      case "expired":
         return "error";
       default:
         return "default";
