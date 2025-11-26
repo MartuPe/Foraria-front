@@ -111,7 +111,8 @@ export default function CallDialog({
       if (!meeting) {
         throw new Error("No se encontró la reunión seleccionada.");
       }
-
+      localStorage.setItem("call_micOn", String(isMicOn));
+      localStorage.setItem("call_camOn", String(isCameraOn));
       const callId = meeting.id;
       await callService.join(callId, currentUserId);
       const call = await callService.getDetails(callId);
