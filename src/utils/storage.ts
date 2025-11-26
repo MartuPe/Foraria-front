@@ -61,6 +61,13 @@ export const storage = {
     if (id && id > 0) localStorage.setItem("consortiumId", String(id));
     else localStorage.removeItem("consortiumId");
   },
+  get hasPermission(): boolean {
+  const v = localStorage.getItem("hasPermission");
+  return v === "true"; // convierto a boolean
+},
+set hasPermission(v: boolean) {
+  localStorage.setItem("hasPermission", String(v));
+},
 
   clear() {
     localStorage.clear();

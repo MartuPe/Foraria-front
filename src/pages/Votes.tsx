@@ -49,6 +49,7 @@ import { api } from "../api/axios";
 import { storage } from "../utils/storage"; 
 import SuccessModal from "../components/modals/SuccessModal"; 
 import NewVote from "../components/modals/NewVote"; // Importar tu componente
+import { Role } from "../constants/roles";
 
 export interface PollOption {
   id: number;
@@ -99,7 +100,7 @@ const BACKEND_STATE_VALUES: Record<string, string> = {
   cerrada: 'Cerrada'
 };
 
-const tienePermisos = localStorage.getItem("hasPermission")
+const tienePermisos = storage.hasPermission
 
 interface PollCategory { id: number; name: string; }
 
@@ -138,7 +139,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
   const [voteErrorMessage, setVoteErrorMessage] = useState<string>("");       
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [pollVoters, setPollVoters] = useState<Record<number, { userId: number; userName: string }[]>>({}); 
-
+    const isAdmin = storage.role === Role.ADMIN;
   // Estados para admin - NewVote modal y editar
   const [showNewVoteModal, setShowNewVoteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -449,7 +450,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
           }
         }}
       >
-        {isAdministrador && (
+        {!isAdmin && (
           <Box
             sx={{
               position: 'absolute',
@@ -1039,6 +1040,7 @@ if (loadError) {
       </Dialog>
 
       {/* Modal Editar */}
+      {!isAdmin && (
       <Dialog
         open={showEditModal}
         onClose={() => setShowEditModal(false)}
@@ -1128,6 +1130,7 @@ if (loadError) {
           </Button>
         </DialogActions>
       </Dialog>
+)}
       
       {/* Modal de Resultados */}
       <Dialog

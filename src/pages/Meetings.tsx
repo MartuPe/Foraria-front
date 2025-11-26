@@ -33,6 +33,7 @@ export default function Meetings() {
   const isAdminRoute = location.pathname.startsWith("/admin");
   const userRole = storage.role ?? "";
   const canManageMeetings = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
+  const tienePermisos = storage.hasPermission;
 
   useEffect(() => {
     const loadMeetings = async () => {
@@ -189,8 +190,21 @@ export default function Meetings() {
               }))}
               showDivider
               extraActions={
-                m.status === "finished" ? undefined : [{label: "Unirse", color: "secondary" as const, variant: "contained" as const, onClick: () => handleOpenJoinPreview(m), icon: <VideocamIcon />,},]
-              }
+    tienePermisos
+      ? (m.status === "finished"
+          ? undefined
+          : [
+              {
+                label: "Unirse",
+                color: "secondary" as const,
+                variant: "contained" as const,
+                onClick: () => handleOpenJoinPreview(m),
+                icon: <VideocamIcon />,
+              },
+            ])
+      : undefined
+  }
+
             />
           ))}
       </Stack>
