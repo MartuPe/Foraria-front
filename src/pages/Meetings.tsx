@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Box, Typography, Stack, Button, Dialog, DialogContent, } from "@mui/material";
+import { Box, Typography, Stack, Button, Dialog, DialogContent,} from "@mui/material";
 import VideocamIcon from "@mui/icons-material/Videocam";
 import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
@@ -10,7 +10,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import PageHeader from "../components/SectionHeader";
 import InfoCard from "../components/InfoCard";
 import { ForariaStatusModal } from "../components/StatCardForms";
-import { getStats, Meeting, fetchMeetingsByConsortium, } from "../services/meetingService";
+import { getStats, Meeting, fetchMeetingsByConsortium,} from "../services/meetingService";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import "../styles/meetings.css";
@@ -25,7 +25,7 @@ export default function Meetings() {
   const [loading, setLoading] = useState<boolean>(false);
   const [tab, setTab] = useState<TabKey>("todas");
   const [openNewMeet, setOpenNewMeet] = useState(false);
-  const [statusModal, setStatusModal] = useState<{ open: boolean; title: string; message: string; variant: "success" | "error"; }>({ open: false, title: "", message: "", variant: "error", });
+  const [statusModal, setStatusModal] = useState<{ open: boolean; title: string; message: string; variant: "success" | "error";}>({open: false, title: "", message: "", variant: "error",});
   const [callDialogOpen, setCallDialogOpen] = useState(false);
   const [selectedMeetingForCall, setSelectedMeetingForCall] = useState<Meeting | null>(null);
   const navigate = useNavigate();
@@ -34,6 +34,7 @@ export default function Meetings() {
   const userRole = storage.role ?? "";
   const canManageMeetings = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
   const tienePermisos = storage.hasPermission;
+
   useEffect(() => {
     const loadMeetings = async () => {
       try {
@@ -46,7 +47,7 @@ export default function Meetings() {
           setStatusModal({
             open: true,
             title: "Sin consorcio",
-            message: "No se encontró el consorcio asociado. Verificá tu sesión o configuración.",
+            message:"No se encontró el consorcio asociado. Verificá tu sesión o configuración.",
             variant: "error",
           });
           return;
@@ -95,16 +96,20 @@ export default function Meetings() {
     setCallDialogOpen(false);
     const base = isAdminRoute ? `/admin/reuniones/${selectedMeetingForCall.id}` : `/reuniones/${selectedMeetingForCall.id}`;
     navigate(`${base}/llamada/${call.id}`, {
-      state: { meetingId: selectedMeetingForCall.id, },
+      state: { meetingId: selectedMeetingForCall.id,},
     });
   };
 
-  const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("es-AR", {
+  const formatLocalYMD = (dateStr: string) => {
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-").map(Number);
+    const d = new Date(year, month - 1, day);
+    return d.toLocaleDateString("es-AR", {
       day: "2-digit",
       month: "short",
       year: "numeric",
     });
+  };
 
   return (
     <Box className="foraria-page-container">
@@ -112,21 +117,9 @@ export default function Meetings() {
         title="Reuniones"
         actions={
           canManageMeetings ? (
-            <Button
-              variant="contained"
-              color="secondary"
-              onClick={() => setOpenNewMeet(true)}
-              sx={{
-                width: { xs: "100%", sm: "auto" },
-                fontWeight: 600,
-                textTransform: "none",
-                boxShadow: "0 6px 16px rgba(245,158,11,.25)",
-              }}
-            >
+            <Button variant="contained" color="secondary" onClick={() => setOpenNewMeet(true)}>
               + Nueva reunión
             </Button>
-
-
           ) : undefined
         }
         showSearch
@@ -181,12 +174,10 @@ export default function Meetings() {
               description={m.description}
               fields={[
                 {
-                  label: `${formatDate(m.date)} · ${m.time}`,
+                  label: `${formatLocalYMD(m.date)} · ${m.time}`,
                   value: "",
                   icon: <CalendarTodayIcon />,
                 },
-                //{ label: m.duration, value: "", icon: <QueryBuilderIcon /> },
-                //{ label: m.location, value: "", icon: <VideocamIcon /> },
                 {
                   label: `${m.participants.length} participantes`,
                   value: "",
@@ -199,12 +190,10 @@ export default function Meetings() {
               }))}
               showDivider
               extraActions={
-  m.status === "finished"
-    ? undefined
-    : (tienePermisos
-        ? [{ label: "Unirse", color: "secondary" as const, variant: "contained" as const, onClick: () => handleOpenJoinPreview(m), icon: <VideocamIcon /> }]
-        : undefined)
-}
+
+                m.status === "finished" ? undefined : [{label: "Unirse", color: "secondary" as const, variant: "contained" as const, onClick: () => handleOpenJoinPreview(m), icon: <VideocamIcon />,},]
+              }
+
             />
           ))}
       </Stack>

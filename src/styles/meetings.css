@@ -1,71 +1,3 @@
-.foraria-call-video {
-  background-color: #071427;
-  border-radius: 16px;
-  height: 260px;
-  position: relative;
-  margin-bottom: 24px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-}
-
-.foraria-call-main-icon {
-  font-size: 48px !important;
-  margin-bottom: 8px;
-}
-
-.foraria-call-connecting {
-  margin-bottom: 24px !important;
-}
-
-.foraria-call-participants {
-  display: flex;
-  gap: 16px;
-}
-
-.foraria-call-participant-box {
-  width: 80px;
-  height: 56px;
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.06);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0.8;
-}
-
-.foraria-call-participant-icon {
-  color: rgba(255, 255, 255, 0.85);
-}
-
-.foraria-call-controls {
-  margin-top: 8px;
-}
-
-.foraria-call-control-btn {
-  width: 48px;
-  height: 48px;
-  border-radius: 999px !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: rgba(15, 76, 129, 0.06) !important;
-}
-
-.foraria-call-control-btn:hover {
-  background-color: rgba(15, 76, 129, 0.16) !important;
-}
-
-.foraria-call-control-btn--end {
-  background-color: #e53935 !important;
-}
-
-.foraria-call-control-btn--end:hover {
-  background-color: #c62828 !important;
-}
-
 .foraria-call-room {
   display: flex;
   flex-direction: column;
@@ -81,7 +13,7 @@
 
 .foraria-call-room-body {
   display: grid;
-  grid-template-columns: minmax(0, 2.3fr) minmax(260px, 1fr);
+  grid-template-columns: minmax(0, 2.2fr) minmax(260px, 1fr);
   gap: 16px;
 }
 
@@ -90,22 +22,97 @@
   border-radius: 16px;
   padding: 16px;
   color: #ffffff;
-  min-height: 340px;
+  min-height: 320px;
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
 }
 
 .foraria-call-room-video-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
 .foraria-call-room-video-tile {
-  border-radius: 12px;
-  background-color: rgba(255, 255, 255, 0.08);
+  position: relative;
+  border-radius: 16px;
+  overflow: hidden;
+  background: radial-gradient(circle at top, #1f2933, #020617);
+  aspect-ratio: 16 / 9;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 120px;
+}
+
+.foraria-call-video-element {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  background: #000;
+  object-fit: cover;
+}
+
+.foraria-call-room-video-tile--off {
+  background: radial-gradient(circle at top, #111827, #020617);
+}
+
+.foraria-call-room-video-tile--off .foraria-call-video-element {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.foraria-call-room-video-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+  gap: 6px;
+  pointer-events: none;
+}
+
+.foraria-call-room-video-placeholder-icon {
+  font-size: 40px !important;
+  opacity: 0.85;
+}
+
+.foraria-call-room-video-name {
+  position: absolute;
+  left: 10px;
+  bottom: 10px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.7);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #f9fafb;
+  backdrop-filter: blur(6px);
+}
+
+.foraria-call-room-video-status {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(15, 118, 110, 0.85); /* verde-ish mic on */
+  color: #e5f9f5;
+}
+
+.foraria-call-room-video-status--muted {
+  background: rgba(239, 68, 68, 0.9); /* rojito mute */
+  color: #fee2e2;
 }
 
 .foraria-call-room-side {
@@ -113,20 +120,7 @@
   padding: 16px;
   border: 1px solid #e5e7eb;
   background-color: #ffffff;
-}
-
-@media (max-width: 960px) {
-  .foraria-call-room-body {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .foraria-call-room-side {
-    order: -1;
-  }
-}
-
-.foraria-call-room-video-tile--off {
-  background-color: rgba(255, 255, 255, 0.04);
+  box-shadow: 0 10px 20px rgba(15, 23, 42, 0.06);
 }
 
 .foraria-call-room-chat-list {
@@ -148,29 +142,68 @@
   color: #6b7280;
 }
 
-.foraria-call-video-element {
-  width: 100%;
-  height: 100%;
-  max-height: 60vh;
-  border-radius: 16px;
-  background: #000;
-  object-fit: cover;
-}
-
-.foraria-call-room-video-tile {
-  position: relative;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #000;
-  aspect-ratio: 16 / 9;
+.foraria-call-control-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 999px !important;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: center;
+  background-color: rgba(15, 76, 129, 0.06) !important;
+  transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
-.foraria-call-room-video-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+.foraria-call-control-btn:hover {
+  background-color: rgba(15, 76, 129, 0.16) !important;
+  transform: translateY(-1px);
+}
+
+.foraria-call-control-btn--off {
+  background-color: rgba(15, 23, 42, 0.25) !important;
+}
+
+.foraria-call-control-btn--end {
+  background-color: #e53935 !important;
+}
+
+.foraria-call-control-btn--end:hover {
+  background-color: #c62828 !important;
+}
+
+@media (max-width: 960px) {
+  .foraria-call-room-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .foraria-call-room-video {
+    min-height: 260px;
+  }
+
+  .foraria-call-room-side {
+    margin-top: 8px;
+  }
+}
+
+@media (max-width: 600px) {
+  .foraria-call-room-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .foraria-call-room-video {
+    padding: 12px;
+  }
+
+  .foraria-call-room-video-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .foraria-call-room-side {
+    padding: 12px;
+  }
+
+  .foraria-call-room-chat-list {
+    max-height: 180px;
+  }
 }

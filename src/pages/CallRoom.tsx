@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, FormEvent, useRef,} from "react";
+import { useEffect, useMemo, useState, FormEvent, useRef, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
-import { Box, IconButton, Typography, Stack, Paper, Tooltip, Button, Divider, TextField,} from "@mui/material";
+import { Box, IconButton, Typography, Stack, Paper, Tooltip, Button, Divider, TextField } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CallEndIcon from "@mui/icons-material/CallEnd";
 import MicOutlinedIcon from "@mui/icons-material/MicOutlined";
@@ -8,8 +8,9 @@ import MicOffOutlinedIcon from "@mui/icons-material/MicOffOutlined";
 import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import VideocamOffOutlinedIcon from "@mui/icons-material/VideocamOffOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import { callService, CallDto, CallParticipantDto, CallMessageDto,} from "../services/callService";
-import { getMeetingById } from "../services/meetingService";
+import { callService, CallDto, CallParticipantDto, CallMessageDto } from "../services/callService";
+import { getMeetingById, parseBackendDate } from "../services/meetingService";
+import { getUserById, getUserDisplayName } from "../services/userService";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import { useSignalR } from "../hooks/useSignalRCalls";
@@ -26,49 +27,117 @@ const HUB_URL = "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsit
 export default function CallRoom() {
   const { meetingId, callId } = useParams<RouteParams>();
   const navigate = useNavigate();
+
   const [call, setCall] = useState<CallDto | null>(null);
   const [participants, setParticipants] = useState<CallParticipantDto[]>([]);
   const [messages, setMessages] = useState<CallMessageDto[]>([]);
-  const [micOn, setMicOn] = useState(true);
-  const [camOn, setCamOn] = useState(true);
+  const [userNames, setUserNames] = useState<Record<number, string>>({});
+
+  const [micOn, setMicOn] = useState<boolean>(() => {
+    const stored = localStorage.getItem("call_micOn");
+    return stored === null ? true : stored === "true";
+  });
+
+  const [camOn, setCamOn] = useState<boolean>(() => {
+    const stored = localStorage.getItem("call_camOn");
+    return stored === null ? true : stored === "true";
+  });
+
   const [newMessage, setNewMessage] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+
   const numericMeetingId = Number(meetingId);
   const numericCallId = Number(callId);
+
   const meeting = useMemo(
     () => (numericMeetingId ? getMeetingById(numericMeetingId) : undefined),
     [numericMeetingId]
   );
+
   const currentUserId = Number(localStorage.getItem("userId") ?? 0);
   const role = storage.role as Role | undefined;
   const isAdminRole = role === Role.ADMIN || role === Role.CONSORCIO;
-  const location = useLocation()
+
+  const location = useLocation();
   const isAdminRoute = location.pathname.startsWith("/admin");
+  const baseMeetingsPath = isAdminRoute ? "/admin/reuniones" : "/reuniones";
+
   const canEndCall = !!call && isAdminRole && call.createdByUserId === currentUserId;
+
   const rtcRef = useRef<RTCClient | null>(null);
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const connectionUsersRef = useRef<Map<string, number>>(new Map());
   const remoteVideoRefs = useRef<Map<number, HTMLVideoElement | null>>(new Map());
-  const setRemoteVideoRef =
-    (userId: number) => (el: HTMLVideoElement | null) => {
-      remoteVideoRefs.current.set(userId, el);
-      if (el && rtcRef.current) {
-        const stream = rtcRef.current.getRemoteStream(userId);
-        if (stream) {
-          el.srcObject = stream;
-        }
-      }
-    };
-    const orderedMessages = useMemo(() => {
-      return [...messages].sort((a, b) => {
-        const da = new Date(a.sentAt).getTime();
-        const db = new Date(b.sentAt).getTime();
-        return da - db; // primero los más viejos
-      });
-    }, [messages]);
+  const chatListRef = useRef<HTMLDivElement | null>(null);
 
+  const setRemoteVideoRef = (userId: number) => (el: HTMLVideoElement | null) => {
+    remoteVideoRefs.current.set(userId, el);
+    if (el && rtcRef.current) {
+      const stream = rtcRef.current.getRemoteStream(userId);
+      if (stream) el.srcObject = stream;
+    }
+  };
+
+  const orderedMessages = useMemo(
+    () =>
+      [...messages].sort(
+        (a, b) =>
+          new Date(a.sentAt).getTime() - new Date(b.sentAt).getTime()
+      ),
+    [messages]
+  );
+
+  const ensureUserNameLoaded = useCallback(
+    async (userId: number) => {
+      if (!userId || userId === currentUserId) return;
+      if (userNames[userId]) return;
+
+      try {
+        const user = await getUserById(userId);
+        const fullName = getUserDisplayName(user);
+        setUserNames(prev => (prev[userId] ? prev : { ...prev, [userId]: fullName }));
+      } catch (e) {
+        console.error("Error obteniendo usuario", userId, e);
+      }
+    },
+    [currentUserId, userNames]
+  );
+
+  const getDisplayName = (userId: number) =>
+    userId === currentUserId ? "Vos" : userNames[userId] ?? `Usuario #${userId}`;
+
+  useEffect(() => {
+    const ids = new Set<number>();
+    participants.forEach((p) => {
+      if (p.userId && p.userId !== currentUserId) {
+        ids.add(p.userId);
+      }
+    });
+    messages.forEach((m) => {
+      if (m.userId && m.userId !== currentUserId) {
+        ids.add(m.userId);
+      }
+    });
+    ids.forEach((id) => {
+      ensureUserNameLoaded(id);
+    });
+  }, [participants, messages, currentUserId, ensureUserNameLoaded]);
+
+  useEffect(() => {
+    const el = chatListRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [orderedMessages.length]);
+
+  useEffect(() => {
+    localStorage.setItem("call_micOn", micOn ? "true" : "false");
+  }, [micOn]);
+
+  useEffect(() => {
+    localStorage.setItem("call_camOn", camOn ? "true" : "false");
+  }, [camOn]);
 
   useEffect(() => {
     if (!numericCallId || Number.isNaN(numericCallId)) {
@@ -79,26 +148,32 @@ export default function CallRoom() {
 
     let cancelled = false;
 
-const loadInitial = async () => {
-  try {
-    setLoading(true);
-    setError(null);
-    const [callDetails, state] = await Promise.all([
-      callService.getDetails(numericCallId),
-      callService.getState(numericCallId),
-    ]);
+    const loadInitial = async () => {
+      try {
+        setLoading(true);
+        setError(null);
 
-    if (cancelled) return;
+        const [callDetails, state] = await Promise.all([
+          callService.getDetails(numericCallId),
+          callService.getState(numericCallId),
+        ]);
 
-    setCall(callDetails);
-    setMessages(state.messages ?? []);
-  } catch (e) {
-    console.error(e);
-    if (!cancelled) setError("No se pudo cargar la llamada.");
-  } finally {
-    if (!cancelled) setLoading(false);
-  }
-};
+        if (cancelled) return;
+
+        setCall(callDetails);
+        setMessages(
+          (state.messages ?? []).map((m) => ({
+            ...m,
+            sentAt: parseBackendDate(m.sentAt as any),
+          }))
+        );
+      } catch (e) {
+        console.error(e);
+        if (!cancelled) setError("No se pudo cargar la llamada.");
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
 
     loadInitial();
     return () => {
@@ -131,10 +206,7 @@ const loadInitial = async () => {
 
     const initMediaAndRtc = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: true,
-          audio: true,
-        });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
 
         if (cancelled) {
           stream.getTracks().forEach((t) => t.stop());
@@ -142,28 +214,17 @@ const loadInitial = async () => {
         }
 
         setLocalStream(stream);
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
 
         rtcRef.current = new RTCClient(
-          (offer, toUserId) =>
-            send("SendOffer", numericCallId.toString(), toUserId, offer),
-          (answer, toUserId) =>
-            send("SendAnswer", numericCallId.toString(), toUserId, answer),
+          (offer, toUserId) => send("SendOffer", numericCallId.toString(), toUserId, offer),
+          (answer, toUserId) => send("SendAnswer", numericCallId.toString(), toUserId, answer),
           (candidate, toUserId) =>
-            send(
-              "SendIceCandidate",
-              numericCallId.toString(),
-              toUserId,
-              candidate
-            ),
+            send("SendIceCandidate", numericCallId.toString(), toUserId, candidate),
           (userId, remoteStream) => {
             console.log("🎥 Llega stream remoto para userId:", userId);
             const videoEl = remoteVideoRefs.current.get(userId);
-            if (videoEl) {
-              videoEl.srcObject = remoteStream;
-            }
+            if (videoEl) videoEl.srcObject = remoteStream;
           }
         );
 
@@ -198,43 +259,39 @@ const loadInitial = async () => {
   }, [camOn, localStream]);
 
   useEffect(() => {
-    if (!connected) return;
-    if (!numericCallId) return;
+    if (!connected || !numericCallId) return;
 
-   const handleCurrentParticipants = (
-  payload: { connectionId: string; userId: number }[]
-) => {
-  console.log("📥 CurrentParticipants:", payload);
+    const handleCurrentParticipants = (payload: { connectionId: string; userId: number }[]) => {
+      console.log("CurrentParticipants:", payload);
 
-  setParticipants((prev) => {
-    const prevByUser = new Map<number, CallParticipantDto>();
-    prev.forEach((p) => prevByUser.set(p.userId, p));
+      setParticipants((prev) => {
+        const prevByUser = new Map<number, CallParticipantDto>();
+        prev.forEach((p) => prevByUser.set(p.userId, p));
 
-    const map = new Map<number, CallParticipantDto>();
+        const map = new Map<number, CallParticipantDto>();
 
-    payload.forEach((u) => {
-      connectionUsersRef.current.set(u.connectionId, u.userId);
+        payload.forEach((u) => {
+          connectionUsersRef.current.set(u.connectionId, u.userId);
 
-      const existing = prevByUser.get(u.userId);
-      map.set(u.userId, {
-        id: existing?.id ?? Math.random(),
-        userId: u.userId,
-        isCameraOn: existing?.isCameraOn ?? true,
-        isMuted: existing?.isMuted ?? true,
-        isConnected: true,
-        joinedAt: existing?.joinedAt ?? new Date().toISOString(),
+          const existing = prevByUser.get(u.userId);
+          map.set(u.userId, {
+            id: existing?.id ?? Math.random(),
+            userId: u.userId,
+            isCameraOn: existing?.isCameraOn ?? true,
+            isMuted: existing?.isMuted ?? false, // <-- corregido: por defecto NO muteado
+            isConnected: true,
+            joinedAt: existing?.joinedAt ?? new Date().toISOString(),
+          });
+        });
+
+        return Array.from(map.values());
       });
-    });
-    return Array.from(map.values());
-  });
-};
+    };
 
-    const handleUserJoined = (payload: {
-      userId: number;
-      connectionId: string;
-    }) => {
-      console.log("➕ UserJoined recibido:", payload);
+    const handleUserJoined = (payload: { userId: number; connectionId: string }) => {
+      console.log("UserJoined recibido:", payload);
       connectionUsersRef.current.set(payload.connectionId, payload.userId);
+
       setParticipants((prev) => {
         const exists = prev.some((p) => p.userId === payload.userId);
         if (exists) {
@@ -247,7 +304,7 @@ const loadInitial = async () => {
           id: Math.random(),
           userId: payload.userId,
           isCameraOn: true,
-          isMuted: true,
+          isMuted: false, // <-- corregido: entra con mic encendido
           isConnected: true,
           joinedAt: new Date().toISOString(),
         };
@@ -262,24 +319,17 @@ const loadInitial = async () => {
       }
     };
 
-    const handleUserLeft = (payload: {
-      userId: number;
-      connectionId: string;
-    }) => {
+    const handleUserLeft = (payload: { userId: number; connectionId: string }) => {
       console.log("➖ UserLeft recibido:", payload);
 
       setParticipants((prev) =>
-        prev.map((p) =>
-          p.userId === payload.userId ? { ...p, isConnected: false, leftAt: new Date().toISOString() } : p)
+        prev.map((p) => p.userId === payload.userId ? { ...p, isConnected: false, leftAt: new Date().toISOString() } : p)
       );
 
       rtcRef.current?.closePeer(payload.userId);
     };
 
-    const handleUserMuteChanged = (payload: {
-      userId: number;
-      isMuted: boolean;
-    }) => {
+    const handleUserMuteChanged = (payload: { userId: number; isMuted: boolean }) => {
       console.log("UserMuteChanged:", payload);
       setParticipants((prev) =>
         prev.map((p) =>
@@ -288,10 +338,7 @@ const loadInitial = async () => {
       );
     };
 
-    const handleUserCameraChanged = (payload: {
-      userId: number;
-      isCameraOn: boolean;
-    }) => {
+    const handleUserCameraChanged = (payload: { userId: number; isCameraOn: boolean }) => {
       console.log("UserCameraChanged:", payload);
       setParticipants((prev) =>
         prev.map((p) =>
@@ -323,9 +370,11 @@ const loadInitial = async () => {
       fromUserId?: number;
     }) => {
       console.log("ReceiveOffer:", payload);
-      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      const remoteUserId =
+        payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
       console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
+
       try {
         await rtcRef.current.receiveOffer(remoteUserId, payload.offer);
       } catch (e) {
@@ -333,15 +382,17 @@ const loadInitial = async () => {
       }
     };
 
-      const handleReceiveAnswer = async (payload: {
+    const handleReceiveAnswer = async (payload: {
       from: string;
       answer: any;
       fromUserId?: number;
     }) => {
       console.log("ReceiveAnswer:", payload);
-      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      const remoteUserId =
+        payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
       console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
+
       try {
         await rtcRef.current.receiveAnswer(remoteUserId, payload.answer);
       } catch (e) {
@@ -355,9 +406,11 @@ const loadInitial = async () => {
       fromUserId?: number;
     }) => {
       console.log("ReceiveIceCandidate:", payload);
-      const remoteUserId = payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
+      const remoteUserId =
+        payload.fromUserId ?? connectionUsersRef.current.get(payload.from);
       console.log("from mapeado a userId:", remoteUserId);
       if (!remoteUserId || !rtcRef.current) return;
+
       try {
         await rtcRef.current.receiveIceCandidate(remoteUserId, payload.candidate);
       } catch (e) {
@@ -371,7 +424,6 @@ const loadInitial = async () => {
     on("UserMuteChanged", handleUserMuteChanged);
     on("UserCameraChanged", handleUserCameraChanged);
     on("ReceiveChatMessage", handleReceiveChatMessage);
-
     on("ReceiveOffer", handleReceiveOffer);
     on("ReceiveAnswer", handleReceiveAnswer);
     on("ReceiveIceCandidate", handleReceiveIceCandidate);
@@ -383,7 +435,6 @@ const loadInitial = async () => {
       off("UserMuteChanged", handleUserMuteChanged);
       off("UserCameraChanged", handleUserCameraChanged);
       off("ReceiveChatMessage", handleReceiveChatMessage);
-
       off("ReceiveOffer", handleReceiveOffer);
       off("ReceiveAnswer", handleReceiveAnswer);
       off("ReceiveIceCandidate", handleReceiveIceCandidate);
@@ -401,9 +452,7 @@ const loadInitial = async () => {
       if (connected && numericCallId && currentUserId) {
         await send("LeaveCall", numericCallId.toString(), currentUserId);
       }
-
-      const basePath = isAdminRoute ? "/admin/reuniones" : "/reuniones";
-      navigate(basePath);
+      navigate(baseMeetingsPath);
     }
   };
 
@@ -415,8 +464,7 @@ const loadInitial = async () => {
     } catch (e) {
       console.error(e);
     } finally {
-      const basePath = isAdminRoute ? "/admin/reuniones" : "/reuniones";
-      navigate(basePath);
+      navigate(baseMeetingsPath);
     }
   };
 
@@ -426,21 +474,14 @@ const loadInitial = async () => {
     if (!trimmed || !numericCallId || !currentUserId) return;
 
     try {
-      await send(
-        "SendChatMessage",
-        numericCallId.toString(),
-        currentUserId,
-        trimmed
-      );
+      await send("SendChatMessage", numericCallId.toString(), currentUserId, trimmed);
       setNewMessage("");
     } catch (err) {
       console.error("Error enviando mensaje de chat:", err);
     }
   };
 
-  const title =
-    meeting?.title ?? (call ? `Llamada #${call.id}` : "Reunión en curso");
-  const subtitle = meeting ? `${meeting.date} · ${meeting.time} · ${meeting.location}` : call ? `Estado: ${call.status}` : "Llamada en curso";
+  const title = meeting?.title ?? call?.title ?? "Reunión en curso";
 
   const visibleParticipants = useMemo(() => {
     const map = new Map<number, CallParticipantDto>();
@@ -453,74 +494,123 @@ const loadInitial = async () => {
 
   const videoParticipants = visibleParticipants.length
     ? visibleParticipants
-    : [
-        {
-          id: -1,
-          userId: 0,
-          isCameraOn: false,
-          isMuted: true,
-          isConnected: false,
-          joinedAt: new Date().toISOString(),
-        } as CallParticipantDto,
-      ];
+    : [{
+      id: -1,
+      userId: 0,
+      isCameraOn: false,
+      isMuted: true,
+      isConnected: false,
+      joinedAt: new Date().toISOString(),
+    } as CallParticipantDto];
 
   return (
     <Box className="foraria-page-container foraria-call-room">
       <Box className="foraria-call-room-header">
         <Stack direction="row" alignItems="center" spacing={1.5}>
-          <IconButton onClick={() => navigate("/reuniones")}>
+          <IconButton onClick={() => navigate(baseMeetingsPath)}>
             <ArrowBackIcon />
           </IconButton>
           <Box>
-            <Typography variant="subtitle1" fontWeight={600}>
-              {title}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {subtitle}
-            </Typography>
+            <Typography variant="subtitle1" fontWeight={600}>{title}</Typography>
           </Box>
         </Stack>
 
-        <Button variant="contained" color={canEndCall ? "error" : "secondary"} startIcon={<CallEndIcon />} onClick={canEndCall ? handleEndCall : handleLeaveCall} >
+        <Button
+          variant="contained"
+          color={canEndCall ? "error" : "secondary"}
+          startIcon={<CallEndIcon />}
+          onClick={canEndCall ? handleEndCall : handleLeaveCall}
+        >
           {canEndCall ? "Finalizar llamada" : "Salir de la llamada"}
         </Button>
       </Box>
 
       {error && (
-        <Typography variant="body2" color="error" sx={{ mb: 1, textAlign: "center" }} >
+        <Typography variant="body2" color="error" sx={{ mb: 1, textAlign: "center" }}>
           {error}
         </Typography>
       )}
 
       <Box className="foraria-call-room-body">
         <Paper className="foraria-call-room-video" elevation={0}>
-          <Typography variant="body2" color="common.white" sx={{ mb: 2, opacity: 0.9 }} >
-            Videollamada en curso.
-          </Typography>
-
           <Box className="foraria-call-room-video-grid">
-            <Box className="foraria-call-room-video-tile">
-              <video ref={localVideoRef} autoPlay playsInline muted className="foraria-call-video-element" />
-              <Typography variant="caption" sx={{ mt: 0.5, opacity: 0.9 }}>
-                Vos
-              </Typography>
+            <Box
+              className={"foraria-call-room-video-tile" + (!camOn ? " foraria-call-room-video-tile--off" : "")}>
+              <video
+                ref={localVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className="foraria-call-video-element"
+              />
+
+              {!camOn && (
+                <Box className="foraria-call-room-video-placeholder">
+                  <VideocamOffOutlinedIcon className="foraria-call-room-video-placeholder-icon" />
+                </Box>
+              )}
+
+              <Box className="foraria-call-room-video-name">
+                <PersonOutlineIcon fontSize="small" />
+                <span>Vos</span>
+              </Box>
+
+              <Box
+                className={
+                  "foraria-call-room-video-status" +
+                  (!micOn ? " foraria-call-room-video-status--muted" : "")
+                }
+              >
+                {micOn ? (
+                  <MicOutlinedIcon fontSize="small" />
+                ) : (
+                  <MicOffOutlinedIcon fontSize="small" />
+                )}
+              </Box>
             </Box>
 
             {videoParticipants
               .filter((p) => p.userId !== currentUserId)
               .map((p) => {
-                const name = `Participante #${p.userId}`;
+                const name = getDisplayName(p.userId);
                 return (
-                  <Box key={p.id} className={ "foraria-call-room-video-tile" + (p.isCameraOn === false ? " foraria-call-room-video-tile--off" : "")}>
-                    <video ref={setRemoteVideoRef(p.userId)} autoPlay playsInline className="foraria-call-video-element"/>
-                    <Typography variant="caption" sx={{ mt: 0.5, opacity: 0.9 }} >
-                      {name}
-                    </Typography>
+                  <Box
+                    key={p.id}
+                    className={
+                      "foraria-call-room-video-tile" +
+                      (p.isCameraOn === false ? " foraria-call-room-video-tile--off" : "")
+                    }
+                  >
+                    <video
+                      ref={setRemoteVideoRef(p.userId)}
+                      autoPlay
+                      playsInline
+                      className="foraria-call-video-element"
+                    />
+
                     {p.isCameraOn === false && (
-                      <Typography variant="caption" sx={{ mt: 0.25, opacity: 0.7 }}>
-                        Cámara apagada
-                      </Typography>
+                      <Box className="foraria-call-room-video-placeholder">
+                        <VideocamOffOutlinedIcon className="foraria-call-room-video-placeholder-icon" />
+                      </Box>
                     )}
+
+                    <Box className="foraria-call-room-video-name">
+                      <PersonOutlineIcon fontSize="small" />
+                      <span>{name}</span>
+                    </Box>
+
+                    <Box
+                      className={
+                        "foraria-call-room-video-status" +
+                        (p.isMuted ? " foraria-call-room-video-status--muted" : "")
+                      }
+                    >
+                      {p.isMuted ? (
+                        <MicOffOutlinedIcon fontSize="small" />
+                      ) : (
+                        <MicOutlinedIcon fontSize="small" />
+                      )}
+                    </Box>
                   </Box>
                 );
               })}
@@ -529,15 +619,49 @@ const loadInitial = async () => {
           <Stack direction="row" spacing={2} justifyContent="center" alignItems="center" sx={{ mt: 3 }}>
             <Tooltip title={micOn ? "Silenciar" : "Activar micrófono"}>
               <IconButton
-                onClick={() => setMicOn((m) => !m)}
-                className={"foraria-call-control-btn" + (!micOn ? " foraria-call-control-btn--off" : "")}>
-                {micOn ? (<MicOutlinedIcon color="primary" />) : (<MicOffOutlinedIcon className="foraria-call-icon-off" />)}
+                onClick={() => {
+                  setMicOn((prev) => {
+                    const next = !prev;
+                    if (connected && numericCallId && currentUserId) {
+                      send("ToggleMute", numericCallId.toString(), currentUserId, !next);
+                    }
+                    return next;
+                  });
+                }}
+                className={
+                  "foraria-call-control-btn" +
+                  (!micOn ? " foraria-call-control-btn--off" : "")
+                }
+              >
+                {micOn ? (
+                  <MicOutlinedIcon color="primary" />
+                ) : (
+                  <MicOffOutlinedIcon className="foraria-call-icon-off" />
+                )}
               </IconButton>
             </Tooltip>
 
             <Tooltip title={camOn ? "Apagar cámara" : "Encender cámara"}>
-              <IconButton onClick={() => setCamOn((c) => !c)} className={"foraria-call-control-btn" + (!camOn ? " foraria-call-control-btn--off" : "")}>
-                {camOn ? (<VideocamOutlinedIcon color="primary" />) : (<VideocamOffOutlinedIcon className="foraria-call-icon-off" />)}
+              <IconButton
+                onClick={() => {
+                  setCamOn((prev) => {
+                    const next = !prev;
+                    if (connected && numericCallId && currentUserId) {
+                      send("ToggleCamera", numericCallId.toString(), currentUserId, next);
+                    }
+                    return next;
+                  });
+                }}
+                className={
+                  "foraria-call-control-btn" +
+                  (!camOn ? " foraria-call-control-btn--off" : "")
+                }
+              >
+                {camOn ? (
+                  <VideocamOutlinedIcon color="primary" />
+                ) : (
+                  <VideocamOffOutlinedIcon className="foraria-call-icon-off" />
+                )}
               </IconButton>
             </Tooltip>
           </Stack>
@@ -546,12 +670,7 @@ const loadInitial = async () => {
             <Typography
               variant="caption"
               color="common.white"
-              sx={{
-                mt: 1.5,
-                display: "block",
-                opacity: 0.6,
-                textAlign: "center",
-              }}
+              sx={{ mt: 1.5, display: "block", opacity: 0.6, textAlign: "center" }}
             >
               Cargando información de la llamada...
             </Typography>
@@ -576,30 +695,32 @@ const loadInitial = async () => {
               >
                 <Stack direction="row" spacing={1} alignItems="center">
                   <PersonOutlineIcon fontSize="small" />
-                  <span>
-                    {p.userId === currentUserId
-                      ? "Vos"
-                      : `Usuario #${p.userId}`}
-                  </span>
+                  <span>{getDisplayName(p.userId)}</span>
                 </Stack>
 
                 <Stack direction="row" spacing={1} alignItems="center">
-                  {p.isMuted ? (
-                    <MicOffOutlinedIcon fontSize="small" />
-                  ) : (
-                    <MicOutlinedIcon fontSize="small" />
-                  )}
-                  {p.isCameraOn ? (
-                    <VideocamOutlinedIcon fontSize="small" />
-                  ) : (
-                    <VideocamOutlinedIcon
-                      fontSize="small"
-                      sx={{ opacity: 0.3 }}
-                    />
-                  )}
-                  <Typography variant="caption" color="text.secondary">
-                    {p.isConnected ? "Conectado" : "Desconectado"}
-                  </Typography>
+                  {(() => {
+                    const isLocal = p.userId === currentUserId;
+                    const micMuted = isLocal ? !micOn : !!p.isMuted;
+                    const cameraOn = isLocal ? camOn : p.isCameraOn !== false;
+                    return (
+                      <>
+                        {micMuted ? (
+                          <MicOffOutlinedIcon fontSize="small" />
+                        ) : (
+                          <MicOutlinedIcon fontSize="small" />
+                        )}
+                        {cameraOn ? (
+                          <VideocamOutlinedIcon fontSize="small" />
+                        ) : (
+                          <VideocamOffOutlinedIcon fontSize="small" />
+                        )}
+                        <Typography variant="caption" color="text.secondary">
+                          {p.isConnected ? "Conectado" : "Desconectado"}
+                        </Typography>
+                      </>
+                    );
+                  })()}
                 </Stack>
               </Box>
             ))}
@@ -617,24 +738,17 @@ const loadInitial = async () => {
             Chat
           </Typography>
 
-          <Box className="foraria-call-room-chat-list">
+          <Box className="foraria-call-room-chat-list" ref={chatListRef}>
             {messages.length === 0 && (
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                sx={{ fontStyle: "italic" }}
-              >
+              <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
                 Todavía no hay mensajes en el chat.
               </Typography>
             )}
 
             {orderedMessages.map((m) => (
-              <Box
-                key={m.id}
-                className="foraria-call-room-chat-message"
-              >
+              <Box key={m.id} className="foraria-call-room-chat-message">
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                  Usuario #{m.userId}{" "}
+                  {getDisplayName(m.userId)}{" "}
                   <span className="foraria-call-room-chat-time">
                     {new Date(m.sentAt).toLocaleTimeString("es-AR", {
                       hour: "2-digit",
