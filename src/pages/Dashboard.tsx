@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Paper, Typography, Button, Chip, Grid } from "@mui/material";
 import { GroupOutlined, ReportProblemOutlined, SavingsOutlined, EventAvailableOutlined, PersonAddAlt1Outlined,
-  RequestQuoteOutlined, EventNoteOutlined, AssessmentOutlined, VisibilityOutlined as VisibilityOutlinedAdmin, } from "@mui/icons-material";
+  RequestQuoteOutlined, EventNoteOutlined, AssessmentOutlined, } from "@mui/icons-material";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import EventIcon from "@mui/icons-material/Event";
@@ -10,7 +10,6 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import ForumIcon from "@mui/icons-material/Forum";
 import PaymentsIcon from "@mui/icons-material/Payments";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import "../styles/dashboard.css";
 import PageHeader from "../components/SectionHeader";
 import QuickAction from "../components/QuickAction";
@@ -176,9 +175,6 @@ export default function DashboardPage() {
             <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
               <Box className="panel__head">
                 <h4>Actividad Reciente</h4>
-                <span className="eye">
-                  <VisibilityOutlinedAdmin fontSize="small" />
-                </span>
               </Box>
 
               <Box className="panel__content">
@@ -195,9 +191,6 @@ export default function DashboardPage() {
             <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
               <Box className="panel__head">
                 <h4>Tareas Pendientes</h4>
-                <span className="eye">
-                  <VisibilityOutlinedAdmin fontSize="small" />
-                </span>
               </Box>
 
               <Box className="panel__content">
@@ -222,9 +215,6 @@ export default function DashboardPage() {
             <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
               <Box className="panel__head">
                 <h4>Desglose de Gastos del Consorcio</h4>
-                <span className="eye">
-                  <VisibilityOutlinedIcon fontSize="small" />
-                </span>
               </Box>
 
               <div className="panel__content two">
@@ -356,9 +346,6 @@ export default function DashboardPage() {
           <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
             <Box className="panel__head">
               <h4>Mi Estado de Pagos</h4>
-              <span className="eye">
-                <VisibilityOutlinedIcon fontSize="small" />
-              </span>
             </Box>
 
             <Box className="panel__content two">
@@ -440,9 +427,6 @@ export default function DashboardPage() {
           <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
             <Box className="panel__head">
               <h4>Desglose de Gastos del Consorcio</h4>
-              <span className="eye">
-                <VisibilityOutlinedIcon fontSize="small" />
-              </span>
             </Box>
 
             <div className="panel__content two">
