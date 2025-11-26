@@ -17,7 +17,7 @@ import QuickAction from "../components/QuickAction";
 import Money from "../components/Money";
 import DonutChart from "../components/charts/Donut";
 import BarsChart from "../components/charts/Bar";
-import { fetchDashboard, DashboardData } from "../services/dashboardService";
+import { fetchDashboard, DashboardData, ExpenseCategory } from "../services/dashboardService";
 import {  fetchAdminDashboard, AdminDashboardData, RecentActivity, AdminTask, } from "../services/adminDashboardService";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
@@ -63,10 +63,14 @@ export default function DashboardPage() {
 
   const [userData, setUserData] = useState<DashboardData | null>(null);
   const [adminData, setAdminData] = useState<AdminDashboardData | null>(null);
+  const [adminExpenseBreakdown, setAdminExpenseBreakdown] = useState<ExpenseCategory[]>([]);
 
   useEffect(() => {
     if (isAdminRole) {
       fetchAdminDashboard().then(setAdminData);
+      fetchDashboard().then(data => {
+        setAdminExpenseBreakdown(data.expenseBreakdown);
+      });
     } else {
       fetchDashboard().then(setUserData);
     }
@@ -209,6 +213,41 @@ export default function DashboardPage() {
                   </Button>
                 </Box>
               </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
+              <Box className="panel__head">
+                <h4>Desglose de Gastos del Consorcio</h4>
+                <span className="eye">
+                  <VisibilityOutlinedIcon fontSize="small" />
+                </span>
+              </Box>
+
+              <div className="panel__content two">
+                <DonutChart
+                  data={(
+                    adminExpenseBreakdown.length
+                      ? adminExpenseBreakdown
+                      : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
+                  ).map(s => ({ ...s, color: s.color ?? "#aaaaaaff" }))}
+                />
+
+                <ul className="legend">
+                  {(adminExpenseBreakdown.length
+                    ? adminExpenseBreakdown
+                    : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
+                  ).map(s => (
+                    <li key={s.label}>
+                      <span className="dot" style={{ background: s.color ?? "#aaaaaaff" }} />
+                      {s.label} <span className="muted">{s.value}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </Paper>
           </Grid>
         </Grid>
