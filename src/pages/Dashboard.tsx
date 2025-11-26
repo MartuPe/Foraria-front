@@ -140,7 +140,7 @@ export default function DashboardPage() {
 
             <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
-                to="/admin/gastos/cargar"
+                to="/admin/expensas"
                 icon={<RequestQuoteOutlined color="warning" />}
                 title="Cargar Gasto"
                 subtitle="Agregar gasto / factura"
@@ -149,7 +149,7 @@ export default function DashboardPage() {
 
             <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
-                to="/admin/reuniones/nueva"
+                to="/admin/reuniones"
                 icon={<EventNoteOutlined color="secondary" />}
                 title="Nueva Reunión"
                 subtitle="Programar asamblea"
@@ -158,10 +158,10 @@ export default function DashboardPage() {
 
             <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
-                to="/admin/reportes"
+                to="/admin/votaciones"
                 icon={<AssessmentOutlined color="success" />}
-                title="Ver Reportes"
-                subtitle="Cobranza y gestión"
+                title="Ver Votaciones"
+                subtitle="Gestionar votación"
               />
             </Grid>
           </Grid>
