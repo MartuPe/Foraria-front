@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Box, Paper, Typography, Button, Chip, Grid } from "@mui/material";
 import { GroupOutlined, ReportProblemOutlined, SavingsOutlined, EventAvailableOutlined, PersonAddAlt1Outlined,
-  RequestQuoteOutlined, EventNoteOutlined, AssessmentOutlined, VisibilityOutlined as VisibilityOutlinedAdmin, } from "@mui/icons-material";
+  RequestQuoteOutlined, EventNoteOutlined, AssessmentOutlined, } from "@mui/icons-material";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import HowToVoteIcon from "@mui/icons-material/HowToVote";
 import EventIcon from "@mui/icons-material/Event";
@@ -10,14 +10,13 @@ import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
 import ReportProblemIcon from "@mui/icons-material/ReportProblem";
 import ForumIcon from "@mui/icons-material/Forum";
 import PaymentsIcon from "@mui/icons-material/Payments";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
 import "../styles/dashboard.css";
 import PageHeader from "../components/SectionHeader";
 import QuickAction from "../components/QuickAction";
 import Money from "../components/Money";
 import DonutChart from "../components/charts/Donut";
 import BarsChart from "../components/charts/Bar";
-import { fetchDashboard, DashboardData } from "../services/dashboardService";
+import { fetchDashboard, DashboardData, ExpenseCategory } from "../services/dashboardService";
 import {  fetchAdminDashboard, AdminDashboardData, RecentActivity, AdminTask, } from "../services/adminDashboardService";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
@@ -63,10 +62,14 @@ export default function DashboardPage() {
 
   const [userData, setUserData] = useState<DashboardData | null>(null);
   const [adminData, setAdminData] = useState<AdminDashboardData | null>(null);
+  const [adminExpenseBreakdown, setAdminExpenseBreakdown] = useState<ExpenseCategory[]>([]);
 
   useEffect(() => {
     if (isAdminRole) {
       fetchAdminDashboard().then(setAdminData);
+      fetchDashboard().then(data => {
+        setAdminExpenseBreakdown(data.expenseBreakdown);
+      });
     } else {
       fetchDashboard().then(setUserData);
     }
@@ -140,7 +143,7 @@ export default function DashboardPage() {
 
             <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
-                to="/admin/gastos/cargar"
+                to="/admin/expensas"
                 icon={<RequestQuoteOutlined color="warning" />}
                 title="Cargar Gasto"
                 subtitle="Agregar gasto / factura"
@@ -149,7 +152,7 @@ export default function DashboardPage() {
 
             <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
-                to="/admin/reuniones/nueva"
+                to="/admin/reuniones"
                 icon={<EventNoteOutlined color="secondary" />}
                 title="Nueva Reunión"
                 subtitle="Programar asamblea"
@@ -158,10 +161,10 @@ export default function DashboardPage() {
 
             <Grid size={{ xs: 12, md: 3 }}>
               <QuickAction
-                to="/admin/reportes"
+                to="/admin/votaciones"
                 icon={<AssessmentOutlined color="success" />}
-                title="Ver Reportes"
-                subtitle="Cobranza y gestión"
+                title="Ver Votaciones"
+                subtitle="Gestionar votación"
               />
             </Grid>
           </Grid>
@@ -172,9 +175,6 @@ export default function DashboardPage() {
             <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
               <Box className="panel__head">
                 <h4>Actividad Reciente</h4>
-                <span className="eye">
-                  <VisibilityOutlinedAdmin fontSize="small" />
-                </span>
               </Box>
 
               <Box className="panel__content">
@@ -191,9 +191,6 @@ export default function DashboardPage() {
             <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
               <Box className="panel__head">
                 <h4>Tareas Pendientes</h4>
-                <span className="eye">
-                  <VisibilityOutlinedAdmin fontSize="small" />
-                </span>
               </Box>
 
               <Box className="panel__content">
@@ -209,6 +206,38 @@ export default function DashboardPage() {
                   </Button>
                 </Box>
               </Box>
+            </Paper>
+          </Grid>
+        </Grid>
+
+        <Grid container spacing={2} sx={{ mt: 2 }}>
+          <Grid size={{ xs: 12, lg: 6 }}>
+            <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
+              <Box className="panel__head">
+                <h4>Desglose de Gastos del Consorcio</h4>
+              </Box>
+
+              <div className="panel__content two">
+                <DonutChart
+                  data={(
+                    adminExpenseBreakdown.length
+                      ? adminExpenseBreakdown
+                      : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
+                  ).map(s => ({ ...s, color: s.color ?? "#aaaaaaff" }))}
+                />
+
+                <ul className="legend">
+                  {(adminExpenseBreakdown.length
+                    ? adminExpenseBreakdown
+                    : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
+                  ).map(s => (
+                    <li key={s.label}>
+                      <span className="dot" style={{ background: s.color ?? "#aaaaaaff" }} />
+                      {s.label} <span className="muted">{s.value}%</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </Paper>
           </Grid>
         </Grid>
@@ -317,9 +346,6 @@ export default function DashboardPage() {
           <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
             <Box className="panel__head">
               <h4>Mi Estado de Pagos</h4>
-              <span className="eye">
-                <VisibilityOutlinedIcon fontSize="small" />
-              </span>
             </Box>
 
             <Box className="panel__content two">
@@ -401,9 +427,6 @@ export default function DashboardPage() {
           <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
             <Box className="panel__head">
               <h4>Desglose de Gastos del Consorcio</h4>
-              <span className="eye">
-                <VisibilityOutlinedIcon fontSize="small" />
-              </span>
             </Box>
 
             <div className="panel__content two">
