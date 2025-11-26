@@ -190,9 +190,20 @@ export default function Meetings() {
               }))}
               showDivider
               extraActions={
-
-                m.status === "finished" ? undefined : [{label: "Unirse", color: "secondary" as const, variant: "contained" as const, onClick: () => handleOpenJoinPreview(m), icon: <VideocamIcon />,},]
-              }
+    tienePermisos
+      ? (m.status === "finished"
+          ? undefined
+          : [
+              {
+                label: "Unirse",
+                color: "secondary" as const,
+                variant: "contained" as const,
+                onClick: () => handleOpenJoinPreview(m),
+                icon: <VideocamIcon />,
+              },
+            ])
+      : undefined
+  }
 
             />
           ))}
