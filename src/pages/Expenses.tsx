@@ -1,5 +1,26 @@
 import React, { useEffect, useState, useMemo } from "react";
-import { Box, Stack, Typography, Button, Dialog, DialogTitle, DialogContent, DialogActions, Divider, Chip, IconButton, useTheme, CircularProgress, Paper } from "@mui/material";
+import {
+  Box,
+  Stack,
+  Typography,
+  Button,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Divider,
+  Chip,
+  IconButton,
+  useTheme,
+  CircularProgress,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+} from "@mui/material";
 import "../styles/expenses.css";
 import Money from "../components/Money";
 import { fetchExpensesMock, formatDateISO } from "../services/expenses.mock";
@@ -15,10 +36,18 @@ import LocalAtmIcon from "@mui/icons-material/LocalAtm";
 import ReceiptLongOutlinedIcon from "@mui/icons-material/ReceiptLongOutlined";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
-import logoForaria from '../assets/Isotipo-Color.png';
+import logoForaria from "../assets/Isotipo-Color.png";
 import { ForariaStatusModal } from "../components/StatCardForms";
+import { storage } from "../utils/storage";
+import { Role } from "../constants/roles";
+interface InvoiceItem {
+  description: string;
+  amount: number;
+  quantity: number;
+  unitPrice: number;
+}
 
-type Invoice = {
+interface Invoice {
   id: number;
   concept: string;
   category: string;
@@ -29,32 +58,32 @@ type Invoice = {
   amount: number;
   description?: string | null;
   filePath?: string | null;
-};
+  items: InvoiceItem[];
+}
 
-type ExpenseInner = {
+interface ExpenseInner {
   id: number;
-  // description: string;
+  description: string;
   totalAmount: number;
-  // : string;
-  // expirationDate?: string | null;
+  createdAt: string;
+  expirationDate?: string | null;
   consortiumId: number;
   invoices: Invoice[];
-};
+}
 
-type ExpenseDetail = {
+interface ExpenseDetail {
   id: number;
   total: number;
   state: "Pending" | "Paid" | "Overdue" | string;
-  expenseId: number;
-  expense: ExpenseInner;
+  expenses: ExpenseInner[];
   residenceId: number;
-};
+}
 
 export default function ExpensesPage() {
   const [items, setItems] = useState<ExpenseDetail[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
-  
+const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO || storage.role === Role.OWNER ;
   const [header, setHeader] = useState<{
     unidad: string;
     titular: string;
@@ -63,8 +92,12 @@ export default function ExpensesPage() {
     proximoVencISO: string;
   } | null>(null);
 
-  const [detailsOpenFor, setDetailsOpenFor] = useState<ExpenseDetail | null>(null);
-  const [loadingPaymentFor, setLoadingPaymentFor] = useState<number | null>(null);
+  const [detailsOpenFor, setDetailsOpenFor] = useState<ExpenseDetail | null>(
+    null
+  );
+  const [loadingPaymentFor, setLoadingPaymentFor] = useState<number | null>(
+    null
+  );
   const theme = useTheme();
 
   const [statusModal, setStatusModal] = useState<{
@@ -104,44 +137,42 @@ export default function ExpensesPage() {
     }
 
     const fetchDetails = async () => {
-        const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("accessToken");
       setLoading(true);
       setLoadError(null);
       try {
         const url = `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/ExpenseDetail?id=${residenceId}`;
-        const resp = await axios.get<ExpenseDetail[]>(url, { headers: { Authorization: `bearer ${token}` }});
+        const resp = await axios.get<ExpenseDetail[]>(url, {
+          headers: { Authorization: `bearer ${token}` },
+        });
         if (!mounted) return;
         const data = resp.data || [];
-        // data.sort((a, b) => {
-        //   const ta = a.expense?.createdAt ? new Date(a.expense.createdAt).getTime() : 0;
-        //   const tb = b.expense?.createdAt ? new Date(b.expense.createdAt).getTime() : 0;
-        //   return tb - ta || b.id - a.id;
-        // });
         setItems(data);
       } catch (err: any) {
         console.error("Error cargando ExpenseDetail:", err);
         if (!mounted) return;
-        
-     
-        const errorMsg = err?.response?.data?.error || 
-                        err?.response?.data?.message || 
-                        String(err);
-        
-     
-        const is404 = err?.response?.status === 404 || 
-                      errorMsg.toLowerCase().includes("404") || 
-                      errorMsg.toLowerCase().includes("not found");
-        
-       
-        const isNotFound = errorMsg.toLowerCase().includes("no se encontraron") ||
-                          errorMsg.toLowerCase().includes("not found");
-        
+
+        const errorMsg =
+          err?.response?.data?.error ||
+          err?.response?.data?.message ||
+          String(err);
+
+        const is404 =
+          err?.response?.status === 404 ||
+          errorMsg.toLowerCase().includes("404") ||
+          errorMsg.toLowerCase().includes("not found");
+
+        const isNotFound =
+          errorMsg.toLowerCase().includes("no se encontraron") ||
+          errorMsg.toLowerCase().includes("not found");
+
         if (is404 || isNotFound) {
           setItems([]);
-      
         } else {
           setItems([]);
-          setLoadError("No se pudieron cargar las expensas. Intentá nuevamente más tarde.");
+          setLoadError(
+            "No se pudieron cargar las expensas. Intentá nuevamente más tarde."
+          );
         }
       } finally {
         if (mounted) setLoading(false);
@@ -171,7 +202,7 @@ export default function ExpensesPage() {
       case "paid":
         return "Pagada";
       case "overdue":
-      case "defeated":
+      case "expired":
         return "Vencida";
       default:
         return state;
@@ -186,7 +217,7 @@ export default function ExpensesPage() {
       case "paid":
         return "success";
       case "overdue":
-      case "defeated":
+      case "expired":
         return "error";
       default:
         return "default";
@@ -206,79 +237,185 @@ export default function ExpensesPage() {
     }
   };
 
-  const generatePdf = (detail: ExpenseDetail) => {
-    const pdf = new jsPDF("p", "pt", "a4");
-    const exp = detail.expense;
+   const generatePdf = async (detail: ExpenseDetail) => {
+    if (!detail.expenses || detail.expenses.length === 0) return;
 
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    pdf.setFillColor(13, 52, 102);
-    pdf.rect(0, 0, pageWidth, 90, "F");
+    try {
+      // Fetch del Expense completo para obtener expenseDetailDtos
+      const token = localStorage.getItem("accessToken");
+      const expenseId = detail.expenses[0].id;
+      
+      const resp = await axios.get(
+        `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Expense`,
+        { headers: { Authorization: `bearer ${token}` } }
+      );
 
-    const logoWidth = 80;
-    const logoHeight = 80;
-    const logoX = pageWidth / 2 - logoWidth / 2;
-    const logoY = 0;
-    pdf.addImage(logoForaria, "PNG", logoX, logoY, logoWidth, logoHeight);
+      const fullExpense = resp.data.find((e: any) => e.id === expenseId);
+      if (!fullExpense) {
+        console.error("No se encontró la expensa completa");
+        return;
+      }
 
-    pdf.setFontSize(22);
-    pdf.setTextColor(255, 255, 255);
-    pdf.text("FORARIA", pageWidth / 2, 80, { align: "center" });
+      const pdf = new jsPDF("p", "pt", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
 
-    // const created = new Date(exp.createdAt).toLocaleDateString("es-AR");
-    // const venc = exp.expirationDate
-    //   ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
-    //   : "-";
+      // Header azul
+      pdf.setFillColor(13, 52, 102);
+      pdf.rect(0, 0, pageWidth, 90, "F");
 
-    pdf.setFontSize(10);
-    // const rightX = pageWidth - 20;
-    // pdf.text(`CREADA: ${created}`, rightX, 25, { align: "right" });
-    // pdf.text(`VENCIMIENTO: ${venc}`, rightX, 40, { align: "right" });
+      // Logo
+      const logoWidth = 80;
+      const logoHeight = 80;
+      const logoX = pageWidth / 2 - logoWidth / 2;
+      const logoY = 0;
+      pdf.addImage(logoForaria, "PNG", logoX, logoY, logoWidth, logoHeight);
 
-    pdf.setFontSize(14);
-    pdf.setTextColor(0, 0, 0);
-    // pdf.text(
-    //   `${exp.description || `Expensa ${exp.id}`}`,
-    //   pageWidth / 2,
-    //   130,
-    //   { align: "center" }
-    // );
+      // Título
+      pdf.setFontSize(22);
+      pdf.setTextColor(255, 255, 255);
+      pdf.text("FORARIA", pageWidth / 2, 80, { align: "center" });
 
-    const rows = exp.invoices.map((inv) => [
-      inv.dateOfIssue ? new Date(inv.dateOfIssue).toLocaleDateString("es-AR") : "-",
-      inv.concept || inv.description || "-",
-      inv.category || "-",
-      "$" + inv.amount?.toLocaleString("es-AR")
-    ]);
+      // Fechas
+      const created = fullExpense.createdAt
+        ? new Date(fullExpense.createdAt).toLocaleDateString("es-AR")
+        : "-";
+      const venc = fullExpense.expirationDate
+        ? new Date(fullExpense.expirationDate).toLocaleDateString("es-AR")
+        : "-";
 
-    autoTable(pdf, {
-      startY: 160,
-      head: [["FECHA", "CONCEPTO", "CATEGORIA", "MONTO"]],
-      body: rows,
-      styles: { fontSize: 10, halign: "center", valign: "middle" },
-      headStyles: {
-        fillColor: [255, 255, 255],
-        textColor: [0, 0, 0],
-        lineWidth: 0.5,
-        lineColor: [180, 180, 180],
-        fontStyle: "bold",
-      },
-      bodyStyles: {
-        lineColor: [180, 180, 180],
-        lineWidth: 0.3,
-        cellPadding: 8,
-      },
-    });
+      pdf.setFontSize(10);
+      const rightX = pageWidth - 20;
+      pdf.text(`CREADA: ${created}`, rightX, 25, { align: "right" });
+      pdf.text(`VENCIMIENTO: ${venc}`, rightX, 40, { align: "right" });
 
-    const finalY = (pdf as any).lastAutoTable.finalY + 30;
-    pdf.setFontSize(20);
-    pdf.text(
-      `TOTAL: $${detail.total.toLocaleString("es-AR")}`,
-      pageWidth / 2,
-      finalY,
-      { align: "center" }
-    );
+      // Descripción
+      pdf.setFontSize(14);
+      pdf.setTextColor(0, 0, 0);
+      pdf.text(`${fullExpense.description || `Expensa ${fullExpense.id}`}`, pageWidth / 2, 120, {
+        align: "center",
+      });
 
-    pdf.save(`expensa_${detail.expenseId}_unidad_${detail.residenceId}.pdf`);
+      let currentY = 140;
+
+      // Tabla de residencias
+      const residencesRows = fullExpense.expenseDetailDtos.map((expDetail: any) => {
+        const residence = expDetail.residenceResponseDtos;
+        const userName = residence.users.length > 0 
+          ? `${residence.users[0].firstName} ${residence.users[0].lastName}`
+          : "-";
+        
+        return [
+          `${residence.floor}° ${residence.tower} - ${residence.number}`,
+          userName,
+          residence.coeficient.toFixed(2),
+          "$0.00", // Expensa anterior (no está en los datos)
+          `$${expDetail.total.toLocaleString("es-AR")}`,
+        ];
+      });
+
+      autoTable(pdf, {
+        startY: currentY,
+        head: [["UNIDAD", "TITULAR", "COEF.", "EXP. ANTERIOR", "A PAGAR"]],
+        body: residencesRows,
+        foot: [
+          [
+            "",
+            "",
+            "",
+            "TOTAL",
+            `$${fullExpense.totalAmount.toLocaleString("es-AR")}`,
+          ],
+        ],
+        styles: { fontSize: 9, halign: "center", valign: "middle" },
+        headStyles: {
+          fillColor: [13, 52, 102],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        footStyles: {
+          fillColor: [240, 240, 240],
+          textColor: [0, 0, 0],
+          fontStyle: "bold",
+          fontSize: 11,
+        },
+        bodyStyles: {
+          lineColor: [180, 180, 180],
+          lineWidth: 0.3,
+          cellPadding: 6,
+        },
+      });
+
+      currentY = (pdf as any).lastAutoTable.finalY + 20;
+
+      // Título de desglose
+      pdf.setFontSize(12);
+      pdf.setFont("helvetica", "bold");
+      pdf.text("DETALLE DE GASTOS EXPENSAS ORDINARIAS", 40, currentY);
+      currentY += 15;
+
+      // Tabla de facturas con items
+      const invoiceRows: any[] = [];
+      fullExpense.invoices.forEach((inv: any) => {
+        // Si hay items, mostrar cada uno
+        if (inv.items && inv.items.length > 0) {
+          inv.items.forEach((item: any) => {
+            invoiceRows.push([
+              item.description || "-",
+              inv.category || "-",
+              `$${item.amount.toLocaleString("es-AR")}`,
+            ]);
+          });
+        } else {
+          // Si no hay items, mostrar la factura completa
+          invoiceRows.push([
+            inv.description || inv.concept || "-",
+            inv.category || "-",
+            `$${inv.amount.toLocaleString("es-AR")}`,
+          ]);
+        }
+      });
+
+      autoTable(pdf, {
+        startY: currentY,
+        head: [["CONCEPTO", "CATEGORÍA", "MONTO"]],
+        body: invoiceRows,
+        foot: [
+          ["", "TOTAL GASTOS", `$${fullExpense.totalAmount.toLocaleString("es-AR")}`],
+        ],
+        styles: { fontSize: 9, halign: "left", valign: "middle" },
+        headStyles: {
+          fillColor: [13, 52, 102],
+          textColor: [255, 255, 255],
+          fontStyle: "bold",
+        },
+        footStyles: {
+          fillColor: [240, 240, 240],
+          textColor: [0, 0, 0],
+          fontStyle: "bold",
+          fontSize: 10,
+        },
+        bodyStyles: {
+          lineColor: [180, 180, 180],
+          lineWidth: 0.3,
+          cellPadding: 6,
+        },
+        columnStyles: {
+          0: { cellWidth: "auto" },
+          1: { cellWidth: 100 },
+          2: { cellWidth: 80, halign: "right" },
+        },
+      });
+
+      pdf.save(`expensa_${fullExpense.id}.pdf`);
+    } catch (error) {
+      console.error("Error generando PDF:", error);
+      setStatusModal({
+        open: true,
+        variant: "error",
+        title: "Error al generar PDF",
+        message: "No se pudo generar el PDF. Intentá nuevamente.",
+      });
+    }
   };
 
   const handleMercadoPago = async (detail: ExpenseDetail) => {
@@ -287,14 +424,15 @@ export default function ExpensesPage() {
 
     try {
       setLoadingPaymentFor(detail.id);
-        const token = localStorage.getItem("accessToken");
+      const token = localStorage.getItem("accessToken");
       const res = await fetch(
         `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
-        { method: "POST" ,
-          headers:  {Authorization: `bearer ${token}`} 
+        {
+          method: "POST",
+          headers: { Authorization: `bearer ${token}` },
         }
       );
-      
+
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `HTTP ${res.status}`);
@@ -318,7 +456,15 @@ export default function ExpensesPage() {
 
   if (loading) {
     return (
-      <Box className="foraria-page-container" sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+      <Box
+        className="foraria-page-container"
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 200,
+        }}
+      >
         <Stack direction="row" spacing={2} alignItems="center">
           <CircularProgress />
           <Typography>Cargando expensas…</Typography>
@@ -329,7 +475,6 @@ export default function ExpensesPage() {
 
   if (!header || !statValues) return null;
 
-  // Estado vacío: No hay expensas O hubo error
   const isEmpty = items.length === 0;
 
   return (
@@ -341,7 +486,9 @@ export default function ExpensesPage() {
             {
               icon: <PaymentsIcon color="action" />,
               title: "Total Pendiente",
-              value: (<Money value={statValues.totalPendiente} /> as unknown as string),
+              value: (
+                <Money value={statValues.totalPendiente} /> as unknown as string
+              ),
               color: "warning",
             },
             {
@@ -361,7 +508,6 @@ export default function ExpensesPage() {
 
         <Stack spacing={2}>
           {isEmpty ? (
-            // Estado vacío: No hay expensas o hubo error
             <Paper
               sx={{
                 p: 6,
@@ -375,30 +521,34 @@ export default function ExpensesPage() {
                 sx={{ fontSize: 80, color: "text.disabled", mb: 2 }}
               />
               <Typography variant="h5" color="text.primary" gutterBottom>
-                {loadError ? "Error al cargar expensas" : "No hay expensas registradas"}
+                {loadError
+                  ? "Error al cargar expensas"
+                  : "No hay expensas registradas"}
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 1 }}>
-                {loadError 
+                {loadError
                   ? "No se pudieron cargar las expensas. Intentá nuevamente más tarde."
-                  : "Aún no se han generado expensas para tu unidad."
-                }
+                  : "Aún no se han generado expensas para tu unidad."}
               </Typography>
               {!loadError && (
                 <Typography variant="body2" color="text.secondary">
-                  Las expensas aparecerán aquí cuando la administración las cargue.
+                  Las expensas aparecerán aquí cuando la administración las
+                  cargue.
                 </Typography>
               )}
             </Paper>
           ) : (
-            // Lista de expensas
             items.map((detail) => {
-              // const exp = detail.expense;
+              const exp = detail.expenses && detail.expenses.length > 0 
+                ? detail.expenses[0] 
+                : null;
+
+              if (!exp) return null;
 
               return (
                 <InfoCard
                   key={detail.id}
-                  title='hola!'
-                  // title={exp.description || `Expensa ${exp.id}`}
+                  title={exp.description || `Expensa ${exp.id}`}
                   subtitle={
                     <span style={{ fontSize: "2rem", fontWeight: "bold" }}>
                       <span style={{ color: "rgb(249 115 22)" }}>
@@ -414,37 +564,43 @@ export default function ExpensesPage() {
                     },
                   ]}
                   fields={[
-                    // {
-                    //   label: "Creada:",
-                    //   value: new Date(exp.createdAt).toLocaleDateString("es-AR"),
-                    // },
-                    // {
-                    //   label: "Vence:",
-                    //   value: exp.expirationDate
-                    //     ? new Date(exp.expirationDate).toLocaleDateString("es-AR")
-                    //     : "-",
-                    // },
+                    {
+                      label: "Creada:",
+                      value: new Date(exp.createdAt).toLocaleDateString(
+                        "es-AR"
+                      ),
+                    },
+                    {
+                      label: "Vence:",
+                      value: exp.expirationDate
+                        ? new Date(exp.expirationDate).toLocaleDateString(
+                            "es-AR"
+                          )
+                        : "-",
+                    },
                   ]}
                   showDivider
                   extraActions={[
-                    {
-                      label: loadingPaymentFor === detail.id ? "Redirigiendo..." : "Pagar",
-                      icon: <LocalAtmIcon />,
-                      variant: "contained",
-                      color: "primary",
-                      onClick: () => handleMercadoPago(detail),
-                    },
-                    {
-                      label: "Ver",
-                      icon: <VisibilityIcon />,
-                      onClick: () => setDetailsOpenFor(detail),
-                    },
-                    {
-                      label: "PDF",
-                      icon: <DownloadIcon />,
-                      onClick: () => generatePdf(detail),
-                    },
-                  ]}
+  ...(isAdmin
+    ? [{
+        label: loadingPaymentFor === detail.id ? "Redirigiendo..." : "Pagar",
+        icon: <LocalAtmIcon />,
+        variant: "contained" as const,
+        color: "primary" as const,
+        onClick: () => { void handleMercadoPago(detail); },
+      }]
+    : []),
+  {
+    label: "Ver",
+    icon: <VisibilityIcon />,
+    onClick: () => setDetailsOpenFor(detail),
+  },
+  {
+    label: "PDF",
+    icon: <DownloadIcon />,
+    onClick: () => generatePdf(detail),
+  },
+]}
                   sx={{ mb: 2 }}
                 />
               );
@@ -461,12 +617,12 @@ export default function ExpensesPage() {
       >
         <DialogTitle>Detalle de expensa</DialogTitle>
         <DialogContent dividers>
-          {detailsOpenFor && (
+          {detailsOpenFor && detailsOpenFor.expenses && detailsOpenFor.expenses.length > 0 && (
             <>
-              {/* <Typography variant="subtitle1" sx={{ mb: 1 }}>
-                {detailsOpenFor.expense.description ||
-                  `Expensa ${detailsOpenFor.expenseId}`}
-              </Typography> */}
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                {detailsOpenFor.expenses[0].description ||
+                  `Expensa ${detailsOpenFor.expenses[0].id}`}
+              </Typography>
               <Typography variant="body2" sx={{ mb: 2 }}>
                 Estado:{" "}
                 <Chip
@@ -484,48 +640,177 @@ export default function ExpensesPage() {
 
               <Divider sx={{ mb: 2 }} />
 
+              {/* Tabla de distribución */}
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Distribución por Unidad
+              </Typography>
+              <TableContainer component={Paper} sx={{ mb: 3 }}>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "primary.main" }}>
+                      <TableCell sx={{ color: "white", fontWeight: "bold" }}>
+                        Unidad
+                      </TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: "bold" }} align="center">
+                        Coeficiente
+                      </TableCell>
+                      <TableCell sx={{ color: "white", fontWeight: "bold" }} align="right">
+                        Total
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    <TableRow sx={{ bgcolor: "info.50" }}>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Tu Unidad (Residencia {detailsOpenFor.residenceId})
+                      </TableCell>
+                      <TableCell align="center" sx={{ fontWeight: "bold" }}>
+                        {(detailsOpenFor.total / detailsOpenFor.expenses[0].totalAmount).toFixed(4)}
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: "bold" }}>
+                        ${detailsOpenFor.total.toLocaleString("es-AR")}
+                      </TableCell>
+                    </TableRow>
+                    <TableRow sx={{ bgcolor: "grey.100" }}>
+                      <TableCell colSpan={2} sx={{ fontWeight: "bold" }}>
+                        TOTAL EXPENSA
+                      </TableCell>
+                      <TableCell align="right" sx={{ fontWeight: "bold" }}>
+                        ${detailsOpenFor.expenses[0].totalAmount.toLocaleString("es-AR")}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Divider sx={{ mb: 2 }} />
+
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Detalle de Gastos
+              </Typography>
               <Stack spacing={1}>
-                {detailsOpenFor.expense.invoices.length === 0 && (
+                {detailsOpenFor.expenses[0].invoices.length === 0 && (
                   <Typography>No hay facturas.</Typography>
                 )}
-                {detailsOpenFor.expense.invoices.map((inv) => (
-                  <Box
-                    key={`dlg-inv-${inv.id}`}
-                    sx={{
-                      borderRadius: 1,
-                      p: 1.25,
-                      bgcolor: "background.paper",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        gap: 1,
-                        alignItems: "center",
-                      }}
-                    >
-                      <Box sx={{ flex: 1 }}>
-                        {/* <Typography variant="subtitle2" noWrap>
-                          {inv.concept || inv.description || `Factura ${inv.id}`}
-                        </Typography> */}
-                        <Typography variant="body2" color="text.secondary" noWrap>
-                          {inv.supplierName || "-"} • {inv.category || "-"}
-                        </Typography>
-                      </Box>
-                      <Typography variant="subtitle2">
-                        ${inv.amount?.toFixed(2) ?? "0.00"}
-                      </Typography>
-                      {inv.filePath && (
-                        <IconButton
-                          size="small"
-                          onClick={() => window.open(inv.filePath!, "_blank")}
+                {detailsOpenFor.expenses[0].invoices.map((inv) => {
+                  const myCoeficient = detailsOpenFor.total / detailsOpenFor.expenses[0].totalAmount;
+                  const myPortion = inv.amount * myCoeficient;
+
+                  return (
+                    <Box key={`dlg-inv-${inv.id}`}>
+                      <Box
+                        sx={{
+                          borderRadius: 1,
+                          p: 1.25,
+                          bgcolor: "background.paper",
+                          border: "1px solid",
+                          borderColor: "grey.300",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            alignItems: "center",
+                          }}
                         >
-                          <DownloadIcon fontSize="small" />
-                        </IconButton>
+                          <Box sx={{ flex: 1 }}>
+                            <Typography variant="subtitle2" noWrap>
+                              {inv.concept || inv.description || `Factura ${inv.id}`}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              noWrap
+                            >
+                              {inv.supplierName || "-"} • {inv.category || "-"}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ textAlign: "right" }}>
+                            <Typography variant="subtitle2" sx={{ fontWeight: "bold" }}>
+                              ${inv.amount?.toLocaleString("es-AR") ?? "0.00"}
+                            </Typography>
+                            <Typography variant="caption" color="primary" sx={{ fontWeight: "bold" }}>
+                              Tu parte: ${myPortion.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </Typography>
+                          </Box>
+                          {inv.filePath && (
+                            <IconButton
+                              size="small"
+                              onClick={() => window.open(inv.filePath!, "_blank")}
+                            >
+                              <DownloadIcon fontSize="small" />
+                            </IconButton>
+                          )}
+                        </Box>
+                      </Box>
+
+                      {/* Items de la factura */}
+                      {inv.items && inv.items.length > 0 && (
+                        <Box sx={{ ml: 3, mt: 1 }}>
+                          {inv.items.map((item, idx) => {
+                            const itemPortion = item.amount * myCoeficient;
+                            return (
+                              <Box
+                                key={`item-${idx}`}
+                                sx={{
+                                  display: "flex",
+                                  justifyContent: "space-between",
+                                  py: 0.5,
+                                  px: 1,
+                                  bgcolor: "grey.50",
+                                  borderRadius: 1,
+                                  mb: 0.5,
+                                }}
+                              >
+                                <Typography variant="caption" color="text.secondary">
+                                  • {item.description} (x{item.quantity} @ $
+                                  {item.unitPrice})
+                                </Typography>
+                                <Box sx={{ textAlign: "right" }}>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{ fontWeight: "bold", display: "block" }}
+                                  >
+                                    ${item.amount.toLocaleString("es-AR")}
+                                  </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    color="primary"
+                                    sx={{ fontSize: "0.65rem" }}
+                                  >
+                                    ${itemPortion.toLocaleString("es-AR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                  </Typography>
+                                </Box>
+                              </Box>
+                            );
+                          })}
+                        </Box>
                       )}
                     </Box>
-                  </Box>
-                ))}
+                  );
+                })}
+
+                {/* Totales finales */}
+                <Box sx={{ mt: 2, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
+                  <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                      Total Expensa:
+                    </Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>
+                      ${detailsOpenFor.expenses[0].totalAmount.toLocaleString("es-AR")}
+                    </Typography>
+                  </Stack>
+                  <Divider sx={{ my: 1 }} />
+                  <Stack direction="row" justifyContent="space-between">
+                    <Typography variant="h6" color="primary" sx={{ fontWeight: "bold" }}>
+                      Tu parte a pagar:
+                    </Typography>
+                    <Typography variant="h6" color="primary" sx={{ fontWeight: "bold" }}>
+                      ${detailsOpenFor.total.toLocaleString("es-AR")}
+                    </Typography>
+                  </Stack>
+                </Box>
               </Stack>
             </>
           )}

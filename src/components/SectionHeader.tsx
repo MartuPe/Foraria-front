@@ -7,7 +7,9 @@ import {
   TextField,
   Tabs,
   Tab,
-  Grid
+  Grid,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import { alpha } from "@mui/material/styles";
 import type { GridSize } from "@mui/material";
@@ -53,6 +55,9 @@ export default function PageHeader({
 }: PageHeaderProps) {
   if (!stats) stats = [];
 
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+
   // lógica para que 4 por fila cuando haya >=4, pero si hay 2 -> md=6 (50% cada uno)
   const maxCols = 4;
   const colsActuales = Math.min(maxCols, Math.max(1, stats.length));
@@ -71,15 +76,30 @@ export default function PageHeader({
     >
       {/* Título + acción */}
       <Stack
-        direction="row"
-        alignItems="center"
+        direction={{ xs: "column", md: "row" }}      // 👈 antes era fijo en row
+        alignItems={{ xs: "flex-start", md: "center" }}
         justifyContent="space-between"
-        sx={{ mb: 2 }}
+        sx={{ mb: 2, gap: { xs: 1.5, md: 0 } }}
       >
-        <Typography variant="h5" fontWeight={600} color="primary">
+        <Typography
+          variant={isMobile ? "h6" : "h5"}
+          fontWeight={600}
+          color="primary"
+        >
           {title}
         </Typography>
-        {actions && <Box>{actions}</Box>}
+
+        {actions && (
+          <Box
+            sx={{
+              alignSelf: { xs: "stretch", md: "center" },
+              display: "flex",
+              justifyContent: { xs: "flex-start", md: "flex-end" },
+            }}
+          >
+            {actions}
+          </Box>
+        )}
       </Stack>
 
       {/* Métricas (sólo si hay items) */}
@@ -88,7 +108,7 @@ export default function PageHeader({
           {stats.map((s, i) => (
             <Grid
               key={i}
-              size={{xs:12,sm:6,md:mdSize}}
+              size={{ xs: 12, sm: 6, md: mdSize }}
               sx={{ width: "100%" }}
             >
               <Paper
@@ -159,37 +179,47 @@ export default function PageHeader({
         </Stack>
       )}
 
-      {/* Tabs */}
+      {/* Tabs / filtros de foro */}
       {tabs.length > 0 && (
-        <Tabs
-          value={selectedTab}
-          onChange={(_, v) => onTabChange?.(v)}
+        <Box
           sx={{
-            "& .MuiTabs-root": { mt: 0.5 },
-            "& .MuiTab-root": {
-              textTransform: "none",
-              fontWeight: 700,
-              borderRadius: 999,
-              minHeight: 40,
-              px: 2.5,
-              mr: 1.5,
-              border: "1px solid",
-              borderColor: "divider",
-              color: "text.secondary",
-            },
-            "& .MuiTab-root.Mui-selected": {
-              bgcolor: "primary.main",
-              color: "primary.contrastText",
-              borderColor: "primary.main",
-              boxShadow: "0 6px 14px rgba(8,61,119,0.25)",
-            },
-            "& .MuiTabs-indicator": { display: "none" },
+            mt: 1,
+            overflowX: "auto",            // 👈 clave para mobile
           }}
         >
-          {tabs.map((tab) => (
-            <Tab key={tab.value} label={tab.label} value={tab.value} />
-          ))}
-        </Tabs>
+          <Tabs
+            value={selectedTab ?? tabs[0]?.value}
+            onChange={(_, v) => onTabChange?.(v)}
+            variant={isMobile ? "scrollable" : "standard"} // 👈 se vuelven scrolleables en mobile
+            scrollButtons={isMobile ? "auto" : false}
+            allowScrollButtonsMobile
+            sx={{
+              "& .MuiTab-root": {
+                textTransform: "none",
+                fontWeight: 700,
+                borderRadius: 999,
+                minHeight: 40,
+                px: 2.5,
+                mr: 1.5,
+                border: "1px solid",
+                borderColor: "divider",
+                color: "text.secondary",
+                whiteSpace: "nowrap",     // 👈 que no corten palabra a la mitad
+              },
+              "& .MuiTab-root.Mui-selected": {
+                bgcolor: "primary.main",
+                color: "primary.contrastText",
+                borderColor: "primary.main",
+                boxShadow: "0 6px 14px rgba(8,61,119,0.25)",
+              },
+              "& .MuiTabs-indicator": { display: "none" },
+            }}
+          >
+            {tabs.map((tab) => (
+              <Tab key={tab.value} label={tab.label} value={tab.value} />
+            ))}
+          </Tabs>
+        </Box>
       )}
     </Paper>
   );

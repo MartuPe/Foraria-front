@@ -50,7 +50,6 @@ const menuItems = [
 ];
 
 const forosSubMenu = [
-  { id: "foros-todas",            label: "Todas",            icon: <ForumsIcon />,         path: "/admin/foros?category=Todas" },
   { id: "foros-general",          label: "General",          icon: <ForumsIcon />,         path: "/admin/foros?category=General" },
   { id: "foros-administracion",   label: "Administración",   icon: <AdminPanelSettings />, path: "/admin/foros?category=Administración" },
   { id: "foros-seguridad",        label: "Seguridad",        icon: <Security />,           path: "/admin/foros?category=Seguridad" },
@@ -98,7 +97,8 @@ useEffect(() => {
   };
 
   const handleForosClick = () => setForosOpen((s) => !s);
-
+  const stored = localStorage.getItem("user");
+  const user = stored ? JSON.parse(stored) : null;
   return (
     <Drawer
       variant={variant}
@@ -299,64 +299,95 @@ useEffect(() => {
         </ListItemButton>
       </Box>
 
-      {/* Perfil Admin */}
-      <Box sx={{ p: 1.5, borderTop: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}>
-        <Box
-          onClick={() => handleNavigation("/admin/perfil")}
+   {/* Perfil Admin / Consejo */}
+<Box sx={{ p: 1.5, borderTop: "1px solid rgba(255,255,255,0.1)", flexShrink: 0 }}>
+  {(() => {
+    const firstName = user?.firstName ?? "Administrador";
+    const lastName = user?.lastName ?? "";
+    const role = user?.role ?? "Administrador";
+
+    const residence = user?.residences?.[0];
+    let bottomLabel = "Admin Panel";
+
+    // Consejo también tiene depto
+    if (role === "Consorcio" || role === "Consejo") {
+      if (residence) {
+        const floor = residence.floor ?? "";
+        const number = residence.number ?? "";
+        const letter =
+          typeof number === "number"
+            ? String.fromCharCode(64 + number)
+            : number;
+
+        bottomLabel = `Depto ${floor}${letter}`;
+      } else {
+        bottomLabel = "Sin residencia";
+      }
+    }
+
+    const avatarLetter = firstName?.[0]?.toUpperCase?.() ?? "A";
+
+    return (
+      <Box
+        onClick={() => handleNavigation("/admin/perfil")}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: 1.5,
+          p: 1.5,
+          borderRadius: 1.5,
+          backgroundColor: "rgba(255,255,255,0.08)",
+          cursor: "pointer",
+          "&:hover": { backgroundColor: "rgba(255,255,255,0.15)" },
+        }}
+      >
+        <Avatar
           sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            p: 1.5,
-            borderRadius: 1.5,
-            backgroundColor: "rgba(255,255,255,0.08)",
-            cursor: "pointer",
-            "&:hover": { backgroundColor: "rgba(255,255,255,0.15)" },
+            width: 36,
+            height: 36,
+            backgroundColor: "#F59E0B",
+            color: "white",
+            fontWeight: 700,
+            fontSize: "1rem",
           }}
         >
-          <Avatar
+          {avatarLetter}
+        </Avatar>
+
+        <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+          <Typography
+            variant="body2"
             sx={{
-              width: 36,
-              height: 36,
-              backgroundColor: "#F59E0B",
+              fontWeight: 600,
               color: "white",
-              fontWeight: 700,
-              fontSize: "1rem",
+              fontSize: "0.875rem",
+              lineHeight: 1.2,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
             }}
           >
-            AD
-          </Avatar>
-          <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-            <Typography
-              variant="body2"
-              sx={{
-                fontWeight: 600,
-                color: "white",
-                fontSize: "0.875rem",
-                lineHeight: 1.2,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Administrador
-            </Typography>
-            <Typography
-              variant="caption"
-              sx={{
-                color: "rgba(255,255,255,0.7)",
-                fontSize: "0.75rem",
-                lineHeight: 1.1,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              Admin Panel
-            </Typography>
-          </Box>
+            {firstName} {lastName}
+          </Typography>
+
+          <Typography
+            variant="caption"
+            sx={{
+              color: "rgba(255,255,255,0.7)",
+              fontSize: "0.75rem",
+              lineHeight: 1.1,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {bottomLabel}
+          </Typography>
         </Box>
       </Box>
+    );
+  })()}
+</Box>
     </Drawer>
   );
 };
