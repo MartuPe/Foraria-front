@@ -1,3 +1,4 @@
+import { api } from "../api/axios";
 import { jwtDecode } from "jwt-decode";
 import { storage } from "../utils/storage";
 
@@ -20,6 +21,23 @@ export type UserProfile = {
   hasPermission?: boolean;
   photo?: string | null;
   residences?: ResidenceDto[];
+};
+
+type ApiUserDto = {
+  id: number;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string | null;
+  dni?: number | null;
+  roleId: number;
+  roleDescription: string;
+  photo?: string | null;
+  residenceId?: number | null;
+  floor?: number | null;
+  numberFloor?: number | null;
+  consortiumId?: number | null;
+  success?: boolean;
 };
 
 function normalizeRole(r: any): string | undefined {
@@ -136,4 +154,49 @@ export async function getEffectiveIds(): Promise<{ userId: number; consortiumId:
   storage.userId = userId;
   storage.consortiumId = consortiumId;
   return { userId, consortiumId };
+}
+
+const userCache: Record<number, UserProfile> = {};
+
+function mapApiUserToProfile(dto: ApiUserDto): UserProfile {
+  const residences: ResidenceDto[] = dto.residenceId
+    ? [
+        {
+          id: dto.residenceId,
+          floor: dto.floor ?? null,
+          number: dto.numberFloor ?? null,
+          consortiumId: dto.consortiumId ?? 0,
+        },
+      ]
+    : [];
+
+  return {
+    id: dto.id,
+    firstName: dto.firstName ?? "",
+    lastName: dto.lastName ?? "",
+    email: dto.email ?? "",
+    phoneNumber: dto.phoneNumber ?? null,
+    dni: dto.dni ?? null,
+    role: dto.roleDescription ?? "",
+    consortiumId: dto.consortiumId ?? null,
+    photo: dto.photo ?? null,
+    residences,
+    hasPermission: undefined,
+  };
+}
+
+export async function getUserById(id: number): Promise<UserProfile> {
+  if (!id) {
+    throw new Error("userId inválido para getUserById");
+  }
+  if (userCache[id]) return userCache[id];
+  const { data } = await api.get<ApiUserDto>("/User", { params: { id } });
+  const profile = mapApiUserToProfile(data);
+  userCache[id] = profile;
+  return profile;
+}
+
+export function getUserDisplayName(profile: UserProfile): string {
+  const full = `${profile.firstName ?? ""} ${profile.lastName ?? ""}`.trim();
+  return full || `Usuario #${profile.id}`;
 }

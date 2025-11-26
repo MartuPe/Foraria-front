@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, FormEvent, useRef } from "react";
+import { useEffect, useMemo, useState, FormEvent, useRef, useCallback } from "react";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { Box, IconButton, Typography, Stack, Paper, Tooltip, Button, Divider, TextField } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -9,7 +9,8 @@ import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import VideocamOffOutlinedIcon from "@mui/icons-material/VideocamOffOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import { callService, CallDto, CallParticipantDto, CallMessageDto } from "../services/callService";
-import { getMeetingById } from "../services/meetingService";
+import { getMeetingById, parseBackendDate } from "../services/meetingService";
+import { getUserById, getUserDisplayName } from "../services/userService";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import { useSignalR } from "../hooks/useSignalRCalls";
@@ -30,6 +31,7 @@ export default function CallRoom() {
   const [call, setCall] = useState<CallDto | null>(null);
   const [participants, setParticipants] = useState<CallParticipantDto[]>([]);
   const [messages, setMessages] = useState<CallMessageDto[]>([]);
+  const [userNames, setUserNames] = useState<Record<number, string>>({});
 
   const [micOn, setMicOn] = useState<boolean>(() => {
     const stored = localStorage.getItem("call_micOn");
@@ -68,6 +70,7 @@ export default function CallRoom() {
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const connectionUsersRef = useRef<Map<string, number>>(new Map());
   const remoteVideoRefs = useRef<Map<number, HTMLVideoElement | null>>(new Map());
+  const chatListRef = useRef<HTMLDivElement | null>(null);
 
   const setRemoteVideoRef = (userId: number) => (el: HTMLVideoElement | null) => {
     remoteVideoRefs.current.set(userId, el);
@@ -85,6 +88,48 @@ export default function CallRoom() {
       ),
     [messages]
   );
+
+  const ensureUserNameLoaded = useCallback(
+  async (userId: number) => {
+    if (!userId || userId === currentUserId) return;
+    if (userNames[userId]) return; // ya lo tengo
+
+    try {
+      const user = await getUserById(userId);
+      const fullName = getUserDisplayName(user);
+      setUserNames(prev => (prev[userId] ? prev : { ...prev, [userId]: fullName }));
+    } catch (e) {
+      console.error("Error obteniendo usuario", userId, e);
+    }
+  },
+  [currentUserId, userNames]
+);
+
+const getDisplayName = (userId: number) =>
+  userId === currentUserId ? "Vos" : userNames[userId] ?? `Usuario #${userId}`;
+
+useEffect(() => {
+  const ids = new Set<number>();
+  participants.forEach((p) => {
+    if (p.userId && p.userId !== currentUserId) {
+      ids.add(p.userId);
+    }
+  });
+  messages.forEach((m) => {
+    if (m.userId && m.userId !== currentUserId) {
+      ids.add(m.userId);
+    }
+  });
+  ids.forEach((id) => {
+    ensureUserNameLoaded(id);
+  });
+}, [participants, messages, currentUserId, ensureUserNameLoaded]);
+
+  useEffect(() => {
+  const el = chatListRef.current;
+  if (!el) return;
+  el.scrollTop = el.scrollHeight;
+}, [orderedMessages.length]);
 
   useEffect(() => {
     localStorage.setItem("call_micOn", micOn ? "true" : "false");
@@ -116,7 +161,12 @@ export default function CallRoom() {
         if (cancelled) return;
 
         setCall(callDetails);
-        setMessages(state.messages ?? []);
+        setMessages(
+          (state.messages ?? []).map((m) => ({
+            ...m,
+            sentAt: parseBackendDate(m.sentAt as any),
+          }))
+        );
       } catch (e) {
         console.error(e);
         if (!cancelled) setError("No se pudo cargar la llamada.");
@@ -431,10 +481,7 @@ export default function CallRoom() {
     }
   };
 
-  const title = meeting?.title ?? (call ? `Llamada #${call.id}` : "Reunión en curso");
-  const subtitle = meeting
-    ? `${meeting.date} · ${meeting.time} · ${meeting.location}` : call
-    ? `Estado: ${call.status}` : "Llamada en curso";
+  const title = meeting?.title ?? call?.title ?? "Reunión en curso";
 
   const visibleParticipants = useMemo(() => {
     const map = new Map<number, CallParticipantDto>();
@@ -447,16 +494,7 @@ export default function CallRoom() {
 
   const videoParticipants = visibleParticipants.length
     ? visibleParticipants
-    : [
-        {
-          id: -1,
-          userId: 0,
-          isCameraOn: false,
-          isMuted: true,
-          isConnected: false,
-          joinedAt: new Date().toISOString(),
-        } as CallParticipantDto,
-      ];
+    : [{ id: -1, userId: 0, isCameraOn: false, isMuted: true, isConnected: false, joinedAt: new Date().toISOString(), } as CallParticipantDto,];
 
   return (
     <Box className="foraria-page-container foraria-call-room">
@@ -467,9 +505,6 @@ export default function CallRoom() {
           </IconButton>
           <Box>
             <Typography variant="subtitle1" fontWeight={600}>{title}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {subtitle}
-            </Typography>
           </Box>
         </Stack>
 
@@ -491,17 +526,9 @@ export default function CallRoom() {
 
       <Box className="foraria-call-room-body">
         <Paper className="foraria-call-room-video" elevation={0}>
-          <Typography variant="body2" color="common.white" sx={{ mb: 2, opacity: 0.9 }}>
-            Videollamada en curso.
-          </Typography>
-
           <Box className="foraria-call-room-video-grid">
             <Box
-              className={
-                "foraria-call-room-video-tile" +
-                (!camOn ? " foraria-call-room-video-tile--off" : "")
-              }
-            >
+              className={ "foraria-call-room-video-tile" + (!camOn ? " foraria-call-room-video-tile--off" : "")}>
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -538,7 +565,7 @@ export default function CallRoom() {
             {videoParticipants
               .filter((p) => p.userId !== currentUserId)
               .map((p) => {
-                const name = `Participante #${p.userId}`;
+                const name = getDisplayName(p.userId);
                 return (
                   <Box
                     key={p.id}
@@ -646,7 +673,7 @@ export default function CallRoom() {
               >
                 <Stack direction="row" spacing={1} alignItems="center">
                   <PersonOutlineIcon fontSize="small" />
-                  <span>{p.userId === currentUserId ? "Vos" : `Usuario #${p.userId}`}</span>
+                  <span>{getDisplayName(p.userId)}</span>
                 </Stack>
 
                 <Stack direction="row" spacing={1} alignItems="center">
@@ -680,7 +707,7 @@ export default function CallRoom() {
             Chat
           </Typography>
 
-          <Box className="foraria-call-room-chat-list">
+          <Box className="foraria-call-room-chat-list" ref={chatListRef}>
             {messages.length === 0 && (
               <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
                 Todavía no hay mensajes en el chat.
@@ -690,7 +717,7 @@ export default function CallRoom() {
             {orderedMessages.map((m) => (
               <Box key={m.id} className="foraria-call-room-chat-message">
                 <Typography variant="caption" sx={{ fontWeight: 600 }}>
-                  Usuario #{m.userId}{" "}
+                  {getDisplayName(m.userId)}{" "}
                   <span className="foraria-call-room-chat-time">
                     {new Date(m.sentAt).toLocaleTimeString("es-AR", {
                       hour: "2-digit",
