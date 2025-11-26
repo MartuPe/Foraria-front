@@ -9,7 +9,7 @@ import VideocamOutlinedIcon from "@mui/icons-material/VideocamOutlined";
 import VideocamOffOutlinedIcon from "@mui/icons-material/VideocamOffOutlined";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import { callService, CallDto, CallParticipantDto, CallMessageDto } from "../services/callService";
-import { getMeetingById } from "../services/meetingService";
+import { getMeetingById, parseBackendDate } from "../services/meetingService";
 import { storage } from "../utils/storage";
 import { Role } from "../constants/roles";
 import { useSignalR } from "../hooks/useSignalRCalls";
@@ -123,7 +123,12 @@ export default function CallRoom() {
         if (cancelled) return;
 
         setCall(callDetails);
-        setMessages(state.messages ?? []);
+        setMessages(
+          (state.messages ?? []).map((m) => ({
+            ...m,
+            sentAt: parseBackendDate(m.sentAt as any),
+          }))
+        );
       } catch (e) {
         console.error(e);
         if (!cancelled) setError("No se pudo cargar la llamada.");
@@ -439,9 +444,6 @@ export default function CallRoom() {
   };
 
   const title = meeting?.title ?? (call ? `Llamada #${call.id}` : "Reunión en curso");
-  const subtitle = meeting
-    ? `${meeting.date} · ${meeting.time} · ${meeting.location}` : call
-    ? `Estado: ${call.status}` : "Llamada en curso";
 
   const visibleParticipants = useMemo(() => {
     const map = new Map<number, CallParticipantDto>();
@@ -474,9 +476,6 @@ export default function CallRoom() {
           </IconButton>
           <Box>
             <Typography variant="subtitle1" fontWeight={600}>{title}</Typography>
-            <Typography variant="caption" color="text.secondary">
-              {subtitle}
-            </Typography>
           </Box>
         </Stack>
 
@@ -498,10 +497,6 @@ export default function CallRoom() {
 
       <Box className="foraria-call-room-body">
         <Paper className="foraria-call-room-video" elevation={0}>
-          <Typography variant="body2" color="common.white" sx={{ mb: 2, opacity: 0.9 }}>
-            Videollamada en curso.
-          </Typography>
-
           <Box className="foraria-call-room-video-grid">
             <Box
               className={

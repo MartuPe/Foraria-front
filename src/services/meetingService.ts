@@ -26,7 +26,7 @@ export interface Meeting {
 
 let meetingsStore: Meeting[] = [];
 
-function parseBackendDate(iso: string | null): Date {
+export function parseBackendDate(iso: string | null): Date {
   if (!iso) return new Date();
   return new Date(iso + "Z");
 }
