@@ -116,7 +116,7 @@ export default function AdminCargaFactura() {
   const [openMonthModal, setOpenMonthModal] = useState(false);
   const [selectedYear, setSelectedYear] = useState<string>("");
   const [selectedMonth, setSelectedMonth] = useState<string>("");
-
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const token = localStorage.getItem("accessToken");
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [expenses, setExpenses] = useState<Expense[]>([]);
@@ -326,19 +326,19 @@ export default function AdminCargaFactura() {
           setOpenMonthModal(false);
         } else {
           console.error("Error en ExpenseDetail", detailResp);
-          alert(
-            `Error al crear ExpenseDetail (status ${detailResp.status}).`
-          );
+         
+          setErrorMessage(detailResp.data?.error ?? "Error en detalle");
+          console.error(errorMessage);
         }
       } else {
         console.error("Error en Expense", expenseResp);
-        alert(`Error al generar expensa (status ${expenseResp.status}).`);
+       setErrorMessage(expenseResp.data?.error ?? "Error en expense");
+        console.error(errorMessage);
       }
     } catch (err) {
       console.error("Excepción en generar expensa", err);
-      alert(
-        "Ocurrió un error al generar la expensa. Revisá la consola para más detalles."
-      );
+      setErrorMessage("Error inesperado");
+      console.error(errorMessage);
     }
   };
 
@@ -590,6 +590,11 @@ export default function AdminCargaFactura() {
             </FormControl>
           </Stack>
         </DialogContent>
+         {errorMessage && (
+    <Typography color="error" variant="body2" sx={{ mt: 1, paddingLeft: 2, paddingRight: 2 }}>
+      {errorMessage}
+    </Typography>
+  )}
         <DialogActions>
           <Button onClick={() => setOpenMonthModal(false)}>Cancelar</Button>
           <Button
@@ -876,6 +881,7 @@ export default function AdminCargaFactura() {
                       ]}
                       showDivider
                       extraActions={[
+                        
                         {
                           label: "PDF",
                           icon: <DownloadIcon />,

@@ -34,7 +34,8 @@ const Claims: React.FC = () => {
   const API_BASE = (process.env.REACT_APP_API_URL?.replace(/\/+$/,"") || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net");
   const userRole = storage.role ?? "";
   const canManageClaims = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
-
+  const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;
+  const isConsejo = storage.role === Role.CONSORCIO;
   const is404Error = error && (String(error).includes("404") || String(error).toLowerCase().includes("not found"));
   const safeClaimData = useMemo(() => {
     if (is404Error) return [];
@@ -114,7 +115,7 @@ const Claims: React.FC = () => {
       <PageHeader
         title="Reclamos"
         actions={
-  !isAdministrador ? (
+  !isAdmin ? (
     <Button variant="contained" color="secondary" onClick={() => setOpenNew(true)}>
       + Nuevo Reclamo
     </Button>
@@ -199,7 +200,7 @@ const Claims: React.FC = () => {
             const files = c.claim.archive ? [{ url: `${API_BASE}${c.claim.archive}`, type: fileTypeFromPath(c.claim.archive) }] : [];
             const normalizedState = c.claim.state;
             const actions =
-          canManageClaims && (normalizedState === "" || normalizedState === "Nuevo")
+          canManageClaims && (normalizedState === "" || normalizedState === "Nuevo") && isConsejo
     ? [
         { label: "Aceptar", variant: "contained" as const, color: "primary" as const, onClick: () => setOpenAcceptId(id) },
         { label: "Rechazar", variant: "outlined" as const, color: "error" as const, onClick: () => setOpenRejectId(id) },

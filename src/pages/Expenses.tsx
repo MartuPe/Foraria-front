@@ -581,7 +581,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
                   ]}
                   showDivider
                   extraActions={[
-  ...(isAdmin
+  ...(isAdmin && detail.state?.toLowerCase() !== "paid"
     ? [{
         label: loadingPaymentFor === detail.id ? "Redirigiendo..." : "Pagar",
         icon: <LocalAtmIcon />,
