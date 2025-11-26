@@ -68,6 +68,7 @@ export default function CallRoom() {
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const connectionUsersRef = useRef<Map<string, number>>(new Map());
   const remoteVideoRefs = useRef<Map<number, HTMLVideoElement | null>>(new Map());
+  const chatListRef = useRef<HTMLDivElement | null>(null);
 
   const setRemoteVideoRef = (userId: number) => (el: HTMLVideoElement | null) => {
     remoteVideoRefs.current.set(userId, el);
@@ -85,6 +86,12 @@ export default function CallRoom() {
       ),
     [messages]
   );
+
+  useEffect(() => {
+  const el = chatListRef.current;
+  if (!el) return;
+  el.scrollTop = el.scrollHeight;
+}, [orderedMessages.length]);
 
   useEffect(() => {
     localStorage.setItem("call_micOn", micOn ? "true" : "false");
@@ -680,7 +687,7 @@ export default function CallRoom() {
             Chat
           </Typography>
 
-          <Box className="foraria-call-room-chat-list">
+          <Box className="foraria-call-room-chat-list" ref={chatListRef}>
             {messages.length === 0 && (
               <Typography variant="caption" color="text.secondary" sx={{ fontStyle: "italic" }}>
                 Todavía no hay mensajes en el chat.

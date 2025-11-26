@@ -26,11 +26,13 @@ export interface Meeting {
 
 let meetingsStore: Meeting[] = [];
 
-function toLocalDateTimeParts(iso: string | null): {
-  date: string;
-  time: string;
-} {
-  const d = iso ? new Date(iso) : new Date();
+function parseBackendDate(iso: string | null): Date {
+  if (!iso) return new Date();
+  return new Date(iso + "Z");
+}
+
+function toLocalDateTimeParts(iso: string | null): { date: string; time: string } {
+  const d = parseBackendDate(iso);
   const pad = (n: number) => n.toString().padStart(2, "0");
   const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
   const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
@@ -43,7 +45,7 @@ function mapBackendStatusToMeetingStatus(
   endedAt?: string | null
 ): MeetingStatus {
   const now = new Date();
-  const start = startedAt ? new Date(startedAt) : null;
+  const start = startedAt ? parseBackendDate(startedAt) : null;
   const normalized = (status || "").toLowerCase();
   if (normalized === "ended" || normalized === "finished" || endedAt) {
     return "finished";
