@@ -202,7 +202,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
       case "paid":
         return "Pagada";
       case "overdue":
-      case "defeated":
+      case "expired":
         return "Vencida";
       default:
         return state;
