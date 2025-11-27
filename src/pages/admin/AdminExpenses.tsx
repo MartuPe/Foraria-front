@@ -702,12 +702,12 @@ export default function AdminCargaFactura() {
               {!loadingInvoices &&
                 !loadErrorInvoices &&
                 sortedInvoices.map((inv) => {
-                  const files = inv.filePath
-                    ? inv.filePath.split(",").map((name) => ({
-                        url: name,
-                        type: name.split(".").pop(),
-                      }))
-                    : [];
+                  // const files = inv.filePath
+                  //   ? inv.filePath.split(",").map((name) => ({
+                  //       url: name,
+                  //       type: name.split(".").pop(),
+                  //     }))
+                  //   : [];
 
                   return (
                     <InfoCard
