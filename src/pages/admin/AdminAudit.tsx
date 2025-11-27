@@ -18,7 +18,6 @@ import {
 import { DownloadOutlined, FilterListOutlined } from "@mui/icons-material";
 import PageHeader from "../../components/SectionHeader";
 
-// Tipos
 type ActionKind =
   | "CREO_VOTACION"
   | "ACTUALIZO_PERFIL"
@@ -32,7 +31,7 @@ type ActionKind =
 
 type LogRow = {
   id: string;
-  timestamp: string; // ISO
+  timestamp: string; 
   user: string;
   action: ActionKind;
   entityType: string;
@@ -41,7 +40,6 @@ type LogRow = {
   ip: string;
 };
 
-// Mock (reemplazar por service real)
 const MOCK: LogRow[] = [
   {
     id: "1",
@@ -135,7 +133,7 @@ const MOCK: LogRow[] = [
   },
 ];
 
-// Helpers UI
+
 function actionChip(kind: ActionKind) {
   const map: Record<
     ActionKind,
@@ -196,7 +194,7 @@ export default function AdminAudit() {
   const [q, setQ] = React.useState("");
   const [user, setUser] = React.useState<string>("ALL");
   const [type, setType] = React.useState<ActionKind | "ALL">("ALL");
-  const [from, setFrom] = React.useState<string>(""); // yyyy-mm-dd
+  const [from, setFrom] = React.useState<string>(""); 
 
   const users = Array.from(new Set(MOCK.map((m) => m.user)));
   const types: { value: ActionKind | "ALL"; label: string }[] = [
@@ -252,14 +250,14 @@ export default function AdminAudit() {
         }
       />
 
-      {/* Subtitle más compacto */}
+    
       <Box sx={{ mb: 2 }}>
         <Typography variant="body2" color="text.secondary">
           Monitoreo de actividades en la plataforma
         </Typography>
       </Box>
 
-      {/* Panel de filtros más compacto */}
+     
       <Paper
         elevation={0}
         variant="outlined"
@@ -336,7 +334,7 @@ export default function AdminAudit() {
         </Box>
       </Paper>
 
-      {/* Tabla más compacta y responsive */}
+     
       <Paper
         elevation={0}
         variant="outlined"

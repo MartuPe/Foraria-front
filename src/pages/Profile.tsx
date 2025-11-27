@@ -101,9 +101,9 @@ const Profile: React.FC = () => {
           </Box>
 
           <Box display="flex" gap={1} flexWrap="wrap" justifyContent="flex-end">
-            <Button component={RouterLink} to={isAdminRoute ? "/admin/editarInformacion" : "/editarInformacion"} startIcon={<EditIcon />} variant="outlined" size="small" >
+            {/* <Button component={RouterLink} to={isAdminRoute ? "/admin/editarInformacion" : "/editarInformacion"} startIcon={<EditIcon />} variant="outlined" size="small" >
               Editar
-            </Button>
+            </Button> */}
             <Button onClick={handleLogout} startIcon={<LogoutIcon />} color="secondary" variant="contained" size="small">
               Cerrar sesión
             </Button>

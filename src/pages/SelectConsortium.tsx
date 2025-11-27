@@ -33,14 +33,11 @@ export default function SelectConsortium() {
   const [items, setItems] = useState<Residence[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Controles 
   const [q, setQ] = useState("");
   const [qDebounced, setQDebounced] = useState("");
 
-  // Modal "Nueva residencia"
   const [openNew, setOpenNew] = useState(false);
 
-  // Toast
   const [snack, setSnack] = useState<{
     open: boolean;
     msg: string;
@@ -49,7 +46,6 @@ export default function SelectConsortium() {
 
   const nav = useNavigate();
 
-  // Debounce simple para la búsqueda
   useEffect(() => {
     const t = setTimeout(() => setQDebounced(q.trim().toLowerCase()), 250);
     return () => clearTimeout(t);
@@ -79,7 +75,6 @@ export default function SelectConsortium() {
     fetchAll();
   }, [fetchAll]);
 
-  // Filtro por texto
   const filtered = useMemo(() => {
     if (!qDebounced) return items;
     return items.filter((r) => {
@@ -106,7 +101,6 @@ export default function SelectConsortium() {
     </Card>
   );
 
-  // Acción “Entrar”
   const enter = (r: Residence) => {
     setActiveConsortium({ id: r.consortiumId, name: `Consorcio ${r.consortiumId}`, tower: r.tower });
    
@@ -124,7 +118,6 @@ export default function SelectConsortium() {
         }
       />
 
-      {/* Buscador (estilo Suppliers) */}
       <Stack direction={{ xs: "column", md: "row" }} spacing={1.5} mb={2}>
         <TextField
           placeholder="Buscar por torre, piso, unidad o consorcio…"
@@ -141,7 +134,6 @@ export default function SelectConsortium() {
         />
       </Stack>
 
-      {/* Lista */}
       <Stack spacing={2}>
         {loading ? (
           <>
@@ -215,7 +207,6 @@ export default function SelectConsortium() {
         )}
       </Stack>
 
-      {/* Snackbar global */}
       <Snackbar
         open={snack.open}
         autoHideDuration={3000}
@@ -232,7 +223,6 @@ export default function SelectConsortium() {
         </Alert>
       </Snackbar>
 
-      {/* Modal: Nueva residencia (ABM desde la misma vista) */}
       <Dialog open={openNew} onClose={() => setOpenNew(false)} maxWidth="sm" fullWidth>
         <DialogContent>
           <NewResidence

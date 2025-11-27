@@ -9,7 +9,6 @@ import { useMutation } from "../../hooks/useMutation";
 import { useSignalR } from "../../hooks/useSignalR";
 import NewVote from "../../components/modals/NewVote";
 
-// --- Tipos ---
 export interface PollOption {
   id: number;
   text: string;
@@ -48,7 +47,6 @@ interface UserCountResponse {
   totalUsers: number;
 }
 
-// --- Componente principal ---
 export default function AdminVotes() {
   const [tab, setTab] = useState<"todas" | "actives" | "finalizada">("todas");
   const [polls, setPolls] = useState<Poll[]>([]);
@@ -71,7 +69,6 @@ export default function AdminVotes() {
     url: "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/pollHub",
   });
 
-  // ✅ Traemos el total de usuarios una sola vez
   useEffect(() => {
     const fetchUserCount = async () => {
       try {
@@ -168,7 +165,6 @@ export default function AdminVotes() {
             0
           );
 
-          // ✅ Cálculo basado en total de usuarios
           let progressPercent = 0;
           if (optionsValid && totalUsers > 0) {
             progressPercent = Math.min(

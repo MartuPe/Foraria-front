@@ -57,7 +57,7 @@ export default function App() {
             <Route path="calendario" element={<Calendar />} />
             <Route path="configuracion" element={<Configuration />} />
             <Route path="select-consortium" element={<SelectConsortium />} />
-            {["todas","general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"]
+            {["general","administracion","seguridad","mantenimiento","espacios-comunes","garage-parking"]
             .map(f => <Route key={f} path={`forums/${f}`} element={<Forums />} />)}
             <Route path="forums/comentarios" element={<Comentarios />} />
 
