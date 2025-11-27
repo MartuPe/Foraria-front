@@ -129,7 +129,6 @@ export default function VotesPrueba() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [totalUsers, setTotalUsers] = useState<number>(0);
 const [loadError, setLoadError] = useState<string | null>(null);
-  // Estados de votación
   const [selectedPoll, setSelectedPoll] = useState<Poll | null>(null);
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [isVoting, setIsVoting] = useState(false);
@@ -140,12 +139,10 @@ const [loadError, setLoadError] = useState<string | null>(null);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [pollVoters, setPollVoters] = useState<Record<number, { userId: number; userName: string }[]>>({}); 
     const isAdmin = storage.role === Role.ADMIN;
-  // Estados para admin - NewVote modal y editar
   const [showNewVoteModal, setShowNewVoteModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingPoll, setEditingPoll] = useState<Poll | null>(null);
   
-  // Estados para editar poll
   const [newPoll, setNewPoll] = useState<Partial<CreatePollDto & { state: string }>>({
     title: '',
     description: '',
@@ -190,17 +187,17 @@ const [loadError, setLoadError] = useState<string | null>(null);
   }, []);
 
  useEffect(() => {
-  // Si hay datos, cargarlos y limpiar error
+
   if (pollsData) {
     setPolls(pollsData);
     setLoadError(null);
   }
   
-  // Manejar errores
+
   if (error) {
     const errorMsg = typeof error === 'string' ? error : String(error);
     
-    // Detectar si es un error 404 o "no se encontraron"
+
     const is404 = errorMsg.toLowerCase().includes("404") || 
                   errorMsg.toLowerCase().includes("not found") ||
                   errorMsg.toLowerCase().includes("status code 404");
@@ -209,11 +206,11 @@ const [loadError, setLoadError] = useState<string | null>(null);
                       errorMsg.toLowerCase().includes("no hay");
     
     if (is404 || isNotFound) {
-      // Para 404, mostramos lista vacía SIN mensaje de error
+     
       setPolls([]);
       setLoadError(null);
     } else {
-      // Para otros errores, mostramos mensaje de error
+   
       setPolls([]);
       setLoadError("No se pudieron cargar las votaciones. Intentá nuevamente más tarde.");
     }
@@ -239,7 +236,7 @@ const [loadError, setLoadError] = useState<string | null>(null);
     });
   }, [connected, on]);
 
-  // Handlers de votación
+ 
   const handleOpenVoteModal = (poll: Poll) => {
     setSelectedPoll(poll);
     setSelectedOption(null);

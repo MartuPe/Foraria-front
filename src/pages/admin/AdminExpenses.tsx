@@ -357,23 +357,23 @@ export default function AdminCargaFactura() {
     const pdf = new jsPDF("p", "pt", "a4");
     const pageWidth = pdf.internal.pageSize.getWidth();
 
-    // Header azul
+  
     pdf.setFillColor(13, 52, 102);
     pdf.rect(0, 0, pageWidth, 90, "F");
 
-    // Logo
+   
     const logoWidth = 80;
     const logoHeight = 80;
     const logoX = pageWidth / 2 - logoWidth / 2;
     const logoY = 0;
     pdf.addImage(isotipoForaria, "PNG", logoX, logoY, logoWidth, logoHeight);
 
-    // Título
+    
     pdf.setFontSize(22);
     pdf.setTextColor(255, 255, 255);
     pdf.text("FORARIA", pageWidth / 2, 80, { align: "center" });
 
-    // Fechas
+ 
     const created = exp.createdAt
       ? new Date(exp.createdAt).toLocaleDateString("es-AR")
       : "-";
@@ -386,7 +386,7 @@ export default function AdminCargaFactura() {
     pdf.text(`CREADA: ${created}`, rightX, 25, { align: "right" });
     pdf.text(`VENCIMIENTO: ${venc}`, rightX, 40, { align: "right" });
 
-    // Descripción
+
     pdf.setFontSize(14);
     pdf.setTextColor(0, 0, 0);
     pdf.text(`${exp.description || `Expensa ${exp.id}`}`, pageWidth / 2, 120, {
@@ -395,7 +395,7 @@ export default function AdminCargaFactura() {
 
     let currentY = 140;
 
-    // Tabla de residencias
+
     const residencesRows = exp.expenseDetailDtos.map((detail) => {
       const residence = detail.residenceResponseDtos;
       const userName = residence.users.length > 0 
@@ -406,14 +406,13 @@ export default function AdminCargaFactura() {
         `${residence.floor}° ${residence.tower} - ${residence.number}`,
         userName,
         residence.coeficient.toFixed(2),
-        "$0.00", // Expensa anterior (no está en los datos)
         `$${detail.total.toLocaleString("es-AR")}`,
       ];
     });
 
     autoTable(pdf, {
       startY: currentY,
-      head: [["UNIDAD", "TITULAR", "COEF.", "EXP. ANTERIOR", "A PAGAR"]],
+      head: [["UNIDAD", "TITULAR", "COEF.", "A PAGAR"]],
       body: residencesRows,
       foot: [
         [
@@ -445,16 +444,16 @@ export default function AdminCargaFactura() {
 
     currentY = (pdf as any).lastAutoTable.finalY + 20;
 
-    // Título de desglose
+   
     pdf.setFontSize(12);
     pdf.setFont("helvetica", "bold");
     pdf.text("DETALLE DE GASTOS EXPENSAS ORDINARIAS", 40, currentY);
     currentY += 15;
 
-    // Tabla de facturas con items
+
     const invoiceRows: any[] = [];
     exp.invoices.forEach((inv) => {
-      // Si hay items, mostrar cada uno
+
       if (inv.items && inv.items.length > 0) {
         inv.items.forEach((item) => {
           invoiceRows.push([
@@ -464,7 +463,7 @@ export default function AdminCargaFactura() {
           ]);
         });
       } else {
-        // Si no hay items, mostrar la factura completa
+
         invoiceRows.push([
           inv.description || inv.concept || "-",
           inv.category || "-",
@@ -538,7 +537,7 @@ export default function AdminCargaFactura() {
         onTabChange={handleTabFromHeader}
       />
 
-      {/* Modal de carga de factura */}
+
       <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
         <DialogContent>
           <InvoiceUploadForm
@@ -551,7 +550,7 @@ export default function AdminCargaFactura() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal Año/Mes */}
+ 
       <Dialog
         open={openMonthModal}
         onClose={() => setOpenMonthModal(false)}
@@ -608,7 +607,7 @@ export default function AdminCargaFactura() {
         </DialogActions>
       </Dialog>
 
-      {/* Contenido principal */}
+
       <Box sx={{ padding: 2 }}>
         <Stack spacing={2}>
           {selectedTab === "facturas" && (
@@ -703,12 +702,12 @@ export default function AdminCargaFactura() {
               {!loadingInvoices &&
                 !loadErrorInvoices &&
                 sortedInvoices.map((inv) => {
-                  const files = inv.filePath
-                    ? inv.filePath.split(",").map((name) => ({
-                        url: name,
-                        type: name.split(".").pop(),
-                      }))
-                    : [];
+                  // const files = inv.filePath
+                  //   ? inv.filePath.split(",").map((name) => ({
+                  //       url: name,
+                  //       type: name.split(".").pop(),
+                  //     }))
+                  //   : [];
 
                   return (
                     <InfoCard
@@ -738,8 +737,8 @@ export default function AdminCargaFactura() {
                             : "",
                         },
                       ]}
-                      files={files}
-                      filesCount={files.length}
+                      // files={files}
+                      // filesCount={files.length}
                       showDivider
                     />
                   );
@@ -918,7 +917,7 @@ export default function AdminCargaFactura() {
 
                       <Divider sx={{ mb: 2 }} />
 
-                      {/* Tabla de residencias */}
+                     
                       <Typography variant="h6" sx={{ mb: 2 }}>
                         Unidades
                       </Typography>
@@ -976,7 +975,7 @@ export default function AdminCargaFactura() {
 
                       <Divider sx={{ mb: 2 }} />
 
-                      {/* Detalle de gastos */}
+                      
                       <Typography variant="h6" sx={{ mb: 2 }}>
                         Detalle de Gastos
                       </Typography>
@@ -1028,7 +1027,7 @@ export default function AdminCargaFactura() {
                               </Box>
                             </Box>
 
-                            {/* Items de la factura */}
+                            
                             {inv.items && inv.items.length > 0 && (
                               <Box sx={{ ml: 3, mt: 1 }}>
                                 {inv.items.map((item, idx) => (

@@ -241,7 +241,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
     if (!detail.expenses || detail.expenses.length === 0) return;
 
     try {
-      // Fetch del Expense completo para obtener expenseDetailDtos
+   
       const token = localStorage.getItem("accessToken");
       const expenseId = detail.expenses[0].id;
       
@@ -259,23 +259,23 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
       const pdf = new jsPDF("p", "pt", "a4");
       const pageWidth = pdf.internal.pageSize.getWidth();
 
-      // Header azul
+      
       pdf.setFillColor(13, 52, 102);
       pdf.rect(0, 0, pageWidth, 90, "F");
 
-      // Logo
+   
       const logoWidth = 80;
       const logoHeight = 80;
       const logoX = pageWidth / 2 - logoWidth / 2;
       const logoY = 0;
       pdf.addImage(logoForaria, "PNG", logoX, logoY, logoWidth, logoHeight);
 
-      // Título
+      
       pdf.setFontSize(22);
       pdf.setTextColor(255, 255, 255);
       pdf.text("FORARIA", pageWidth / 2, 80, { align: "center" });
 
-      // Fechas
+     
       const created = fullExpense.createdAt
         ? new Date(fullExpense.createdAt).toLocaleDateString("es-AR")
         : "-";
@@ -288,7 +288,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
       pdf.text(`CREADA: ${created}`, rightX, 25, { align: "right" });
       pdf.text(`VENCIMIENTO: ${venc}`, rightX, 40, { align: "right" });
 
-      // Descripción
+      
       pdf.setFontSize(14);
       pdf.setTextColor(0, 0, 0);
       pdf.text(`${fullExpense.description || `Expensa ${fullExpense.id}`}`, pageWidth / 2, 120, {
@@ -297,7 +297,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
 
       let currentY = 140;
 
-      // Tabla de residencias
+      
       const residencesRows = fullExpense.expenseDetailDtos.map((expDetail: any) => {
         const residence = expDetail.residenceResponseDtos;
         const userName = residence.users.length > 0 
@@ -308,14 +308,13 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
           `${residence.floor}° ${residence.tower} - ${residence.number}`,
           userName,
           residence.coeficient.toFixed(2),
-          "$0.00", // Expensa anterior (no está en los datos)
           `$${expDetail.total.toLocaleString("es-AR")}`,
         ];
       });
 
       autoTable(pdf, {
         startY: currentY,
-        head: [["UNIDAD", "TITULAR", "COEF.", "EXP. ANTERIOR", "A PAGAR"]],
+        head: [["UNIDAD", "TITULAR", "COEF.", "A PAGAR"]],
         body: residencesRows,
         foot: [
           [
@@ -347,16 +346,16 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
 
       currentY = (pdf as any).lastAutoTable.finalY + 20;
 
-      // Título de desglose
+     
       pdf.setFontSize(12);
       pdf.setFont("helvetica", "bold");
       pdf.text("DETALLE DE GASTOS EXPENSAS ORDINARIAS", 40, currentY);
       currentY += 15;
 
-      // Tabla de facturas con items
+      
       const invoiceRows: any[] = [];
       fullExpense.invoices.forEach((inv: any) => {
-        // Si hay items, mostrar cada uno
+       
         if (inv.items && inv.items.length > 0) {
           inv.items.forEach((item: any) => {
             invoiceRows.push([
@@ -366,7 +365,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
             ]);
           });
         } else {
-          // Si no hay items, mostrar la factura completa
+        
           invoiceRows.push([
             inv.description || inv.concept || "-",
             inv.category || "-",
@@ -640,7 +639,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
 
               <Divider sx={{ mb: 2 }} />
 
-              {/* Tabla de distribución */}
+             
               <Typography variant="h6" sx={{ mb: 2 }}>
                 Distribución por Unidad
               </Typography>
@@ -745,7 +744,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
                         </Box>
                       </Box>
 
-                      {/* Items de la factura */}
+                      
                       {inv.items && inv.items.length > 0 && (
                         <Box sx={{ ml: 3, mt: 1 }}>
                           {inv.items.map((item, idx) => {
@@ -791,7 +790,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
                   );
                 })}
 
-                {/* Totales finales */}
+              
                 <Box sx={{ mt: 2, p: 2, bgcolor: "grey.100", borderRadius: 2 }}>
                   <Stack direction="row" justifyContent="space-between" sx={{ mb: 1 }}>
                     <Typography variant="subtitle1" sx={{ fontWeight: "bold" }}>

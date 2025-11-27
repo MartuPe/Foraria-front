@@ -1,14 +1,14 @@
 import React, { useEffect, useMemo, useState } from "react";
 import "../styles/profile.css";
 import { Box, Typography, Avatar, Button, Chip, Divider, CircularProgress, Grid, } from "@mui/material";
-import EditIcon from "@mui/icons-material/Edit";
+// import EditIcon from "@mui/icons-material/Edit";
 import LogoutIcon from "@mui/icons-material/Logout";
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import EmailIcon from "@mui/icons-material/Email";
 import BadgeIcon from "@mui/icons-material/Badge";
 import PhoneIcon from "@mui/icons-material/Phone";
 import AssignmentIndIcon from "@mui/icons-material/AssignmentInd";
-import { useNavigate, Link as RouterLink, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../services/authService";
 import type { UserProfile } from "../services/userService";
 import { profileService } from "../services/profileService";
@@ -101,9 +101,9 @@ const Profile: React.FC = () => {
           </Box>
 
           <Box display="flex" gap={1} flexWrap="wrap" justifyContent="flex-end">
-            <Button component={RouterLink} to={isAdminRoute ? "/admin/editarInformacion" : "/editarInformacion"} startIcon={<EditIcon />} variant="outlined" size="small" >
+            {/* <Button component={RouterLink} to={isAdminRoute ? "/admin/editarInformacion" : "/editarInformacion"} startIcon={<EditIcon />} variant="outlined" size="small" >
               Editar
-            </Button>
+            </Button> */}
             <Button onClick={handleLogout} startIcon={<LogoutIcon />} color="secondary" variant="contained" size="small">
               Cerrar sesión
             </Button>

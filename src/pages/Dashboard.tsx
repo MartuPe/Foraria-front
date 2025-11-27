@@ -211,35 +211,42 @@ export default function DashboardPage() {
         </Grid>
 
         <Grid container spacing={2} sx={{ mt: 2 }}>
-          <Grid size={{ xs: 12, lg: 6 }}>
-            <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
-              <Box className="panel__head">
-                <h4>Desglose de Gastos del Consorcio</h4>
-              </Box>
+         <Grid size={{ xs: 12, lg: 6 }}>
+  <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
+    <Box className="panel__head">
+      <h4>Desglose de Gastos del Consorcio</h4>
+    </Box>
 
-              <div className="panel__content two">
-                <DonutChart
-                  data={(
-                    adminExpenseBreakdown.length
-                      ? adminExpenseBreakdown
-                      : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
-                  ).map(s => ({ ...s, color: s.color ?? "#aaaaaaff" }))}
-                />
+    <div className="panel__content two">
+      <DonutChart
+        data={(
+          adminExpenseBreakdown.length
+            ? adminExpenseBreakdown
+            : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
+        ).map(s => ({ ...s, color: s.color ?? "#aaaaaaff" }))}
+      />
 
-                <ul className="legend">
-                  {(adminExpenseBreakdown.length
-                    ? adminExpenseBreakdown
-                    : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
-                  ).map(s => (
-                    <li key={s.label}>
-                      <span className="dot" style={{ background: s.color ?? "#aaaaaaff" }} />
-                      {s.label} <span className="muted">{s.value}%</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </Paper>
-          </Grid>
+      <ul className="legend">
+        {(adminExpenseBreakdown.length
+          ? adminExpenseBreakdown
+          : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
+        ).map(s => {
+          const raw = s.value;
+          const cleaned = String(raw).replace('%', '').trim();
+          const num = Number(cleaned);
+          const display = Number.isFinite(num) ? Math.floor(num) : raw;
+          return (
+            <li key={s.label}>
+              <span className="dot" style={{ background: s.color ?? "#aaaaaaff" }} />
+              {s.label} <span className="muted" title={`${raw}%`}>{display}%</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  </Paper>
+</Grid>
+
         </Grid>
       </Box>
     );
@@ -342,118 +349,104 @@ export default function DashboardPage() {
       </Paper>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
-            <Box className="panel__head">
-              <h4>Mi Estado de Pagos</h4>
-            </Box>
+       <Grid size={{ xs: 12, lg: 6 }}>
+  <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
+    <Box className="panel__head">
+      <h4>Mi Estado de Pagos</h4>
+    </Box>
 
-            <Box className="panel__content two">
-              <DonutChart data={paymentData} />
-              <ul className="legend">
-                {paymentData.map((s) => (
-                  <li key={s.label}>
-                    <span className="dot" style={{ background: s.color }} />
-                    {s.label} <span className="muted">{s.value}%</span>
-                  </li>
-                ))}
-              </ul>
-            </Box>
+    <Box className="panel__content two">
+      <DonutChart data={paymentData} />
+      <ul className="legend">
+        {paymentData.map((s) => {
+          const raw = s.value;
+          // limpiar si viene con '%' y convertir a número
+          const cleaned = String(raw).replace('%', '').trim();
+          const num = Number(cleaned);
+          // si es número finito, truncamos; si no, mostramos tal cual
+          const display = Number.isFinite(num) ? Math.floor(num) : raw;
+          return (
+            <li key={s.label}>
+              <span className="dot" style={{ background: s.color }} />
+              {s.label} <span className="muted" title={`${raw}%`}>{display}%</span>
+            </li>
+          );
+        })}
+      </ul>
+    </Box>
 
-            <hr className="divider" />
+    <hr className="divider" />
 
-            <Box className="pending">
-              <h5>Facturas Pendientes ({pendingBills.length})</h5>
-              <div className="bills">
-                {pendingBills.map((b) => (
-                  <div key={b.id} className={`bill bill--${b.status}`}>
-                    <div className="bill__left">
-                      <div className="bill__title">{b.title}</div>
-                      <div className="bill__meta">
-                        ID: {b.code} · Vence:{" "}
-                        {new Date(b.dueISO).toLocaleDateString("es-AR")}
-                      </div>
-                      <div className={`bill__tag bill__tag--${b.status}`}>
-                        {b.status === "overdue" ? "Vencida" : "Vence pronto"}
-                      </div>
-                    </div>
-                    <div className="bill__right">
-                      <div className="bill__amount">
-                        <Money value={b.amount} />
-                      </div>
-                      <Button
-                        variant="contained"
-                        color={b.status === "overdue" ? "error" : "secondary"}
-                      >
-                        Pagar
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
+    <Box className="pending">
+      <h5>Facturas Pendientes ({pendingBills.length})</h5>
 
-              <div className="totals">
-                <div>
-                  <span className="muted">Total pendiente:</span>{" "}
-                  <strong className="neg">
-                    <Money value={totals.totalPending} />
-                  </strong>
-                </div>
-                <div>
-                  <span className="muted">Próximas a vencer:</span>{" "}
-                  <strong>{totals.nextToDue}</strong>
-                </div>
-                <div>
-                  <span className="muted">Facturas vencidas:</span>{" "}
-                  <strong className="neg">{totals.overdueCount}</strong>
-                </div>
-                <div>
-                  <span className="muted">Pagado este año:</span>{" "}
-                  <strong className="pos">
-                    <Money value={totals.paidThisYear} />
-                  </strong>
-                </div>
-              </div>
+      <div className="totals">
+        <div>
+          <span className="muted">Total pendiente:</span>{" "}
+          <strong className="neg">
+            <Money value={totals.totalPending} />
+          </strong>
+        </div>
+        <div>
+          <span className="muted">Próximas a vencer:</span>{" "}
+          <strong>{totals.nextToDue}</strong>
+        </div>
+        <div>
+          <span className="muted">Facturas vencidas:</span>{" "}
+          <strong className="neg">{totals.overdueCount}</strong>
+        </div>
+        <div>
+          <span className="muted">Pagado este año:</span>{" "}
+          <strong className="pos">
+            <Money value={totals.paidThisYear} />
+          </strong>
+        </div>
+      </div>
 
-              <div className="history">
-                <h5>Historial de Pagos – Últimos 5 Meses</h5>
-                <BarsChart data={paymentsHistory} />
-              </div>
-            </Box>
-          </Paper>
-        </Grid>
+      <div className="history">
+        <h5>Historial de Pagos – Últimos 5 Meses</h5>
+        <BarsChart data={paymentsHistory} />
+      </div>
+    </Box>
+  </Paper>
+</Grid>
 
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
-            <Box className="panel__head">
-              <h4>Desglose de Gastos del Consorcio</h4>
-            </Box>
+       <Grid size={{ xs: 12, lg: 6 }}>
+  <Paper className="panel" variant="outlined" sx={{ borderRadius: 3 }}>
+    <Box className="panel__head">
+      <h4>Desglose de Gastos del Consorcio</h4>
+    </Box>
 
-            <div className="panel__content two">
-              <DonutChart
-                data={(
-                  expenseBreakdown.length
-                    ? expenseBreakdown
-                    : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
-                ).map((s) => ({ ...s, color: s.color ?? "#aaaaaaff" }))}
+    <div className="panel__content two">
+      <DonutChart
+        data={(
+          expenseBreakdown.length
+            ? expenseBreakdown
+            : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
+        ).map((s) => ({ ...s, color: s.color ?? "#aaaaaaff" }))}
+      />
+      <ul className="legend">
+        {(expenseBreakdown.length
+          ? expenseBreakdown
+          : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
+        ).map((s) => {
+          const raw = s.value;
+          const num = Number(raw);
+          const intValue = Number.isFinite(num) ? Math.floor(num) : raw;
+          return (
+            <li key={s.label}>
+              <span
+                className="dot"
+                style={{ background: s.color ?? "#aaaaaaff" }}
               />
-              <ul className="legend">
-                {(expenseBreakdown.length
-                  ? expenseBreakdown
-                  : [{ label: "Sin datos", value: 100, color: "#e5e7eb" }]
-                ).map((s) => (
-                  <li key={s.label}>
-                    <span
-                      className="dot"
-                      style={{ background: s.color ?? "#aaaaaaff" }}
-                    />
-                    {s.label} <span className="muted">{s.value}%</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </Paper>
-        </Grid>
+              {s.label} <span className="muted" title={`${raw}%`}>{intValue}%</span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  </Paper>
+</Grid>
       </Grid>
     </Box>
   );

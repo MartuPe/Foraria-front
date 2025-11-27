@@ -77,9 +77,7 @@ const iconForCategoryName = (name: string) => {
   return <ForosIcon />;
 };
 
-// ⬇ categorías estáticas para asegurar que nunca falten
 const STATIC_FORUM_LINKS = [
-  { label: "Todas",            slug: "todas" },
   { label: "General",          slug: "general" },
   { label: "Administración",   slug: "administracion" },
   { label: "Seguridad",        slug: "seguridad" },
