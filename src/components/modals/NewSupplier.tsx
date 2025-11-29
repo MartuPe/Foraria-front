@@ -1,5 +1,5 @@
 import { FormEvent, useState } from "react";
-import { TextField, Button, DialogActions, Typography, MenuItem, Box, } from "@mui/material";
+import { TextField, Button, DialogActions, Typography, MenuItem, Box,} from "@mui/material";
 import { supplierService, CreateSupplier } from "../../services/supplierService";
 import { ForariaStatusModal } from "../StatCardForms";
 
@@ -21,23 +21,19 @@ export default function NewSupplier({ onSuccess, consortiumId }: Props) {
   const [form, setForm] = useState<CreateSupplier>({
     commercialName: "",
     businessName: "",
-    cuit: "",
     supplierCategory: "",
-    phone: "",
-    email: "",
-    address: "",
-    contactPerson: "",
-    observations: "",
+    cuit: "30711223344",
+    phone: "11-3456-7821",
+    email: "contacto@limpexservicios.com.ar",
+    address: "Av. Rivadavia 1234, CABA",
+    contactPerson: "María Gómez",
+    observations: "Servicio de limpieza integral para áreas comunes.",
     consortiumId,
   });
 
   const [loading, setLoading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-
-  const [dialog, setDialog] = useState<{
-    open: boolean;
-    message: string;
-  }>({
+  const [dialog, setDialog] = useState<{ open: boolean; message: string }>({
     open: false,
     message: "",
   });
@@ -116,7 +112,6 @@ export default function NewSupplier({ onSuccess, consortiumId }: Props) {
       await supplierService.create({ ...form, consortiumId });
       onSuccess?.();
     } catch (err) {
-      console.error("Error al guardar proveedor", err);
       setDialog({
         open: true,
         message: "No se pudo guardar el proveedor. Intentá nuevamente.",
@@ -155,11 +150,7 @@ export default function NewSupplier({ onSuccess, consortiumId }: Props) {
               error={Boolean(fieldErrors.commercialName)}
             />
             {fieldErrors.commercialName && (
-              <div
-                className="field-message field-message--error"
-                role="alert"
-                aria-live="polite"
-              >
+              <div className="field-message field-message--error" role="alert">
                 {fieldErrors.commercialName}
               </div>
             )}
@@ -176,11 +167,7 @@ export default function NewSupplier({ onSuccess, consortiumId }: Props) {
               error={Boolean(fieldErrors.businessName)}
             />
             {fieldErrors.businessName && (
-              <div
-                className="field-message field-message--error"
-                role="alert"
-                aria-live="polite"
-              >
+              <div className="field-message field-message--error" role="alert">
                 {fieldErrors.businessName}
               </div>
             )}
@@ -194,16 +181,16 @@ export default function NewSupplier({ onSuccess, consortiumId }: Props) {
               onChange={handleChange}
               fullWidth
               required
-              inputProps={{ maxLength: 11, inputMode: "numeric", pattern: "\\d{11}" }}
+              inputProps={{
+                maxLength: 11,
+                inputMode: "numeric",
+                pattern: "\\d{11}",
+              }}
               helperText="11 dígitos sin guiones"
               error={Boolean(fieldErrors.cuit)}
             />
             {fieldErrors.cuit && (
-              <div
-                className="field-message field-message--error"
-                role="alert"
-                aria-live="polite"
-              >
+              <div className="field-message field-message--error" role="alert">
                 {fieldErrors.cuit}
               </div>
             )}
@@ -226,11 +213,7 @@ export default function NewSupplier({ onSuccess, consortiumId }: Props) {
               <MenuItem value="Jardinería">Jardinería</MenuItem>
             </TextField>
             {fieldErrors.supplierCategory && (
-              <div
-                className="field-message field-message--error"
-                role="alert"
-                aria-live="polite"
-              >
+              <div className="field-message field-message--error" role="alert">
                 {fieldErrors.supplierCategory}
               </div>
             )}
@@ -246,11 +229,7 @@ export default function NewSupplier({ onSuccess, consortiumId }: Props) {
               error={Boolean(fieldErrors.phone)}
             />
             {fieldErrors.phone && (
-              <div
-                className="field-message field-message--error"
-                role="alert"
-                aria-live="polite"
-              >
+              <div className="field-message field-message--error" role="alert">
                 {fieldErrors.phone}
               </div>
             )}
@@ -268,11 +247,7 @@ export default function NewSupplier({ onSuccess, consortiumId }: Props) {
               error={Boolean(fieldErrors.email)}
             />
             {fieldErrors.email && (
-              <div
-                className="field-message field-message--error"
-                role="alert"
-                aria-live="polite"
-              >
+              <div className="field-message field-message--error" role="alert">
                 {fieldErrors.email}
               </div>
             )}
