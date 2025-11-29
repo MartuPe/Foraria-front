@@ -227,7 +227,7 @@ export default function DashboardPage() {
               </Box>
 
               <div className='panel__content two'>
-                <DonutChart
+                <DonutChart  size={260}
                   data={(adminExpenseBreakdown.length
                     ? adminExpenseBreakdown
                     : [{ label: 'Sin datos', value: 100, color: '#e5e7eb' }]
@@ -357,7 +357,7 @@ export default function DashboardPage() {
             </Box>
 
             <Box className='panel__content two'>
-              <DonutChart data={paymentData}  size={260} />
+              <DonutChart data={paymentData}  />
               <ul className='legend'>
                 {paymentData.map((s) => {
                   const raw = s.value
