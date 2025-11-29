@@ -42,8 +42,6 @@ async function safeGetAny<T>(
   } catch (e: any) {
     const status = e?.response?.status;
     const payload = e?.response?.data;
-    // Log útil para depurar rápidamente cuál endpoint tronó
-    // (no rompe la UI)
     // eslint-disable-next-line no-console
     console.warn(
       `[AdminDashboard] ${label} → error ${status ?? "?"}:`,
@@ -69,14 +67,13 @@ function parseCollectedRate(raw: any): number {
 }
 
 function parseNextReservation(raw: any): { summary: string; when: string } {
-  const list: any[] =
-    Array.isArray(raw)
-      ? raw
-      : Array.isArray(raw?.upcomingReservations)
-      ? raw.upcomingReservations
-      : raw?.data && Array.isArray(raw.data)
-      ? raw.data
-      : [];
+  const list: any[] = Array.isArray(raw)
+    ? raw
+    : Array.isArray(raw?.upcomingReservations)
+    ? raw.upcomingReservations
+    : raw?.data && Array.isArray(raw.data)
+    ? raw.data
+    : [];
 
   if (!list.length) return { summary: "—", when: "Sin próximas" };
 
@@ -93,6 +90,7 @@ function parseNextReservation(raw: any): { summary: string; when: string } {
 export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
   const consortiumId = getConsortiumId();
 
+  // Llamados reales (si fallan, usamos fallback)
   const [usersCount, pendingClaims, collectedRaw, upcomingRaw] =
     await Promise.all([
       safeGetAny<{ consortiumId?: number; totalUsers: number }>(
@@ -121,18 +119,104 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
       ),
     ]);
 
-  const kpis = {
+  const baseKpis = {
     totalUsers: firstOr(usersCount.totalUsers, 0),
     pendingClaims: firstOr(pendingClaims.pendingClaims, 0),
     collectedRate: parseCollectedRate(collectedRaw),
     nextReservation: parseNextReservation(upcomingRaw),
   };
 
-  // Hasta que tengas endpoints para esto, dejamos listas vacías
+  // 👇 MOCKS para demo (solo se usan si no hay datos reales útiles)
+  const mockedKpis = {
+    ...baseKpis,
+    collectedRate:
+      baseKpis.collectedRate && baseKpis.collectedRate > 0
+        ? baseKpis.collectedRate
+        : 78, // % Expensas cobradas para mostrar algo lindo
+    nextReservation:
+      baseKpis.nextReservation.summary === "—"
+        ? {
+            summary: "SUM – Parrilla",
+            when: "Sáb 14/12 · 19:00 hs",
+          }
+        : baseKpis.nextReservation,
+  };
+
+  const mockRecentActivity: RecentActivity[] = [
+    {
+      id: "act-1",
+      type: "payment",
+      title: "Se registró el pago de expensas del Depto 3B",
+      when: "Hoy · 10:24",
+      status: "Completado",
+    },
+    {
+      id: "act-2",
+      type: "claim",
+      title: "Nuevo reclamo por filtración en cochera",
+      when: "Hoy · 09:10",
+      status: "Pendiente",
+    },
+    {
+      id: "act-3",
+      type: "meeting",
+      title: "Asamblea ordinaria programada para el 15/12",
+      when: "Ayer · 19:00",
+      status: "Programado",
+    },
+    {
+      id: "act-4",
+      type: "maintenance",
+      title: "Mantenimiento preventivo del ascensor",
+      when: "Lun · 08:00",
+      status: "Completado",
+    },
+    {
+      id: "act-5",
+      type: "user",
+      title: "Se dio de alta al propietario del 5C",
+      when: "Lun · 15:23",
+      status: "Completado",
+    },
+  ];
+
+  const mockTasks: AdminTask[] = [
+    {
+      id: "task-1",
+      title: "Dar de alta nuevo usuario",
+      when: "Hoy",
+      priority: "Alta",
+    },
+    {
+      id: "task-2",
+      title: "Cargar factura de luz de octubre",
+      when: "Hoy",
+      priority: "Alta",
+    },
+    {
+      id: "task-3",
+      title: "Cargar nuevo proveedor de limpieza",
+      when: "Esta semana",
+      priority: "Media",
+    },
+    {
+      id: "task-4",
+      title: "Crear votación por presupuesto de pintura",
+      when: "Esta semana",
+      priority: "Media",
+    },
+    {
+      id: "task-5",
+      title: "Revisar reclamos pendientes",
+      when: "Mañana",
+      priority: "Alta",
+    },
+  ];
+
   return {
     header: { title: "Dashboard Administrativo" },
-    kpis,
-    recentActivity: [],
-    tasks: { items: [] },
+    kpis: mockedKpis,
+    recentActivity: mockRecentActivity,
+    tasks: { items: mockTasks },
   };
 }
