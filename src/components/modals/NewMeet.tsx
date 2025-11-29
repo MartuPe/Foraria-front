@@ -17,7 +17,7 @@ type FieldErrors = {
 };
 
 
-// const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245";
+// const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
 export default function NewMeet({ onCancel, onCreated }: NewMeetProps) {
 

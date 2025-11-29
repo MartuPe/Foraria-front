@@ -34,7 +34,7 @@ const categories = [
 ];
 
 const API_BASE =
-  process.env.REACT_APP_API_URL || "https://localhost:7245";
+  process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
 export default function AdminDocuments() {
   const [tab, setTab] = useState<"todos" | "publicos" | "privados">("todos");

@@ -14,7 +14,7 @@ export default function NewVote({ onSuccess, onCancel }: NewVoteProps) {
   const [newOption, setNewOption] = useState("");
   const [options, setOptions] = useState<string[]>(["Sí", "No"]);
   const [formError, setFormError] = useState<string | null>(null);
-  const { mutate, loading, error } = useMutation("https://localhost:7245/polls", "post");
+  const { mutate, loading, error } = useMutation("https://localhost:7245/api/polls", "post");
 
 
  const handleAddOption = () => {

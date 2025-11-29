@@ -157,7 +157,7 @@ const Forums: React.FC = () => {
 
   const [forumStats, setForumStats] = useState<Forum | null>(null);
   const API_BASE =
-    process.env.REACT_APP_API_URL || "https://localhost:7245";
+    process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
   const [statusModal, setStatusModal] = useState<{
     open: boolean;

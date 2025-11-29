@@ -57,22 +57,22 @@ export default function AdminVotes() {
   const handleClose = () => setOpen(false);
 
   const { data: pollsData, loading, error } = useGet<Poll[]>(
-    "https://localhost:7245/polls/with-results"
+    "https://localhost:7245/api/polls/with-results"
   );
 
   const { mutate: sendVote, error: voteError } = useMutation(
-    "https://localhost:7245/votes",
+    "https://localhost:7245/api/votes",
     "post"
   );
 
   const { on, connected } = useSignalR({
-    url: "https://localhost:7245/pollHub",
+    url: "https://localhost:7245/api/pollHub",
   });
 
   useEffect(() => {
     const fetchUserCount = async () => {
       try {
-        const res = await fetch("https://localhost:7245/User/count");
+        const res = await fetch("https://localhost:7245/api/User/count");
         const data: UserCountResponse = await res.json();
         setTotalUsers(data.totalUsers);
       } catch (err) {

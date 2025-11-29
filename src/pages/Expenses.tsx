@@ -141,7 +141,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
       setLoading(true);
       setLoadError(null);
       try {
-        const url = `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/ExpenseDetail?id=${residenceId}`;
+        const url = `https://localhost:7245/api/ExpenseDetail?id=${residenceId}`;
         const resp = await axios.get<ExpenseDetail[]>(url, {
           headers: { Authorization: `bearer ${token}` },
         });
@@ -246,7 +246,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
       const expenseId = detail.expenses[0].id;
       
       const resp = await axios.get(
-        `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Expense`,
+        `https://localhost:7245/api/Expense`,
         { headers: { Authorization: `bearer ${token}` } }
       );
 
@@ -425,7 +425,7 @@ const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO |
       setLoadingPaymentFor(detail.id);
       const token = localStorage.getItem("accessToken");
       const res = await fetch(
-        `https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
+        `https://localhost:7245/api/Payment/create-preference?expenseId=${expenseId}&residenceId=${residenceId}`,
         {
           method: "POST",
           headers: { Authorization: `bearer ${token}` },

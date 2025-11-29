@@ -2,7 +2,7 @@
 import { storage } from "../utils/storage";
 
 export const API_BASE =
-  process.env.REACT_APP_API_BASE || "https://localhost:7245";
+  process.env.REACT_APP_API_BASE || "https://localhost:7245/api";
 
 export interface Message {
   id: number;

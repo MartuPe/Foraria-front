@@ -166,12 +166,12 @@ const [loadError, setLoadError] = useState<string | null>(null);
   };
 
   const { mutate: sendVote } = useMutation(
-    "https://localhost:7245/votes",
+    "https://localhost:7245/api/votes",
     "post"
   );
 
   const { on, connected } = useSignalR({
-    url: "https://localhost:7245/pollHub",
+    url: "https://localhost:7245/api/pollHub",
   });
 
   useEffect(() => {

@@ -120,7 +120,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   useEffect(() => {
     let mounted = true;
-    const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245";
+    const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245/api";
 
     fetch(`${API_BASE}/Forum`, { headers: { Authorization: `bearer ${token}` }})
       .then(async (res) => {

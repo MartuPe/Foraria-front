@@ -31,7 +31,7 @@ const Claims: React.FC = () => {
   const [openAcceptId, setOpenAcceptId] = useState<number | null>(null);
   const [openRejectId, setOpenRejectId] = useState<number | null>(null);
   const isAdministrador = storage.role === "Administrador";
-  const API_BASE = (process.env.REACT_APP_API_URL?.replace(/\/+$/,"") || "https://localhost:7245");
+  const API_BASE = (process.env.REACT_APP_API_URL?.replace(/\/+$/,"") || "https://localhost:7245/api");
   const userRole = storage.role ?? "";
   const canManageClaims = [Role.ADMIN, Role.CONSORCIO].includes(userRole as Role);
   const isAdmin = storage.role === Role.ADMIN || storage.role === Role.CONSORCIO;

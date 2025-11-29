@@ -22,7 +22,7 @@ interface RouteParams extends Record<string, string | undefined> {
   callId?: string;
 }
 
-const HUB_URL = "https://localhost:7245/callhub";
+const HUB_URL = "https://localhost:7245/api/callhub";
 
 export default function CallRoom() {
   const { meetingId, callId } = useParams<RouteParams>();
