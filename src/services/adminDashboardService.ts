@@ -132,12 +132,12 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
     collectedRate:
       baseKpis.collectedRate && baseKpis.collectedRate > 0
         ? baseKpis.collectedRate
-        : 78, // % Expensas cobradas para mostrar algo lindo
+        : 88, // % Expensas cobradas para mostrar algo lindo
     nextReservation:
       baseKpis.nextReservation.summary === "—"
         ? {
-            summary: "SUM – Parrilla",
-            when: "Sáb 14/12 · 19:00 hs",
+            summary: "SUM",
+            when: "Sáb 14/12",
           }
         : baseKpis.nextReservation,
   };
@@ -152,24 +152,10 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
     },
     {
       id: "act-2",
-      type: "claim",
-      title: "Nuevo reclamo por filtración en cochera",
-      when: "Hoy · 09:10",
-      status: "Pendiente",
-    },
-    {
-      id: "act-3",
       type: "meeting",
       title: "Asamblea ordinaria programada para el 15/12",
       when: "Ayer · 19:00",
       status: "Programado",
-    },
-    {
-      id: "act-4",
-      type: "maintenance",
-      title: "Mantenimiento preventivo del ascensor",
-      when: "Lun · 08:00",
-      status: "Completado",
     },
     {
       id: "act-5",
@@ -189,28 +175,11 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
     },
     {
       id: "task-2",
-      title: "Cargar factura de luz de octubre",
-      when: "Hoy",
-      priority: "Alta",
-    },
-    {
-      id: "task-3",
       title: "Cargar nuevo proveedor de limpieza",
       when: "Esta semana",
       priority: "Media",
     },
-    {
-      id: "task-4",
-      title: "Crear votación por presupuesto de pintura",
-      when: "Esta semana",
-      priority: "Media",
-    },
-    {
-      id: "task-5",
-      title: "Revisar reclamos pendientes",
-      when: "Mañana",
-      priority: "Alta",
-    },
+
   ];
 
   return {

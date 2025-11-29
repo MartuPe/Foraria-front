@@ -357,7 +357,7 @@ export default function DashboardPage() {
             </Box>
 
             <Box className='panel__content two'>
-              <DonutChart data={paymentData} />
+              <DonutChart data={paymentData}  size={260} />
               <ul className='legend'>
                 {paymentData.map((s) => {
                   const raw = s.value
