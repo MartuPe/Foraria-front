@@ -209,11 +209,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
 
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                  <Button variant='outlined' href='/admin/tareas'>
-                    Ver Todas las Tareas
-                  </Button>
-                </Box>
+             
               </Box>
             </Paper>
           </Grid>

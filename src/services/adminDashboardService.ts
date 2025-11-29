@@ -136,8 +136,8 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
     nextReservation:
       baseKpis.nextReservation.summary === "—"
         ? {
-            summary: "SUM – Parrilla",
-            when: "Sáb 14/12 · 19:00 hs",
+            summary: "SUM",
+            when: "Sáb 14/12",
           }
         : baseKpis.nextReservation,
   };
@@ -171,13 +171,6 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
       when: "Lun · 08:00",
       status: "Completado",
     },
-    {
-      id: "act-5",
-      type: "user",
-      title: "Se dio de alta al propietario del 5C",
-      when: "Lun · 15:23",
-      status: "Completado",
-    },
   ];
 
   const mockTasks: AdminTask[] = [
@@ -199,17 +192,11 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
       when: "Esta semana",
       priority: "Media",
     },
-    {
+     {
       id: "task-4",
-      title: "Crear votación por presupuesto de pintura",
+      title: "Cargar nuevo proveedor de matenimiento",
       when: "Esta semana",
       priority: "Media",
-    },
-    {
-      id: "task-5",
-      title: "Revisar reclamos pendientes",
-      when: "Mañana",
-      priority: "Alta",
     },
   ];
 
