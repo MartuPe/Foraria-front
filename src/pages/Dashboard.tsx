@@ -226,7 +226,13 @@ export default function DashboardPage() {
                 <h4>Desglose de Gastos del Consorcio</h4>
               </Box>
 
-              <div className='panel__content two'>
+              <div className='panel__content two' style={{
+    width: '100%',
+    maxWidth: '1200px',
+    boxSizing: 'border-box',
+    padding: '16px',
+    background: '#fff'
+  }}>
                 <DonutChart  size={260}
                   data={(adminExpenseBreakdown.length
                     ? adminExpenseBreakdown
