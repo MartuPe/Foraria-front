@@ -158,10 +158,17 @@ export async function fetchAdminDashboard(): Promise<AdminDashboardData> {
       status: "Programado",
     },
     {
-      id: "act-5",
+      id: "act-3",
       type: "user",
       title: "Se dio de alta al propietario del 5C",
       when: "Lun · 15:23",
+      status: "Completado",
+    },
+     {
+      id: "act-4",
+      type: "user",
+      title: "Se dio de alta al propietario del 3B",
+      when: "Viernes · 13:06",
       status: "Completado",
     },
   ];
