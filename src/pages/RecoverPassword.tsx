@@ -44,7 +44,7 @@ const ForgotPassword: React.FC = () => {
 
     try {
       const res = await fetch(
-        "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/User/forgot-password",
+        "https://localhost:7245/User/forgot-password",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

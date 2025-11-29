@@ -52,7 +52,7 @@ interface ReactionResponse {
 }
 
 // OJO: este es el que ya usabas en ThreadView
-const API_BASE = "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api";
+const API_BASE = "https://localhost:7245";
 
 const currentUserId = Number(localStorage.getItem("userId") || 0);
 const currentRole = storage.role as Role | null;

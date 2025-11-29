@@ -61,7 +61,7 @@ export default function InvoiceUploadForm({ onSuccess }: InvoiceUploadFormProps)
     formData.append("file", file);
 
     try {
-      const { data } = await axios.post("https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Ocr/process-invoice", formData, {
+      const { data } = await axios.post("https://localhost:7245/Ocr/process-invoice", formData, {
         headers: { "Content-Type": "multipart/form-data", Authorization: `bearer ${token}` },
       });
 

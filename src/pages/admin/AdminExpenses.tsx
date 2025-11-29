@@ -151,7 +151,7 @@ export default function AdminCargaFactura() {
     setLoadErrorInvoices(null);
     try {
       const { data } = await axios.get<Invoice[]>(
-        "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Invoice",
+        "https://localhost:7245/Invoice",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       setInvoices(data || []);
@@ -191,7 +191,7 @@ export default function AdminCargaFactura() {
     setLoadErrorExpenses(null);
     try {
       const { data } = await axios.get<Expense[]>(
-        "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Expense",
+        "https://localhost:7245/Expense",
         { headers: { Authorization: `Bearer ${token}` } }
       );
       const sorted = (data || []).slice().sort((a, b) => {
@@ -276,7 +276,7 @@ export default function AdminCargaFactura() {
       console.log("Enviando Expense payload:", expensePayload);
 
       const expenseResp = await axios.post(
-        "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/Expense",
+        "https://localhost:7245/Expense",
         expensePayload,
         {
           headers: {
@@ -303,7 +303,7 @@ export default function AdminCargaFactura() {
         console.log("Enviando ExpenseDetail payload:", detailPayload);
 
         const detailResp = await axios.post(
-          "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api/ExpenseDetail",
+          "https://localhost:7245/ExpenseDetail",
           detailPayload,
           {
             headers: {

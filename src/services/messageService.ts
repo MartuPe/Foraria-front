@@ -2,7 +2,7 @@
 import { storage } from "../utils/storage";
 
 export const API_BASE =
-  process.env.REACT_APP_API_BASE || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api";
+  process.env.REACT_APP_API_BASE || "https://localhost:7245";
 
 export interface Message {
   id: number;

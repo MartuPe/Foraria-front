@@ -17,7 +17,7 @@ type FieldErrors = {
 };
 
 
-// const API_BASE = process.env.REACT_APP_API_URL || "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/api";
+// const API_BASE = process.env.REACT_APP_API_URL || "https://localhost:7245";
 
 export default function NewMeet({ onCancel, onCreated }: NewMeetProps) {
 

@@ -22,7 +22,7 @@ interface RouteParams extends Record<string, string | undefined> {
   callId?: string;
 }
 
-const HUB_URL = "https://foraria-api-e7dac8bpewbgdpbj.brazilsouth-01.azurewebsites.net/callhub";
+const HUB_URL = "https://localhost:7245/callhub";
 
 export default function CallRoom() {
   const { meetingId, callId } = useParams<RouteParams>();
